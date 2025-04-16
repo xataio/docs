@@ -1,0 +1,21 @@
+{
+  "routes": [
+    {
+      "title": "Getting started",
+      "href": "/getting-started",
+      "file": "docs/getting-started.mdx"
+    },
+    {
+      "title": "Command-line interface",
+      "href": "/cli",
+      "file": "docs/cli/index.mdx",
+      "items": [
+        {
+          "title": "Init",
+          "href": "/cli/init",
+          "file": "docs/cli/init.mdx"
+        }
+      ]
+    }
+  ]
+}
