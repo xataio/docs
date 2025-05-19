@@ -1,19 +1,122 @@
 {
   "routes": [
     {
-      "title": "Getting started",
+      "title": "Overview",
+      "href": "/",
+      "file": "docs/index.mdx"
+    },
+    {
+      "title": "Architecture",
+      "href": "/architecture",
+      "file": "docs/architecture.mdx"
+    },
+    {
+      "title": "Core Concepts",
+      "href": "/core-concepts",
+      "file": "docs/core-concepts.mdx"
+    },
+    {
+      "title": "Getting Started",
       "href": "/getting-started",
       "file": "docs/getting-started.mdx"
     },
     {
-      "title": "Command-line interface",
-      "href": "/cli",
-      "file": "docs/cli/index.mdx",
+      "title": "Connect",
+      "href": "/connect",
       "items": [
         {
-          "title": "Init",
-          "href": "/cli/init",
-          "file": "docs/cli/init.mdx"
+          "title": "Languages",
+          "href": "/connect/languages",
+          "file": "docs/connect/languages.mdx"
+        },
+        {
+          "title": "Frameworks",
+          "href": "/connect/frameworks",
+          "file": "docs/connect/frameworks.mdx"
+        },
+        {
+          "title": "ORMs",
+          "href": "/connect/orms",
+          "file": "docs/connect/orms.mdx"
+        }
+      ]
+    },
+    {
+      "title": "Tutorials",
+      "href": "/tutorials",
+      "items": [
+        {
+          "title": "Developer Workflow",
+          "href": "/tutorials/developer-workflow",
+          "file": "docs/tutorials/developer-workflow.mdx"
+        },
+        {
+          "title": "Migrate to Xata",
+          "href": "/tutorials/migrate-to-xata",
+          "file": "docs/tutorials/migrate-to-xata.mdx"
+        }
+      ]
+    },
+    {
+      "title": "Features",
+      "href": "/features",
+      "items": [
+        {
+          "title": "Branching",
+          "href": "/features/branching",
+          "file": "docs/features/branching.mdx"
+        },
+        {
+          "title": "Schema Changes",
+          "href": "/features/schema-changes",
+          "file": "docs/features/schema-changes.mdx"
+        },
+        {
+          "title": "Data Anonymization",
+          "href": "/features/data-anonymization",
+          "file": "docs/features/data-anonymization.mdx"
+        }
+      ]
+    },
+    {
+      "title": "Reference",
+      "href": "/reference",
+      "items": [
+        {
+          "title": "Command-line Interface",
+          "href": "/reference/cli",
+          "file": "docs/reference/cli.mdx"
+        },
+        {
+          "title": "CI Pipelines",
+          "href": "/reference/ci-pipelines",
+          "file": "docs/reference/ci-pipelines.mdx"
+        }
+      ]
+    },
+    {
+      "title": "Pricing",
+      "href": "/pricing",
+      "file": "docs/resources/pricing.mdx"
+    },
+    {
+      "title": "Resources",
+      "href": "/resources",
+      "items": [
+        {
+          "title": "Troubleshooting & FAQ",
+          "href": "/resources/troubleshooting",
+          "file": "docs/resources/troubleshooting.mdx"
+        },
+        {
+          "title": "Compliance",
+          "href": "/resources/compliance",
+          "file": "docs/resources/compliance.mdx"
+        },
+        {
+          "title": "Roadmap",
+          "href": "/resources/roadmap",
+          "file": "docs/resources/roadmap.mdx"
         }
       ]
     }
