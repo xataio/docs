@@ -1,0 +1,111 @@
+---
+title: Bring Your Own Cloud
+description: Deploy Xata's PostgreSQL platform in your own cloud environment
+---
+
+Deploy Xata's PostgreSQL platform in your own AWS, Azure, or GCP account while maintaining full control over your infrastructure and data.
+
+## Architecture
+
+![BYOC Architecture](/assets/images/byoc-architecture.png)
+
+*BYOC Architecture: Control plane managed by Xata, data plane deployed in your cloud account*
+
+### Control Plane
+
+The Xata control plane manages:
+- User authentication and authorization
+- Project and organization management
+- Monitoring and alerting
+- Backup and restore operations
+- Schema migration management
+
+### Data Plane
+
+The data plane runs in your cloud account:
+- PostgreSQL instances on Kubernetes
+- Distributed storage system
+- Network and security configuration
+- Monitoring and logging
+- Backup storage
+
+## Implementation
+
+### Kubernetes Integration
+
+Xata uses CloudNativePG operator for PostgreSQL management:
+- High availability via synchronous replication
+- Read replicas for scaling
+- Automatic failover
+- Rolling updates
+- Backup management
+
+### Storage System
+
+The platform uses a distributed storage system:
+- NVMe over Fabrics (NVMe-oF) for high performance
+- Erasure coding for data resilience
+- Node-level redundancy
+- Automatic failover
+- Unlimited storage growth
+
+## Deployment Options
+
+### Cloud Providers
+
+- **AWS**: EKS, EC2, EBS
+- **Azure**: AKS, VMs, Managed Disks
+- **GCP**: GKE, Compute Engine, Persistent Disks
+- **Hetzner**: Self-managed Kubernetes
+
+### Infrastructure Requirements
+
+- Kubernetes cluster (1.20+)
+- 3+ nodes for high availability
+- NVMe storage support
+- Network connectivity to control plane
+- IAM/Service Principal configuration
+
+## Security
+
+### Data Protection
+
+- Data never leaves your cloud account
+- Encryption at rest and in transit
+- Network isolation via VPC/VNet
+- IAM integration for access control
+- Audit logging
+
+### Compliance
+
+- GDPR compliance
+- HIPAA compliance
+- SOC 2 compliance
+- Custom compliance requirements
+- Data residency controls
+
+## Getting Started
+
+1. Set up Kubernetes cluster:
+```bash
+# AWS
+eksctl create cluster --name xata-cluster
+
+# Azure
+az aks create --name xata-cluster
+
+# GCP
+gcloud container clusters create xata-cluster
+```
+
+2. Configure Xata deployment:
+```bash
+xata init --byoc
+```
+
+3. Deploy Xata platform:
+```bash
+xata deploy
+```
+
+[Learn more about project management](/cli/project) 

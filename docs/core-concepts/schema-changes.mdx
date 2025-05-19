@@ -1,0 +1,115 @@
+---
+title: Schema Changes
+description: Zero-downtime schema migrations with automatic rollback support
+---
+
+Xata's schema migration system enables zero-downtime database changes with automatic rollback support, powered by the open-source pgroll project.
+
+## Implementation
+
+### Migration Architecture
+
+The system uses a dual-schema approach:
+
+1. **Version Tracking**: Maintains multiple schema versions
+2. **Parallel Execution**: Runs old and new schemas simultaneously
+3. **Data Synchronization**: Keeps data consistent across versions
+4. **Rollback Support**: Automatic reversion if issues occur
+
+### Migration Process
+
+Each migration follows these steps:
+
+1. **Schema Creation**: Create new version alongside existing
+2. **Data Sync**: Copy and transform data to new schema
+3. **Validation**: Verify data integrity and constraints
+4. **Switchover**: Atomic transition to new schema
+5. **Cleanup**: Remove old schema version
+
+## Features
+
+### Zero-Downtime Operations
+
+- **No Table Locks**: Operations don't block reads or writes
+- **Atomic Switches**: Instant schema version changes
+- **Background Processing**: Data sync happens in background
+- **Consistent Views**: Applications see consistent data
+
+### Safety Mechanisms
+
+- **Automatic Rollback**: Reverts on validation failure
+- **Data Integrity**: Maintains constraints and relationships
+- **Version Control**: Tracks all schema changes
+- **Audit Trail**: Logs all migration operations
+
+## Migration Types
+
+### Column Operations
+
+```sql
+-- Add column with default
+ALTER TABLE users ADD COLUMN status text DEFAULT 'active';
+
+-- Rename column
+ALTER TABLE users RENAME COLUMN old_name TO new_name;
+
+-- Change column type
+ALTER TABLE users ALTER COLUMN age TYPE integer;
+```
+
+### Table Operations
+
+```sql
+-- Create new table
+CREATE TABLE new_table (LIKE old_table);
+
+-- Drop table
+DROP TABLE old_table;
+
+-- Rename table
+ALTER TABLE old_table RENAME TO new_table;
+```
+
+## Integration
+
+### CLI Usage
+
+```bash
+# Create migration
+xata roll create add_user_status
+
+# Apply migration
+xata roll apply
+
+# Rollback migration
+xata roll revert
+```
+
+### CI/CD Integration
+
+```yaml
+steps:
+  - name: Apply Migration
+    run: xata roll apply
+  - name: Verify Migration
+    run: xata roll verify
+```
+
+## Getting Started
+
+1. Initialize roll configuration:
+```bash
+xata roll init
+```
+
+2. Create your first migration:
+```bash
+xata roll create my_first_migration
+```
+
+3. Apply the migration:
+```bash
+xata roll apply
+```
+
+[Learn more about roll commands](/cli/roll) 

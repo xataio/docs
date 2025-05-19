@@ -1,0 +1,81 @@
+---
+title: Instant Branching
+description: Copy-on-Write branching system for PostgreSQL databases with instant branch creation and efficient storage
+---
+
+Xata's branching system uses Copy-on-Write (CoW) at the storage layer to create instant database branches. This enables developers to create isolated environments for testing and development without duplicating data unnecessarily.
+
+## How It Works
+
+### Storage Layer Implementation
+
+The branching system is built on top of a distributed storage system that splits data into chunks. Here's how it works:
+
+1. **Data Chunking**: The storage system splits your database data into chunks
+2. **Metadata Index**: Each branch maintains a metadata index that tracks chunk locations
+3. **Copy-on-Write**: When a branch is created, it shares the same data chunks as the parent
+4. **Selective Copying**: Data chunks are only copied when modified in either branch
+
+![Copy-on-Write Branching](/assets/images/cow-branching.png)
+
+*Copy-on-Write branching: Initially, the new branch shares data chunks with the parent. Only modified chunks are copied when changes occur.*
+
+### Branch Creation Process
+
+When you create a new branch:
+
+1. A new metadata index is created instantly
+2. The index points to existing data chunks
+3. No data is copied initially
+4. As writes occur, only modified chunks are copied
+
+This approach provides significant storage efficiency since most development work only modifies a small subset of the data.
+
+## Technical Benefits
+
+### Performance
+
+- **Instant Branch Creation**: No data copying means branches are created in seconds
+- **Storage Efficiency**: Only modified data is duplicated
+- **Write Performance**: CoW operations are optimized at the storage layer
+
+### Integration
+
+Works with any PostgreSQL cloud provider:
+- AWS RDS
+- Amazon Aurora
+- Google Cloud SQL
+- Azure Database
+- Self-hosted PostgreSQL
+
+## Use Cases
+
+### Development Workflow
+
+1. Create a branch from production
+2. Make schema changes
+3. Test with real data
+4. Merge changes back to production
+
+### Testing
+
+1. Create multiple test branches
+2. Run parallel test suites
+3. Compare results across branches
+4. No storage overhead for read-only operations
+
+## Getting Started
+
+To create a branch:
+
+```bash
+xata branch create my-feature-branch
+```
+
+To switch between branches:
+
+```bash
+xata branch checkout my-feature-branch
+```
+
+[Learn more about branch management in the CLI documentation](/cli/branch) 
