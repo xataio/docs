@@ -83,6 +83,7 @@
       "title": "Command-line Interface",
       "href": "/cli",
       "file": "docs/cli/cli.mdx",
+      "noLink": true,
       "items": [
         {
           "title": "Auth",
@@ -145,6 +146,7 @@
       "title": "GitHub Actions",
       "href": "/github-actions",
       "file": "docs/github-actions/github-actions.mdx",
+      "noLink": true,
       "items": [
         {
           "title": "Ensure Main is Ready for Merge",
