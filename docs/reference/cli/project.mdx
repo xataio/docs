@@ -1,0 +1,90 @@
+---
+title: Project Commands
+description: Commands for managing Xata projects
+---
+
+# Project Commands
+
+The `project` commands help you manage your Xata projects, including creating, listing, and configuring projects.
+
+## list {#list}
+
+List all projects in your organization.
+
+```bash
+xata project list
+```
+
+This command displays all projects you have access to, including:
+- Project ID
+- Project name
+- Creation date
+- Status
+
+## describe {#describe}
+
+Describe a project in detail.
+
+```bash
+xata project describe
+```
+
+This command shows detailed information about the current project, including:
+- Project configuration
+- Database settings
+- Branch information
+- API endpoints
+
+## create {#create}
+
+Create a new project.
+
+```bash
+xata project create --name <name>
+```
+
+Arguments:
+- `--name` - The name of the project to create
+
+This command creates a new project in your organization with the specified name.
+
+## delete {#delete}
+
+Delete a project.
+
+```bash
+xata project delete
+```
+
+This command permanently deletes the current project and all its data. This action cannot be undone.
+
+## init {#init}
+
+Link a project to the current folder.
+
+```bash
+xata project init
+```
+
+This command initializes a new Xata project in the current directory by:
+- Creating a `.xata` configuration file
+- Setting up the project structure
+- Linking to your Xata account
+
+## get {#get}
+
+Get a field from a project description.
+
+```bash
+xata project get <field>
+```
+
+Arguments:
+- `field` - The field to retrieve from the project description
+
+This command retrieves specific information about the current project.
+
+## Global Flags
+
+- `-h, --help` - Print help information and exit
+- `--json` - Output in JSON format 

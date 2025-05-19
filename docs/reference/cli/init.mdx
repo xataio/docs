@@ -1,0 +1,33 @@
+---
+title: Init Command
+description: Command for initializing a Xata project
+---
+
+# Init Command
+
+The `init` command helps you set up a new Xata project in your current directory.
+
+## init {#init}
+
+Link a project to the current folder.
+
+```bash
+xata init [--organization <org>] [--project <project>] [--branch <branch>] [--database <db>]
+```
+
+Arguments:
+- `--organization` - Organization ID (optional)
+- `--project` - Project ID (optional)
+- `--branch` - Branch ID (optional)
+- `--database` - Database name (optional)
+
+This command initializes a new Xata project in the current directory by:
+- Creating a `.xata` configuration file
+- Setting up the project structure
+- Linking to your Xata account
+- Configuring the specified project and branch
+
+## Global Flags
+
+- `-h, --help` - Print help information and exit
+- `--json` - Output in JSON format 

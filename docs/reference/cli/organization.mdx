@@ -1,0 +1,77 @@
+---
+title: Organization Commands
+description: Commands for managing Xata organizations
+---
+
+# Organization Commands
+
+The `organization` commands (also available as `org`) help you manage your Xata organizations, including creating, listing, and configuring organizations.
+
+## list {#list}
+
+List all organizations you have access to.
+
+```bash
+xata organization list
+```
+
+This command displays all organizations you are a member of, including:
+- Organization ID
+- Organization name
+- Role
+- Creation date
+
+## describe {#describe}
+
+Describe an organization in detail.
+
+```bash
+xata organization describe
+```
+
+This command shows detailed information about the current organization, including:
+- Organization settings
+- Member list
+- Project list
+- Billing information
+
+## create {#create}
+
+Create a new organization.
+
+```bash
+xata organization create --name <name>
+```
+
+Arguments:
+- `--name` - The name of the organization to create
+
+This command creates a new organization with you as the owner.
+
+## delete {#delete}
+
+Delete an organization.
+
+```bash
+xata organization delete
+```
+
+This command permanently deletes the current organization and all its projects. This action cannot be undone.
+
+## get {#get}
+
+Get a field from an organization description.
+
+```bash
+xata organization get <field>
+```
+
+Arguments:
+- `field` - The field to retrieve from the organization description
+
+This command retrieves specific information about the current organization.
+
+## Global Flags
+
+- `-h, --help` - Print help information and exit
+- `--json` - Output in JSON format 

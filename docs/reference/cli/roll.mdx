@@ -1,0 +1,117 @@
+---
+title: Schema Migration Commands
+description: Commands for managing PostgreSQL schema migrations using pgroll
+---
+
+# Schema Migration Commands
+
+The `roll` commands help you manage PostgreSQL schema migrations using pgroll, providing zero-downtime schema changes and rollbacks.
+
+## complete {#complete}
+
+Complete an ongoing migration.
+
+```bash
+xata roll complete
+```
+
+This command finalizes a migration that was started with `roll start`, applying all pending changes to the database.
+
+## init {#init}
+
+Initialize pgroll in the target database.
+
+```bash
+xata roll init
+```
+
+This command sets up the necessary pgroll infrastructure in your database, including:
+- Creating required tables
+- Setting up triggers
+- Initializing the migration tracking system
+
+## latest {#latest}
+
+Print the name of the latest schema version.
+
+```bash
+xata roll latest
+```
+
+This command shows the most recent schema version, either from:
+- The target database
+- A local migration directory
+
+## migrate {#migrate}
+
+Apply outstanding migrations to the database.
+
+```bash
+xata roll migrate
+```
+
+This command applies all pending migrations from your local migration directory to the target database.
+
+## pull {#pull}
+
+Pull migration history from the target database.
+
+```bash
+xata roll pull
+```
+
+This command retrieves the migration history from the target database and writes it to your local migration directory.
+
+## rollback {#rollback}
+
+Roll back an ongoing migration.
+
+```bash
+xata roll rollback
+```
+
+This command reverts a migration that was started with `roll start` but not yet completed.
+
+## start {#start}
+
+Start a new migration.
+
+```bash
+xata roll start <file>
+```
+
+Arguments:
+- `file` - The migration file containing the schema changes
+
+This command begins a new migration using the specified migration file.
+
+## status {#status}
+
+Show pgroll status.
+
+```bash
+xata roll status
+```
+
+This command displays the current state of pgroll, including:
+- Active migrations
+- Pending changes
+- Migration history
+
+## convert {#convert}
+
+Convert SQL statements to a pgroll migration.
+
+```bash
+xata roll convert <file>
+```
+
+Arguments:
+- `file` - The SQL file to convert
+
+This command converts traditional SQL migration statements into a pgroll-compatible migration file.
+
+## Global Flags
+
+- `-h, --help` - Print help information and exit
+- `--json` - Output in JSON format 
