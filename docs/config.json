@@ -88,12 +88,86 @@
         {
           "title": "Command-line Interface",
           "href": "/reference/cli",
-          "file": "docs/reference/cli.mdx"
+          "file": "docs/reference/cli.mdx",
+          "items": [
+            {
+              "title": "Auth",
+              "href": "/reference/cli/auth",
+              "file": "docs/reference/cli/auth.mdx"
+            },
+            {
+              "title": "Project",
+              "href": "/reference/cli/project",
+              "file": "docs/reference/cli/project.mdx"
+            },
+            {
+              "title": "Organization",
+              "href": "/reference/cli/organization",
+              "file": "docs/reference/cli/organization.mdx"
+            },
+            {
+              "title": "Branch",
+              "href": "/reference/cli/branch",
+              "file": "docs/reference/cli/branch.mdx"
+            },
+            {
+              "title": "Roll",
+              "href": "/reference/cli/roll",
+              "file": "docs/reference/cli/roll.mdx"
+            },
+            {
+              "title": "Clone",
+              "href": "/reference/cli/clone",
+              "file": "docs/reference/cli/clone.mdx"
+            },
+            {
+              "title": "Completions",
+              "href": "/reference/cli/completions",
+              "file": "docs/reference/cli/completions.mdx"
+            },
+            {
+              "title": "Init",
+              "href": "/reference/cli/init",
+              "file": "docs/reference/cli/init.mdx"
+            },
+            {
+              "title": "Status",
+              "href": "/reference/cli/status",
+              "file": "docs/reference/cli/status.mdx"
+            },
+            {
+              "title": "Version",
+              "href": "/reference/cli/version",
+              "file": "docs/reference/cli/version.mdx"
+            },
+            {
+              "title": "Upgrade",
+              "href": "/reference/cli/upgrade",
+              "file": "docs/reference/cli/upgrade.mdx"
+            }
+          ]
         },
         {
-          "title": "CI Pipelines",
-          "href": "/reference/ci-pipelines",
-          "file": "docs/reference/ci-pipelines.mdx"
+          "title": "GitHub Actions",
+          "href": "/reference/github-actions",
+          "file": "docs/reference/github-actions.mdx",
+          "items": [
+            {
+              "title": "Check Workflow",
+              "href": "/reference/github-actions/check",
+              "file": "docs/reference/github-actions/check.mdx"
+            },
+            {
+              "title": "PR Workflow",
+              "href": "/reference/github-actions/pr",
+              "file": "docs/reference/github-actions/pr.mdx"
+            },
+            {
+              "title": "Clone Workflow",
+              "href": "/reference/github-actions/clone",
+              "file": "docs/reference/github-actions/clone.mdx"
+            }
+          ]
         }
       ]
     },
