@@ -7,15 +7,18 @@
       "items": [
         {
           "title": "Introduction",
-          "href": "/docs/getting-started/introduction"
+          "href": "/getting-started/introduction",
+          "file": "docs/getting-started/introduction.mdx"
         },
         {
           "title": "Quickstart",
-          "href": "/docs/getting-started/quickstart"
+          "href": "/getting-started/quickstart",
+          "file": "docs/getting-started/quickstart.mdx"
         },
         {
           "title": "Installation",
-          "href": "/docs/getting-started/installation"
+          "href": "/getting-started/installation",
+          "file": "docs/getting-started/installation.mdx"
         }
       ]
     },
@@ -101,84 +104,84 @@
       "items": [
         {
           "title": "Command-line Interface",
-          "href": "/docs/reference/cli",
+          "href": "/reference/cli",
           "file": "docs/reference/cli.mdx",
           "items": [
             {
               "title": "Auth",
-              "href": "/docs/reference/cli/auth",
+              "href": "/reference/cli/auth",
               "file": "docs/reference/cli/auth.mdx"
             },
             {
               "title": "Project",
-              "href": "/docs/reference/cli/project",
+              "href": "/reference/cli/project",
               "file": "docs/reference/cli/project.mdx"
             },
             {
               "title": "Organization",
-              "href": "/docs/reference/cli/organization",
+              "href": "/reference/cli/organization",
               "file": "docs/reference/cli/organization.mdx"
             },
             {
               "title": "Branch",
-              "href": "/docs/reference/cli/branch",
+              "href": "/reference/cli/branch",
               "file": "docs/reference/cli/branch.mdx"
             },
             {
               "title": "Roll",
-              "href": "/docs/reference/cli/roll",
+              "href": "/reference/cli/roll",
               "file": "docs/reference/cli/roll.mdx"
             },
             {
               "title": "Clone",
-              "href": "/docs/reference/cli/clone",
+              "href": "/reference/cli/clone",
               "file": "docs/reference/cli/clone.mdx"
             },
             {
               "title": "Completions",
-              "href": "/docs/reference/cli/completions",
+              "href": "/reference/cli/completions",
               "file": "docs/reference/cli/completions.mdx"
             },
             {
               "title": "Init",
-              "href": "/docs/reference/cli/init",
+              "href": "/reference/cli/init",
               "file": "docs/reference/cli/init.mdx"
             },
             {
               "title": "Status",
-              "href": "/docs/reference/cli/status",
+              "href": "/reference/cli/status",
               "file": "docs/reference/cli/status.mdx"
             },
             {
               "title": "Version",
-              "href": "/docs/reference/cli/version",
+              "href": "/reference/cli/version",
               "file": "docs/reference/cli/version.mdx"
             },
             {
               "title": "Upgrade",
-              "href": "/docs/reference/cli/upgrade",
+              "href": "/reference/cli/upgrade",
               "file": "docs/reference/cli/upgrade.mdx"
             }
           ]
         },
         {
           "title": "GitHub Actions",
-          "href": "/docs/reference/github-actions",
+          "href": "/reference/github-actions",
           "file": "docs/reference/github-actions.mdx",
           "items": [
             {
               "title": "Check Workflow",
-              "href": "/docs/reference/github-actions/check",
+              "href": "/reference/github-actions/check",
               "file": "docs/reference/github-actions/check.mdx"
             },
             {
               "title": "PR Workflow",
-              "href": "/docs/reference/github-actions/pr",
+              "href": "/reference/github-actions/pr",
               "file": "docs/reference/github-actions/pr.mdx"
             },
             {
               "title": "Clone Workflow",
-              "href": "/docs/reference/github-actions/clone",
+              "href": "/reference/github-actions/clone",
               "file": "docs/reference/github-actions/clone.mdx"
             }
           ]
