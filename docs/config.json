@@ -23,7 +23,8 @@
     {
       "title": "Connect",
       "href": "/connect",
-      "file": "docs/connect/index.mdx",
+      "file": "README.md",
+      "noLink": true,
       "items": [
         {
           "title": "Languages",
@@ -45,7 +46,8 @@
     {
       "title": "Tutorials",
       "href": "/tutorials",
-      "file": "docs/tutorials/index.mdx",
+      "file": "README.md",
+      "noLink": true,
       "items": [
         {
           "title": "Developer Workflow",
@@ -62,7 +64,8 @@
     {
       "title": "Features",
       "href": "/features",
-      "file": "docs/features/index.mdx",
+      "file": "README.md",
+      "noLink": true,
       "items": [
         {
           "title": "Branching",
@@ -84,7 +87,8 @@
     {
       "title": "Reference",
       "href": "/reference",
-      "file": "docs/reference/index.mdx",
+      "file": "README.md",
+      "noLink": true,
       "items": [
         {
           "title": "Command-line Interface",
@@ -106,7 +110,8 @@
     {
       "title": "Resources",
       "href": "/resources",
-      "file": "docs/resources/index.mdx",
+      "file": "README.md",
+      "noLink": true,
       "items": [
         {
           "title": "Troubleshooting & FAQ",
