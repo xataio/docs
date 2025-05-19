@@ -82,84 +82,84 @@
     {
       "title": "Command-line Interface",
       "href": "/cli",
-      "file": "cli/cli.mdx",
+      "file": "docs/cli/cli.mdx",
       "items": [
         {
           "title": "Auth",
           "href": "/cli/auth",
-          "file": "cli/auth.mdx"
+          "file": "docs/cli/auth.mdx"
         },
         {
           "title": "Project",
           "href": "/cli/project",
-          "file": "cli/project.mdx"
+          "file": "docs/cli/project.mdx"
         },
         {
           "title": "Organization",
           "href": "/cli/organization",
-          "file": "cli/organization.mdx"
+          "file": "docs/cli/organization.mdx"
         },
         {
           "title": "Branch",
           "href": "/cli/branch",
-          "file": "cli/branch.mdx"
+          "file": "docs/cli/branch.mdx"
         },
         {
           "title": "Roll",
           "href": "/cli/roll",
-          "file": "cli/roll.mdx"
+          "file": "docs/cli/roll.mdx"
         },
         {
           "title": "Clone",
           "href": "/cli/clone",
-          "file": "cli/clone.mdx"
+          "file": "docs/cli/clone.mdx"
         },
         {
           "title": "Completions",
           "href": "/cli/completions",
-          "file": "cli/completions.mdx"
+          "file": "docs/cli/completions.mdx"
         },
         {
           "title": "Init",
           "href": "/cli/init",
-          "file": "cli/init.mdx"
+          "file": "docs/cli/init.mdx"
         },
         {
           "title": "Status",
           "href": "/cli/status",
-          "file": "cli/status.mdx"
+          "file": "docs/cli/status.mdx"
         },
         {
           "title": "Version",
           "href": "/cli/version",
-          "file": "cli/version.mdx"
+          "file": "docs/cli/version.mdx"
         },
         {
           "title": "Upgrade",
           "href": "/cli/upgrade",
-          "file": "cli/upgrade.mdx"
+          "file": "docs/cli/upgrade.mdx"
         }
       ]
     },
     {
       "title": "GitHub Actions",
       "href": "/github-actions",
-      "file": "github-actions/github-actions.mdx",
+      "file": "docs/github-actions/github-actions.mdx",
       "items": [
         {
           "title": "Ensure Main is Ready for Merge",
           "href": "/github-actions/check",
-          "file": "github-actions/check.mdx"
+          "file": "docs/github-actions/check.mdx"
         },
         {
           "title": "Create Xata Dev Branch",
           "href": "/github-actions/pr",
-          "file": "github-actions/pr.mdx"
+          "file": "docs/github-actions/pr.mdx"
         },
         {
           "title": "Xata Clone (daily, on-demand)",
           "href": "/github-actions/clone",
-          "file": "github-actions/clone.mdx"
+          "file": "docs/github-actions/clone.mdx"
         }
       ]
     },
