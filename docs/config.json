@@ -1,9 +1,9 @@
 {
   "routes": [
     {
-      "title": "Overview",
-      "href": "/",
-      "file": "docs/index.mdx"
+      "title": "Getting Started",
+      "href": "/getting-started",
+      "file": "docs/getting-started.mdx"
     },
     {
       "title": "Architecture",
@@ -14,11 +14,6 @@
       "title": "Core Concepts",
       "href": "/core-concepts",
       "file": "docs/core-concepts.mdx"
-    },
-    {
-      "title": "Getting Started",
-      "href": "/getting-started",
-      "file": "docs/getting-started.mdx"
     },
     {
       "title": "Connect",
