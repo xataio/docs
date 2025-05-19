@@ -3,25 +3,7 @@
     {
       "title": "Getting Started",
       "href": "/getting-started",
-      "file": "docs/getting-started.mdx",
-      "noLink": true,
-      "items": [
-        {
-          "title": "Introduction",
-          "href": "/getting-started/introduction",
-          "file": "docs/getting-started/introduction.mdx"
-        },
-        {
-          "title": "Quickstart",
-          "href": "/getting-started/quickstart",
-          "file": "docs/getting-started/quickstart.mdx"
-        },
-        {
-          "title": "Installation",
-          "href": "/getting-started/installation",
-          "file": "docs/getting-started/installation.mdx"
-        }
-      ]
+      "file": "docs/getting-started.mdx"
     },
     {
       "title": "Architecture",
@@ -98,94 +80,86 @@
       ]
     },
     {
-      "title": "Reference",
-      "href": "/reference",
-      "file": "README.md",
-      "noLink": true,
+      "title": "Command-line Interface",
+      "href": "/cli",
+      "file": "docs/cli/cli.mdx",
       "items": [
         {
-          "title": "Command-line Interface",
-          "href": "/reference/cli",
-          "file": "docs/reference/cli.mdx",
-          "items": [
-            {
-              "title": "Auth",
-              "href": "/reference/cli/auth",
-              "file": "docs/reference/cli/auth.mdx"
-            },
-            {
-              "title": "Project",
-              "href": "/reference/cli/project",
-              "file": "docs/reference/cli/project.mdx"
-            },
-            {
-              "title": "Organization",
-              "href": "/reference/cli/organization",
-              "file": "docs/reference/cli/organization.mdx"
-            },
-            {
-              "title": "Branch",
-              "href": "/reference/cli/branch",
-              "file": "docs/reference/cli/branch.mdx"
-            },
-            {
-              "title": "Roll",
-              "href": "/reference/cli/roll",
-              "file": "docs/reference/cli/roll.mdx"
-            },
-            {
-              "title": "Clone",
-              "href": "/reference/cli/clone",
-              "file": "docs/reference/cli/clone.mdx"
-            },
-            {
-              "title": "Completions",
-              "href": "/reference/cli/completions",
-              "file": "docs/reference/cli/completions.mdx"
-            },
-            {
-              "title": "Init",
-              "href": "/reference/cli/init",
-              "file": "docs/reference/cli/init.mdx"
-            },
-            {
-              "title": "Status",
-              "href": "/reference/cli/status",
-              "file": "docs/reference/cli/status.mdx"
-            },
-            {
-              "title": "Version",
-              "href": "/reference/cli/version",
-              "file": "docs/reference/cli/version.mdx"
-            },
-            {
-              "title": "Upgrade",
-              "href": "/reference/cli/upgrade",
-              "file": "docs/reference/cli/upgrade.mdx"
-            }
-          ]
+          "title": "Auth",
+          "href": "/cli/auth",
+          "file": "docs/cli/auth.mdx"
         },
         {
-          "title": "GitHub Actions",
-          "href": "/reference/github-actions",
-          "file": "docs/reference/github-actions.mdx",
-          "items": [
-            {
-              "title": "Check Workflow",
-              "href": "/reference/github-actions/check",
-              "file": "docs/reference/github-actions/check.mdx"
-            },
-            {
-              "title": "PR Workflow",
-              "href": "/reference/github-actions/pr",
-              "file": "docs/reference/github-actions/pr.mdx"
-            },
-            {
-              "title": "Clone Workflow",
-              "href": "/reference/github-actions/clone",
-              "file": "docs/reference/github-actions/clone.mdx"
-            }
-          ]
+          "title": "Project",
+          "href": "/cli/project",
+          "file": "docs/cli/project.mdx"
+        },
+        {
+          "title": "Organization",
+          "href": "/cli/organization",
+          "file": "docs/cli/organization.mdx"
+        },
+        {
+          "title": "Branch",
+          "href": "/cli/branch",
+          "file": "docs/cli/branch.mdx"
+        },
+        {
+          "title": "Roll",
+          "href": "/cli/roll",
+          "file": "docs/cli/roll.mdx"
+        },
+        {
+          "title": "Clone",
+          "href": "/cli/clone",
+          "file": "docs/cli/clone.mdx"
+        },
+        {
+          "title": "Completions",
+          "href": "/cli/completions",
+          "file": "docs/cli/completions.mdx"
+        },
+        {
+          "title": "Init",
+          "href": "/cli/init",
+          "file": "docs/cli/init.mdx"
+        },
+        {
+          "title": "Status",
+          "href": "/cli/status",
+          "file": "docs/cli/status.mdx"
+        },
+        {
+          "title": "Version",
+          "href": "/cli/version",
+          "file": "docs/cli/version.mdx"
+        },
+        {
+          "title": "Upgrade",
+          "href": "/cli/upgrade",
+          "file": "docs/cli/upgrade.mdx"
+        }
+      ]
+    },
+    {
+      "title": "GitHub Actions",
+      "href": "/github-actions",
+      "file": "docs/github-actions/github-actions.mdx",
+      "items": [
+        {
+          "title": "Ensure Main is Ready for Merge",
+          "href": "/github-actions/check",
+          "file": "docs/github-actions/check.mdx"
+        },
+        {
+          "title": "Create Xata Dev Branch",
+          "href": "/github-actions/pr",
+          "file": "docs/github-actions/pr.mdx"
+        },
+        {
+          "title": "Xata Clone (daily, on-demand)",
+          "href": "/github-actions/clone",
+          "file": "docs/github-actions/clone.mdx"
         }
       ]
     },
