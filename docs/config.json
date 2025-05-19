@@ -46,7 +46,7 @@
     {
       "title": "Connect",
       "href": "/connect",
-      "file": "README.md",
+      "file": "docs/connect/connect.mdx",
       "noLink": true,
       "items": [
         {
@@ -69,7 +69,7 @@
     {
       "title": "Tutorials",
       "href": "/tutorials",
-      "file": "README.md",
+      "file": "docs/tutorials/tutorials.mdx",
       "noLink": true,
       "items": [
         {
@@ -171,14 +171,9 @@
       ]
     },
     {
-      "title": "Pricing",
-      "href": "/pricing",
-      "file": "docs/resources/pricing.mdx"
-    },
-    {
       "title": "Resources",
       "href": "/resources",
-      "file": "README.md",
+      "file": "docs/resources/resources.mdx",
       "noLink": true,
       "items": [
         {
@@ -195,6 +190,11 @@
           "title": "Roadmap",
           "href": "/resources/roadmap",
           "file": "docs/resources/roadmap.mdx"
+        },
+        {
+          "title": "Pricing",
+          "href": "/resources/pricing",
+          "file": "docs/resources/pricing.mdx"
         }
       ]
     }

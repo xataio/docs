@@ -1,5 +1,86 @@
 ---
 title: Pricing
+description: Simple, transparent pricing for Xata's PostgreSQL platform
 ---
 
-<!-- TODO: insert tier table once finalised -->
+Xata offers simple, transparent pricing with two main plans: Pay As You Go and Bring Your Own Cloud (BYOC). Save on infrastructure costs through better resource utilization.
+
+## Pay As You Go
+
+Starting at $0.012 / hour
+
+### Features
+- Postgres hosting on our platform
+- Data anonymization / masking
+- Instant Copy-on-Write branches
+- Unlimited projects / databases / branches
+- Premium support
+
+### Instance Types
+
+| Instance     | vCPUs | RAM (GB) | Hourly Rate | Monthly Cost* |
+| ------------ | ----- | -------- | ----------- | ------------- |
+| xata.micro   | 2     | 1        | $0.012      | $9            |
+| xata.small   | 2     | 2        | $0.024      | $18           |
+| xata.medium  | 2     | 4        | $0.048      | $35           |
+| xata.large   | 2     | 8        | $0.096      | $70           |
+| xata.xlarge  | 4     | 16       | $0.192      | $140          |
+| xata.2xlarge | 8     | 32       | $0.384      | $280          |
+| xata.4xlarge | 16    | 64       | $0.768      | $561          |
+| xata.8xlarge | 32    | 128      | $1.536      | $1121         |
+
+*Monthly cost is approximate and based on 730 hours of usage. Contact us for custom instance sizes.
+
+### Storage
+
+Postgres storage is charged at **$0.30 / GB / month**. Only the actually used storage is charged, so you don't have to worry about allocating disk space. Xata uses an advanced distributed storage system for separating storage from compute.
+
+[Learn more about storage](/core-concepts/storage)
+
+## Bring Your Own Cloud (BYOC)
+
+$0.59 / node / hour
+
+### Features
+- Everything included in Pay As You Go
+- Managed Postgres instances on your account
+- Runs on AWS, GCP, Azure, or your own data center
+- Custom extensions support
+
+[Learn more about BYOC](/core-concepts/byoc)
+
+## Enterprise Plan
+
+Contact us to discuss:
+- Custom plans
+- Support options
+- White-labeling
+- Professional services
+
+## Frequently Asked Questions
+
+### Do you have a free tier?
+Yes, we offer a free tier for development and testing. Contact us for details.
+
+### What about a free trial?
+We offer a free trial period for all paid plans. Contact us to get started.
+
+### Are all anonymization features and zero-downtime schema changes free?
+Yes, these features are included in both Pay As You Go and BYOC plans.
+
+### I want to host production on your platform. Is Xata production ready?
+Yes, Xata is production-ready with features like high availability, automatic backups, and monitoring.
+
+### Is there a minimal number of nodes for the BYOC model?
+Yes, BYOC requires a minimum of 3 nodes for high availability. Contact us for specific requirements.
+
+### Do you offer instances with a different CPU / RAM ratio?
+Yes, we can customize instance configurations. Contact us to discuss your specific needs.
+
+### Do you charge for bandwidth?
+No, we don't charge for bandwidth. You only pay for compute and storage.
+
+### We are a PaaS and we'd like to offer a Postgres service to our customers. Can we use Xata to do that?
+Yes, we offer white-labeling options for PaaS providers. Contact us to discuss partnership opportunities.
+
+[Contact us](mailto:info@xata.io) for custom pricing or to discuss your specific needs.

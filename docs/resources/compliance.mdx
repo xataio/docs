@@ -1,5 +1,66 @@
 ---
 title: Compliance
+description: Security certifications and compliance standards supported by Xata
 ---
 
-<!-- TODO: SOC 2, GDPR, HIPAA status -->
+Xata maintains several security certifications and follows industry best practices to ensure the highest level of data protection and privacy.
+
+## Certifications
+
+Xata is currently certified for:
+
+- **SOC-2**: Service Organization Control 2 compliance for security, availability, and confidentiality
+- **HIPAA**: Health Insurance Portability and Accountability Act compliance for healthcare data
+- **GDPR**: General Data Protection Regulation compliance for EU data protection
+
+Additional compliance certifications are being pursued. If you require a specific certification to use Xata, please contact our team.
+
+## Security Practices
+
+Xata implements comprehensive security measures:
+
+### Data Protection
+
+- Data encryption at rest for all data stores
+- Data encryption in transit for all network communication
+- Clear separation between control plane and data plane
+- PII information retention limited to 2 weeks in observability systems
+
+### Access Control
+
+- Minimal scope credentials with periodic rotation
+- SSO with MFA required for critical services
+- Strict controls on production system access
+- Regular third-party risk assessments
+
+### Software Security
+
+- Automatic vulnerability scanning for dependencies
+- Weekly cadence for dependency upgrades
+- Regular security assessments
+- Continuous monitoring of security news and threat intelligence
+
+## Compliance Reports
+
+SOC-2 and HIPAA compliance reports are available upon request. Please contact support to obtain these reports for your compliance needs.
+
+## Responsible Disclosure
+
+Xata maintains a responsible vulnerability disclosure program:
+
+1. Report vulnerabilities to security@xata.io
+2. We respond within 3 business days
+3. We maintain confidentiality throughout the process
+4. We provide credit for discovered vulnerabilities
+5. We offer bounties for medium severity or higher issues
+
+### Out of Scope
+
+The following are not eligible for the disclosure program:
+- Non-security related bugs
+- Email spoofing
+- Social engineering
+- DoS/DDoS attacks
+- Vulnerabilities on feedback.xata.io
+
+[Learn more about our security practices](/security) 
