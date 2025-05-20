@@ -5,6 +5,18 @@ description: Connect to Xata using your preferred language, framework, or ORM
 
 # Connect to Xata
 
+Every connection to Xata ultimately uses the standard PostgreSQL wire protocol, so you can reuse the drivers you already know. The high-level flow is always the same:
+
+1. **Get a connection string for the branch you want to work with**  
+   ```bash
+   export DATABASE_URL=$(xata branch url --branch main)
+   ```  
+   The generated URL already embeds SSL settings and a passwordless access token if you are logged-in via the CLI.
+2. **Pass `DATABASE_URL` to your language, framework or ORM**  
+   Most drivers read the variable automatically; others take it as a constructor argument.
+
+> **Tip:** Xata enforces TLS. Make sure `sslmode=require` (or `verify-full`) is present when using raw libpq strings.
+
 Xata provides multiple ways to connect to your databases, whether you're using a specific programming language, framework, or ORM.
 
 ## Languages

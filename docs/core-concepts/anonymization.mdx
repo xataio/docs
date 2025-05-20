@@ -5,99 +5,64 @@ description: Secure data handling with automatic PII detection and anonymization
 
 Xata's data anonymization system automatically detects and masks sensitive information during database replication, enabling secure development and testing environments.
 
-## PII detection
+When a staging replica is built with `xata clone --anonymize`, the replication pipeline passes every row through a streaming transformation layer powered by [**pgstream**](https://github.com/xataio/pgstream). This layer inspects column names, data types and actual values to decide whether the field contains personally-identifiable information (PII) or other sensitive content. Out-of-the-box detectors recognise emails, phone numbers, names, street addresses, credit-card numbers and more. You can also register custom detectors for domain-specific patterns.
 
-The system uses a combination of techniques to identify sensitive data:
+Once a value is flagged as sensitive, a *transformer* replaces it on-the-fly. The most common transformer is **consistent hashing**—the same input always yields the same opaque token—so application logic that relies on equality checks continues to work. Other transformers preserve formatting (for example keeping the `@domain.com` part of an e-mail) or maintain referential integrity by applying the same hash across foreign-key relationships. Because the masking happens inside the replication stream, no unmasked data ever lands in the staging database.
 
-1. **Column name analysis**: Detects common PII field names
-2. **Pattern matching**: Identifies data formats (emails, phone numbers, etc.)
-3. **Content analysis**: Examines data patterns and distributions
-4. **Custom rules**: Supports user-defined detection rules
+## Configuring rules
 
-## Anonymization methods
-
-Multiple anonymization strategies are available:
-
-1. **Consistent hashing**: Same input produces same output
-2. **Format preservation**: Maintains data structure and format
-3. **Type safety**: Preserves data types and constraints
-4. **Referential integrity**: Maintains relationships between tables
-
-## Rule definition
-
-Configure anonymization rules in your project:
+Anonymisation behaviour is controlled by JSON rules stored in the project configuration. A typical snippet looks like this:
 
 ```json
 {
   "rules": {
-    "email": {
-      "type": "email",
-      "preserve_domain": true
-    },
-    "phone": {
-      "type": "phone",
-      "preserve_country": true
-    }
+    "users.email": { "type": "email", "preserve_domain": true },
+    "users.phone": { "type": "phone", "preserve_country": true },
+    "orders.cc_number": { "type": "credit_card", "format": "****-****-****-####" }
   }
 }
 ```
 
-## Custom transformers
+If a column is not covered by a rule but matches a built-in detector, the platform applies a sensible default transformer (usually consistent hashing). You can opt-out by explicitly setting `"action": "ignore"`.
 
-Create custom anonymization functions:
+## Workflow integration
 
-```sql
-CREATE FUNCTION anonymize_custom(value text)
-RETURNS text AS $$
-BEGIN
-  -- Custom anonymization logic
-  RETURN value;
-END;
-$$ LANGUAGE plpgsql;
-```
-
-## Integration points
-
-### Replication pipeline
-
-1. **Source connection**: Connect to production database
-2. **Data extraction**: Read tables and columns
-3. **Anonymization**: Apply rules during transfer
-4. **Target loading**: Write to staging database
-
-### CI/CD integration
+A typical CI job that prepares an anonymised test environment looks like this:
 
 ```yaml
-- name: Create anonymized branch
-  run: xata branch create --anonymize
-- name: Run tests
-  run: npm test
+steps:
+  - name: Checkout repo
+    uses: actions/checkout@v4
+  - name: Install Xata CLI
+    run: curl -fsSL https://xata.io/install.sh | bash
+  - name: Create anonymised replica
+    run: xata clone --anonymize --branch ci-${{ github.sha }}
+  - name: Run integration tests
+    run: npm test
 ```
 
-## Security features
+The staging branch behaves exactly like production—but with all sensitive data masked—so you can run load tests, debug migrations or train machine-learning models without violating compliance policies.
 
-- **Deterministic anonymization**: Same input always produces same output
-- **Format preservation**: Maintains data structure for testing
-- **Relationship preservation**: Foreign keys remain valid
-- **Type safety**: No data type violations
+## Why deterministic anonymisation matters
+
+Because hashing is consistent, the same e-mail address in two tables maps to the same anonymised value, preserving JOIN semantics. Foreign keys are never broken, and applications that rely on lookups or unique constraints continue to work unmodified. At the same time, the hash is irreversible without the secret key held by the masking service, so the original data cannot be reconstructed.
+
+## Security and compliance
+
+Anonymisation happens before the data leaves the production network segment, ensuring PII never traverses the wire in clear form. The process is compatible with GDPR, HIPAA and SOC-2 requirements and can be tuned further for region-specific regulations such as Schrems II or LGPD.
 
 ## Getting started
 
-1. Configure detection rules:
-
 ```bash
-xata config set detection.rules '{"email": "email", "phone": "phone"}'
-```
-
-2. Set up anonymization:
-
-```bash
+# Enable anonymisation for future clones
 xata config set anonymization.enabled true
+
+# Create the first anonymised replica
+xata clone --anonymize staging
 ```
 
-3. Create anonymized replica:
+If you want to experiment locally, you can preview the transformation result:
+
 ```bash
-xata clone --anonymize
-```
-
-[Learn more about staging replicas](/core-concepts/staging) 
+echo 'john.doe@example.com' | xata anonymize --type email
+``` 

@@ -5,31 +5,40 @@ description: Copy-on-Write branching system for PostgreSQL databases with instan
 
 Xata's branching system uses Copy-on-Write (CoW) at the storage layer to create instant database branches. This enables developers to create isolated environments for testing and development without duplicating data unnecessarily.
 
+Copy-on-Write works by splitting the physical data into immutable *chunks* that are shared by every branch. A lightweight metadata index keeps track of which chunk belongs to which logical page of the database. Creating a branch therefore means cloning only that index—a metadata-only operation that finishes in milliseconds, regardless of whether the database holds a few megabytes or several terabytes.
+
+![Copy-on-Write branch — no writes yet](/assets/images/copy-on-write-diagram-1.png)
+
+After the branch exists, reads from either the parent or the child still hit the same chunks. The first time one of the branches writes to a page, the storage layer allocates a brand-new chunk, applies the change there and updates *only* that branch's index to reference it. Every other chunk continues to be shared, so additional disk usage grows in proportion to the amount of data that actually changes.
+
+![Copy-on-Write branch — chunks diverged](/assets/images/copy-on-write-branching-2.png)
+
 ## How it works
 
-### Storage Layer Implementation
+### Storage-level implementation
 
-The branching system is built on top of a distributed storage system that splits data into chunks. Here's how it works:
+Because the mechanism lives entirely below PostgreSQL, it is compatible with vanilla Postgres and every extension you might load. There is no performance penalty on reads—unchanged chunks are served directly—and the write-amplification is limited to a single additional chunk copy per modified page.
 
-1. **Data Chunking**: The storage system splits your database data into chunks
-2. **Metadata Index**: Each branch maintains a metadata index that tracks chunk locations
-3. **Copy-on-Write**: When a branch is created, it shares the same data chunks as the parent
-4. **Selective Copying**: Data chunks are only copied when modified in either branch
+### Developer workflow
 
-![Copy-on-Write Branching](/assets/images/cow-branching.png)
+A typical flow looks like this:
 
-*Copy-on-Write branching: Initially, the new branch shares data chunks with the parent. Only modified chunks are copied when changes occur.*
+1. A staging replica kept in sync by [**pgstream**](https://github.com/xataio/pgstream) holds an anonymised copy of production.
+2. `xata branch create feature-xyz` clones the metadata index and gives the developer a fully isolated environment that behaves like production.
+3. The developer makes schema edits, runs tests and benchmarks against realistic data.
+4. Once validated, [**pgroll**](https://github.com/xataio/pgroll) compares the branch with its parent, generates a reversible migration plan and applies it to production with zero-downtime.
 
-### Branch Creation Process
+Because CoW tracks every changed chunk, the merge-back step knows *exactly* which pages were touched, enabling deterministic, audit-ready schema migrations.
 
-When you create a new branch:
+## Benefits at scale
 
-1. A new metadata index is created instantly
-2. The index points to existing data chunks
-3. No data is copied initially
-4. As writes occur, only modified chunks are copied
+* **Speed** – branch creation takes milliseconds, enabling per-PR ephemeral environments.
+* **Storage efficiency** – only the modified chunks consume additional space; dozens of branches cost little more than a single copy.
+* **Safety** – experiments happen against realistic data without risking production state.
 
-This approach provides significant storage efficiency since most development work only modifies a small subset of the data.
+### Integration with any Postgres provider
+
+The storage layer is provider-agnostic: you can run instant branches on AWS RDS, Aurora, Google Cloud SQL, Azure Database or even self-hosted Postgres. Xata improves rather than replaces your existing production setup.
 
 ## Technical Benefits
 

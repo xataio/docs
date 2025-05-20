@@ -1,13 +1,13 @@
 ---
 title: Architecture
-description: Deep technical dive into Xata's PostgreSQL platform architecture
+description: Xata's PostgreSQL platform architecture
 ---
 
 Xata delivers "Postgres at scale" by combining a globally hosted control-plane with a data-plane that can be either hosted by Xata or deployed in your own cloud. The platform brings together three core building blocks:
 
 1. **A cloud-native storage layer** that separates storage from compute and enables instant copy-on-write (CoW) branching.
 2. **Vanilla PostgreSQL on Kubernetes** orchestrated by **CloudNativePG (CNPG)** for high availability, rolling upgrades, and self-healing.
-3. **A developer-centric workflow** powered by open-source projects **pgstream** (replication & data masking) and **pgroll** (zero-downtime schema changes).
+3. **A developer-centric workflow** powered by open-source projects [**pgstream**](https://github.com/xataio/pgstream) (replication & data masking) and [**pgroll**](https://github.com/xataio/pgroll) (zero-downtime schema changes).
 
 ## 1. High-level architecture
 
@@ -23,97 +23,52 @@ In the standard Xata architecture, both the control plane and data plane are hos
 
 ![Compute Kubernetes cluster and storage cluster](/assets/images/k8s-and-storage.png)
 
-Xata provides a software-defined storage cluster that exposes logical NVMe volumes to Postgres pods via NVMe over Fabrics (NVMe-oF). Key characteristics:
+Behind every Xata instance sits a [**Simplyblock**](https://www.simplyblock.io/)-powered, software-defined storage cluster that presents logical NVMe volumes to the Postgres pods over NVMe-oF. Because the block device lives in a separate tier, you can grow compute and storage independently: scaling a database is as easy as changing the pod size, and you never have to migrate data to a larger disk.  
+The cluster protects data with node-level erasure coding rather than traditional RAID, so even if several nodes disappear your database keeps running without losing redundancy. All I/O is handled entirely in user space via **SPDK** and **DPDK**, shaving unnecessary kernel context switches and keeping latencies low even under heavy parallel workloads.  
+Finally, storage is billed on the bytes that actually exist on disk—no pre-allocating big volumes—so costs stay proportional to real usage.
 
-* **Separation of storage & compute** – grow each independently; no need to over-provision disks.
-* **Erasure coding at node level** – parity data is distributed across nodes, allowing multiple node failures with minimal overhead.
-* **NVMe-oF multipathing** – every volume has multiple active paths; I/O is transparently rerouted on node failure.
-* **User-space I/O via SPDK/DPDK** – bypassing the kernel reduces latency and context switches.
-* **Bottomless storage billing** – pay per-GB-month for only the bytes actually in use.
+Under the hood, Simplyblock detaches raw NVMe devices from the Linux kernel and hands them over to **SPDK** (Storage Performance Development Kit) and **DPDK** (Data Plane Development Kit) in user-space. Bypassing the kernel eliminates expensive context switches and lets the I/O stack talk directly to the hardware queues. The result is single-digit-microsecond latency even when dozens of Postgres instances hammer the same storage pool in parallel.
+
+Durability is handled by **erasure coding at the node level**. Instead of mirroring every block multiple times—wasting 2× or 3× the space—Simplyblock stripes data and parity chunks across the cluster so that any two nodes can vanish without losing information. Because the parity lives at cluster scope, the system tolerates not just drive failures but full-node outages and even zone-level disruptions.
+
+On top of that sits **NVMe-oF multipathing**. Each logical volume is presented to the Postgres pods with several active paths; if a primary storage node is drained for maintenance or suffers a failure, I/O is automatically rerouted through a secondary path with zero application impact. All of this orchestration happens transparently to the database, so developers and operators never have to think about RAID sets, fail-over scripts, or hot spares.
+
+From a total-cost-of-ownership perspective, the combination of thin-provisioned capacity, efficient parity and just-in-time scaling means the same workload can run at a fraction of the price you would pay for monolithic EBS volumes or pre-allocated local SSDs in a managed database service.
+
+![Redundancy with Simplyblock](/assets/images/redundancy-with-simplyblock.png)
 
 ### 3. Copy-on-write branching
 
-CoW happens **inside the storage layer**. Creating a branch copies only the metadata index; data blocks are duplicated lazily on first write.
+![Copy-on-write branch (no writes yet)](/assets/images/copy-on-write-branching-step1.png)
 
-![CoW branching without writes](/assets/images/copy-on-write-branching-2.png)
+Instant branching in Xata is implemented at the storage layer itself. When you create a new branch the platform simply clones the metadata index that maps logical blocks to their physical location; no data is copied, so the operation finishes in milliseconds whether the database is megabytes or terabytes in size.  
+As soon as either the parent or the child branch writes to a page, the storage layer allocates a fresh block for the modified data, leaving the original block untouched. The two branches therefore share all unchanged pages and diverge only where changes occur, which keeps additional disk usage minimal and enables hundreds of simultaneous branches without exploding storage costs.  
+Because branching happens below Postgres, the feature is completely transparent to the database engine and works with any extension.
 
-The branching process involves several steps:
+To make this more concrete, imagine the storage system as a set of immutable **data chunks** and a lightweight **metadata index** that records which chunk belongs to which logical address. Creating a branch duplicates the index—not the chunks—so it takes the same amount of time no matter how large the database is. When the first write lands on, say, chunk `3`, that chunk is copied, the write is applied to the new copy, and the child branch's index is updated to point to it. All other chunks continue to be shared.  
+This model is a perfect match for developer workflows: feature branches usually touch only a small fraction of the total dataset, so the storage overhead is tiny. It is equally powerful in staging and CI pipelines where dozens of short-lived branches can exist in parallel without additional storage planning.
 
-1. **Metadata copy**: Only the metadata index is copied, which contains pointers to data blocks
-2. **Lazy block duplication**: Data blocks are duplicated only when modified
-3. **Write tracking**: Modified blocks are tracked to maintain branch isolation
-4. **Block sharing**: Unmodified blocks are shared between branches to save space
+Copy-on-write also underpins the **merge-back** story. Because each modified chunk is tracked precisely, tools such as [**pgroll**](https://github.com/xataio/pgroll) can compare the branch with its parent, compute an idempotent migration plan, and apply it to production with zero downtime. Combined with [**pgstream**](https://github.com/xataio/pgstream) for continuous, masked replication, the result is a feedback loop where developers experiment freely and ship schema changes safely.
 
-Benefits:
-
-* Instant branch creation (milliseconds)
-* Minimal extra disk usage – only changed blocks are duplicated
-* Works on multi-TB databases because no full copy is required
-* Efficient storage utilization through block sharing
+![Copy-on-write branch (chunks 3 and 6 duplicated)](/assets/images/copy-on-write-branching-step2.png)
 
 ## 4. Compute layer – Kubernetes & CloudNativePG
 
-We run **unmodified PostgreSQL** inside Kubernetes pods managed by **CloudNativePG**. CNPG handles:
+PostgreSQL itself runs unmodified inside Kubernetes pods managed by the **CloudNativePG** operator. CNPG takes care of high-availability via synchronous replication, automated fail-over, rolling minor version upgrades and continuous, incremental backups to object storage.  
+Running vanilla Postgres means you retain 100 % extension compatibility—if it works upstream, it works on Xata. Scaling up or down is a matter of adjusting the pod spec; the decoupled storage layer makes the change immediate and risk-free.
 
-* Synchronous or asynchronous replication
-* Automated fail-over & self-healing
-* Online minor-version upgrades
-* Continuous, base + incremental backups to object storage
-* Read-replica management and connection pooling
+### 5. Developer workflow components
 
-Because Postgres is unmodified, **all extensions work** out-of-the-box. You can request additional extensions and Xata will validate & enable them quickly.
+The storage and compute layers come together in a developer experience powered by two open-source projects from Xata. [**pgstream**](https://github.com/xataio/pgstream) taps into the logical replication stream, applies masking transforms on the fly and keeps an always-fresh, anonymised replica of production data. [**pgroll**](https://github.com/xataio/pgroll) builds on top of that replica to generate reversible, zero-downtime migration plans.  
+In practice a developer calls `xata clone` to obtain an anonymised copy of production, uses `xata branch create` to spin up an isolated branch, and later runs `xata roll migrate` (or `xata roll rollback`) to move the validated schema changes into production without downtime.
 
-### 4.1 Developer workflow components
-
-#### pgstream – Replication & data masking
-
-* Logical replication stream augmented with **in-flight masking transforms**
-* Detects and anonymizes PII/PHI based on configurable transformers
-* Powers `xata clone` to build **staging replicas** and keep them in sync
-
-The replication process:
-1. Captures changes from the source database
-2. Applies masking transforms in-flight
-3. Replicates to target database
-4. Maintains consistency through transaction boundaries
-
-#### pgroll – Zero-downtime schema changes
-
-* Generates migration plans that can be **rolled forward or rolled back**
-* Uses dual-schema execution so reads/writes work during migrations
-* Integrated into `xata roll` commands & GitHub Action workflows
-
-Migration workflow:
-1. Create a new schema version
-2. Apply changes to new schema
-3. Migrate data in batches
-4. Switch to new schema
-5. Clean up old schema
-
-### 4.2 CI/CD & GitHub actions
-
-* **Ensure main is ready for merge** – blocks PRs if pending migrations exist
-* **Dev branch per PR** – automatically `xata branch create` & tear-down
-* **Nightly clone** – scheduled `xata clone` to refresh anonymized staging data
-
-## 5. Bring your own cloud (BYOC)
+## 6. Bring your own cloud (BYOC)
 
 ![BYOC control plane and data plane](/assets/images/byoc-architecture.png)
 
-For customers who need to keep their data within their own cloud infrastructure, Xata offers the Bring Your Own Cloud (BYOC) deployment model. In this model:
-
-* The control plane remains hosted by Xata
-* The entire data plane (Postgres pods, storage nodes, pgstream/pgroll workers) is deployed inside your VPC
-* Deployment is handled via Terraform or Helm charts provided by Xata
-* The control plane communicates via outbound-only gRPC over TLS
-* You maintain full network control and can leverage your existing cloud infrastructure
-
-Security highlights:
-
-* **No inbound ports** need to be opened
-* All data remains within your cloud account – meets strict compliance requirements
-* Leverage existing **Reserved instances / Savings plans** for cost reductions
+While the default deployment keeps both control-plane and data-plane in Xata's multi-region cloud, organisations with strict governance or latency requirements can choose **Bring Your Own Cloud**. In BYOC the full data plane—Postgres pods, storage cluster, [pgstream](https://github.com/xataio/pgstream) and [pgroll](https://github.com/xataio/pgroll) workers—runs inside your own AWS, GCP, Azure or on-prem Kubernetes cluster.  
+The control plane stays with Xata and communicates over outbound-only gRPC, so no inbound ports have to be opened. All customer data remains inside the VPC, allowing teams to leverage existing cloud credits, satisfy residency constraints and keep network latency to an absolute minimum.
 
 ---
 
-> **Need help?** Reach out to the Xata team at [info@xata.io](mailto:info@xata.io) or join our Discord community.
+**Need help?** Reach out to the Xata team at [info@xata.io](mailto:info@xata.io) or join our Discord community.

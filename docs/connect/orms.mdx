@@ -1,10 +1,27 @@
 ---
-title: ORM quick‑starts
+title: ORM quick-starts
 ---
+
+Export `DATABASE_URL` via `xata branch url` and then use the snippets below.
 
 | ORM | Config snippet | Notes |
 | --- | --- | --- |
-| Prisma | prisma\ndatasource db { url = env("DATABASE_URL") } | Use shadowDatabaseUrl for pgroll |
-| SQLAlchemy | engine = create_engine(DB_URL, pool_pre_ping=True) | |
+| **Prisma** | ```prisma
+datasource db { provider = "postgresql" url = env("DATABASE_URL") }
+``` | Use `shadowDatabaseUrl` for pgroll migrations |
+| **Drizzle** | ```ts
+import { drizzle } from 'drizzle-orm/postgres-js';
+const db = drizzle(process.env.DATABASE_URL);
+``` | |
+| **TypeORM** | ```ts
+DataSource({ url: process.env.DATABASE_URL, ssl: true })
+``` | |
+| **SQLAlchemy** | ```python
+engine = create_engine(os.environ['DATABASE_URL'], pool_pre_ping=True)
+``` | |
+| **Django ORM** | ```python
+DATABASE_URL = os.getenv('DATABASE_URL')
+DATABASES = {'default': dj_database_url.parse(DATABASE_URL)}
+``` | |
 
 

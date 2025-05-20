@@ -36,12 +36,12 @@ By providing instant Copy-on-Write branches, developers can:
 - Quickly create and destroy environments as needed
 
 ### Can I test complex schema changes with Xata?
-Yes, you can use `xata roll` (powered by pgroll) to test schema changes and safely apply them with zero-downtime to production. This allows you to test complex changes in isolation before applying them to production.
+Yes, you can use `xata roll` (powered by [pgroll](https://github.com/xataio/pgroll)) to test schema changes and safely apply them with zero-downtime to production. This allows you to test complex changes in isolation before applying them to production.
 
 ## Data Privacy & Security
 
 ### How does data anonymization work?
-Xata uses `pgstream` to copy and anonymize data on the fly. The system:
+Xata uses [pgstream](https://github.com/xataio/pgstream) to copy and anonymize data on the fly. The system:
 - Detects and masks PII/PHI and sensitive data
 - Maintains referential integrity
 - Preserves data relationships

@@ -5,6 +5,12 @@ description: Deploy Xata's PostgreSQL platform in your own cloud environment
 
 Deploy Xata's PostgreSQL platform in your own AWS, Azure, or GCP account while maintaining full control over your infrastructure and data.
 
+Running Xata in BYOC mode gives you all the benefits of the managed service—control-plane UI, CLI, GitHub Actions, automated migrations—while keeping every byte of customer data inside your private VPC. The deployment ships as a set of Kubernetes manifests (or a Terraform module) that spin up the Postgres pods, the Simplyblock storage cluster and the [pgstream](https://github.com/xataio/pgstream) / [pgroll](https://github.com/xataio/pgroll) workers alongside your existing workloads.
+
+Because the **control plane** remains in Xata's multi-region cloud, upgrades to the SaaS UI or API surface are rolled out instantly without touching your cluster. Communication flows outbound-only over mutual-TLS gRPC, so you never have to open an inbound port. All telemetry is aggregated and anonymised before it leaves your VPC, satisfying even the strictest compliance departments.
+
+From an economics point of view, BYOC lets you pay for compute with the reservations and discounts you already have from your cloud provider. Network traffic between your application pods and the database never crosses the public Internet, reducing both latency and egress costs.
+
 ## Architecture
 
 ![BYOC Architecture](/assets/images/byoc-architecture.png)
@@ -83,6 +89,25 @@ The platform uses a distributed storage system:
 - SOC 2 compliance
 - Custom compliance requirements
 - Data residency controls
+
+## Security posture
+
+* **Data residency** – choose the exact regions (or on-prem data centres) where data is stored and processed.
+* **No shared tenancy** – storage and compute nodes belong exclusively to your account.
+* **Key management** – integrate with KMS / HSM services for at-rest encryption keys.
+* **Auditability** – logs and metrics stay inside your logging stack (CloudWatch, Stackdriver, etc.).
+
+## Typical rollout
+
+1. Provision a Kubernetes cluster of three or more nodes with NVMe disks.
+2. Install the CloudNativePG operator and the Simplyblock storage Helm chart.
+3. Run `xata byoc init` to register the cluster; the control plane issues an agent token.
+4. Apply the generated manifests; Postgres and storage pods come online and self-register.
+5. Migrate data from the previous provider using `xata clone --target byoc-prod` or start with a fresh database.
+
+The entire process is idempotent, so you can treat the cluster as cattle: tear it down and recreate it from Git at any time.
+
+> **Tip:** BYOC pairs well with multi-region fail-over. You can deploy a second BYOC data plane in another region and let Xata orchestrate asynchronous replication.
 
 ## Getting Started
 

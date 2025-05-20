@@ -1,7 +1,7 @@
 {
   "routes": [
     {
-      "title": "Getting Started",
+      "title": "Getting started",
       "href": "/getting-started",
       "file": "docs/getting-started.mdx"
     },
@@ -11,27 +11,22 @@
       "file": "docs/architecture.mdx"
     },
     {
-      "title": "Core Concepts",
+      "title": "Core concepts",
       "href": "/core-concepts",
       "file": "docs/core-concepts/core-concepts.mdx",
       "items": [
         {
-          "title": "Instant Branching",
+          "title": "Instant branching",
           "href": "/core-concepts/branching",
           "file": "docs/core-concepts/branching.mdx"
         },
         {
-          "title": "Staging Replicas",
-          "href": "/core-concepts/staging",
-          "file": "docs/core-concepts/staging.mdx"
-        },
-        {
-          "title": "Data Anonymization",
+          "title": "Data anonymization",
           "href": "/core-concepts/anonymization",
           "file": "docs/core-concepts/anonymization.mdx"
         },
         {
-          "title": "Schema Changes",
+          "title": "Schema changes",
           "href": "/core-concepts/schema-changes",
           "file": "docs/core-concepts/schema-changes.mdx"
         },
@@ -70,7 +65,7 @@
       "file": "docs/tutorials/tutorials.mdx",
       "items": [
         {
-          "title": "Developer Workflow",
+          "title": "Developer workflow",
           "href": "/tutorials/developer-workflow",
           "file": "docs/tutorials/developer-workflow.mdx"
         },

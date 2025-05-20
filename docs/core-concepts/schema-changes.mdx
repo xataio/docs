@@ -3,28 +3,55 @@ title: Schema Changes
 description: Zero-downtime schema migrations with automatic rollback support
 ---
 
-Xata's schema migration system enables zero-downtime database changes with automatic rollback support, powered by the open-source pgroll project.
+Xata's schema migration system enables zero-downtime database changes with automatic rollback support, powered by the open-source [**pgroll**](https://github.com/xataio/pgroll) project. Instead of locking tables or waiting for long-running `ALTER TABLE` commands to finish, [pgroll](https://github.com/xataio/pgroll) creates a *new* schema version next to the live one and moves traffic over when everything is ready.
 
-## Implementation
+## How online migrations work
 
-### Migration Architecture
+When you run `xata roll migrate`, [pgroll](https://github.com/xataio/pgroll) first generates a migration plan that can always be reversed. The plan creates a *shadow schema*—for example `v2`—that contains the target structure. Triggers and logical decoding keep the data between the two versions consistent while the migration is in progress. As soon as the shadow schema has caught up, [pgroll](https://github.com/xataio/pgroll) performs an atomic *switchover* by updating a search-path alias. Because the alias switch is a metadata operation, it takes microseconds and never blocks reads or writes.
 
-The system uses a dual-schema approach:
+If something goes wrong—constraint violation, performance regression, unexpected app error—you can issue `xata roll rollback` and [pgroll](https://github.com/xataio/pgroll) flips the alias back to the original schema. No data is lost, and the cut-over is again instantaneous.
 
-1. **Version Tracking**: Maintains multiple schema versions
-2. **Parallel Execution**: Runs old and new schemas simultaneously
-3. **Data Synchronization**: Keeps data consistent across versions
-4. **Rollback Support**: Automatic reversion if issues occur
+### Behind the scenes
 
-### Migration Process
+1. **Version tracking** – A dedicated table stores the current schema version and the planned next version.
+2. **Dual execution** – During the catch-up phase both versions accept writes; triggers forward changes to keep them in sync.
+3. **Progress monitoring** – [pgroll](https://github.com/xataio/pgroll) streams progress metrics so you can observe long-running back-fills.
+4. **Automatic cleanup** – After a successful switchover the old version is kept for a configurable grace period and then dropped.
 
-Each migration follows these steps:
+## Operational benefits
 
-1. **Schema Creation**: Create new version alongside existing
-2. **Data Sync**: Copy and transform data to new schema
-3. **Validation**: Verify data integrity and constraints
-4. **Switchover**: Atomic transition to new schema
-5. **Cleanup**: Remove old schema version
+* **No query interruption** – Clients continue to read and write while the migration runs in the background.
+* **No table locks** – Large `ADD COLUMN` or `ALTER TYPE` operations no longer freeze traffic.
+* **Safe experimentation** – Because every plan is reversible you can abort at any point without risking data divergence.
+
+## Typical workflow
+
+```bash
+# Initialise pgroll once per database
+gxata roll init
+
+# Generate a new migration skeleton
+xata roll create add_user_status
+
+# Edit `migrations/add_user_status.sql` (DDL only)
+
+# Test locally against a branch
+xata branch create schema-test --from main
+xata roll migrate --branch schema-test
+
+# Apply to staging / production
+xata roll migrate  # runs against current branch (main)
+```
+
+In a CI pipeline you would usually call `xata roll migrate --non-interactive` during the *deploy* phase and `xata roll status` to wait until the catch-up is complete before flipping traffic.
+
+## Best practices
+
+* Keep individual migrations small; several tiny steps are safer than one large one.
+* Avoid back-filling huge columns inside the migration; use incremental jobs where possible.
+* Clean up old schema versions to prevent catalog bloat.
+
+For a GitHub Actions reference see the [check merge readiness workflow](/github-actions/check) that blocks a pull-request until all pending migrations have completed.
 
 ## Features
 
@@ -42,74 +69,47 @@ Each migration follows these steps:
 - **Version Control**: Tracks all schema changes
 - **Audit Trail**: Logs all migration operations
 
-## Migration Types
+## Supported operations
 
-### Column Operations
+Xata migrations, powered by pgroll, support a wide range of schema evolution tasks. Here are the currently supported operations (see the [pgroll docs](https://pgroll.com/docs/latest/operations/) for the latest details):
 
-```sql
--- Add column with default
-ALTER TABLE users ADD COLUMN status text DEFAULT 'active';
+- [Add column](https://pgroll.com/docs/latest/operations/add_column)
+- [Drop column](https://pgroll.com/docs/latest/operations/drop_column)
+- [Rename column](https://pgroll.com/docs/latest/operations/rename_column)
+- [Alter column type](https://pgroll.com/docs/latest/operations/alter_column_type)
+- [Set column default](https://pgroll.com/docs/latest/operations/set_column_default)
+- [Drop column default](https://pgroll.com/docs/latest/operations/drop_column_default)
+- [Set column not null](https://pgroll.com/docs/latest/operations/set_column_not_null)
+- [Drop column not null](https://pgroll.com/docs/latest/operations/drop_column_not_null)
+- [Add table](https://pgroll.com/docs/latest/operations/add_table)
+- [Drop table](https://pgroll.com/docs/latest/operations/drop_table)
+- [Rename table](https://pgroll.com/docs/latest/operations/rename_table)
+- [Add index](https://pgroll.com/docs/latest/operations/add_index)
+- [Drop index](https://pgroll.com/docs/latest/operations/drop_index)
+- [Add constraint](https://pgroll.com/docs/latest/operations/add_constraint)
+- [Drop constraint](https://pgroll.com/docs/latest/operations/drop_constraint)
+- [Add primary key](https://pgroll.com/docs/latest/operations/add_primary_key)
+- [Drop primary key](https://pgroll.com/docs/latest/operations/drop_primary_key)
+- [Add unique constraint](https://pgroll.com/docs/latest/operations/add_unique_constraint)
+- [Drop unique constraint](https://pgroll.com/docs/latest/operations/drop_unique_constraint)
+- [Add foreign key](https://pgroll.com/docs/latest/operations/add_foreign_key)
+- [Drop foreign key](https://pgroll.com/docs/latest/operations/drop_foreign_key)
+- [Add check constraint](https://pgroll.com/docs/latest/operations/add_check_constraint)
+- [Drop check constraint](https://pgroll.com/docs/latest/operations/drop_check_constraint)
+- [Add sequence](https://pgroll.com/docs/latest/operations/add_sequence)
+- [Drop sequence](https://pgroll.com/docs/latest/operations/drop_sequence)
+- [Alter sequence](https://pgroll.com/docs/latest/operations/alter_sequence)
+- [Add view](https://pgroll.com/docs/latest/operations/add_view)
+- [Drop view](https://pgroll.com/docs/latest/operations/drop_view)
+- [Rename view](https://pgroll.com/docs/latest/operations/rename_view)
+- [Add trigger](https://pgroll.com/docs/latest/operations/add_trigger)
+- [Drop trigger](https://pgroll.com/docs/latest/operations/drop_trigger)
+- [Add function](https://pgroll.com/docs/latest/operations/add_function)
+- [Drop function](https://pgroll.com/docs/latest/operations/drop_function)
+- [Rename function](https://pgroll.com/docs/latest/operations/rename_function)
+- [Alter function](https://pgroll.com/docs/latest/operations/alter_function)
+- [Add schema](https://pgroll.com/docs/latest/operations/add_schema)
+- [Drop schema](https://pgroll.com/docs/latest/operations/drop_schema)
+- [Rename schema](https://pgroll.com/docs/latest/operations/rename_schema)
 
--- Rename column
-ALTER TABLE users RENAME COLUMN old_name TO new_name;
-
--- Change column type
-ALTER TABLE users ALTER COLUMN age TYPE integer;
-```
-
-### Table Operations
-
-```sql
--- Create new table
-CREATE TABLE new_table (LIKE old_table);
-
--- Drop table
-DROP TABLE old_table;
-
--- Rename table
-ALTER TABLE old_table RENAME TO new_table;
-```
-
-## Integration
-
-### CLI Usage
-
-```bash
-# Create migration
-xata roll create add_user_status
-
-# Apply migration
-xata roll apply
-
-# Rollback migration
-xata roll revert
-```
-
-### CI/CD Integration
-
-```yaml
-steps:
-  - name: Apply Migration
-    run: xata roll apply
-  - name: Verify Migration
-    run: xata roll verify
-```
-
-## Getting Started
-
-1. Initialize roll configuration:
-```bash
-xata roll init
-```
-
-2. Create your first migration:
-```bash
-xata roll create my_first_migration
-```
-
-3. Apply the migration:
-```bash
-xata roll apply
-```
-
-[Learn more about roll commands](/cli/roll) 
+For the full syntax, advanced options, and the latest supported operations, see the [pgroll documentation](https://pgroll.com/docs/latest/) and the [CLI reference for roll commands](/cli/roll).
