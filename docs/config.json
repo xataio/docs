@@ -87,59 +87,59 @@
       "file": "docs/cli/cli.mdx",
       "items": [
         {
-          "title": "Auth",
+          "title": "auth",
           "href": "/cli/auth",
           "file": "docs/cli/auth.mdx"
         },
         {
-          "title": "Project",
-          "href": "/cli/project",
-          "file": "docs/cli/project.mdx"
-        },
-        {
-          "title": "Organization",
-          "href": "/cli/organization",
-          "file": "docs/cli/organization.mdx"
-        },
-        {
-          "title": "Branch",
+          "title": "branch",
           "href": "/cli/branch",
           "file": "docs/cli/branch.mdx"
         },
         {
-          "title": "Roll",
-          "href": "/cli/roll",
-          "file": "docs/cli/roll.mdx"
-        },
-        {
-          "title": "Clone",
+          "title": "clone",
           "href": "/cli/clone",
           "file": "docs/cli/clone.mdx"
         },
         {
-          "title": "Completions",
+          "title": "completions",
           "href": "/cli/completions",
           "file": "docs/cli/completions.mdx"
         },
         {
-          "title": "Init",
+          "title": "init",
           "href": "/cli/init",
           "file": "docs/cli/init.mdx"
         },
         {
-          "title": "Status",
+          "title": "organization",
+          "href": "/cli/organization",
+          "file": "docs/cli/organization.mdx"
+        },
+        {
+          "title": "project",
+          "href": "/cli/project",
+          "file": "docs/cli/project.mdx"
+        },
+        {
+          "title": "roll",
+          "href": "/cli/roll",
+          "file": "docs/cli/roll.mdx"
+        },
+        {
+          "title": "status",
           "href": "/cli/status",
           "file": "docs/cli/status.mdx"
         },
         {
-          "title": "Version",
-          "href": "/cli/version",
-          "file": "docs/cli/version.mdx"
-        },
-        {
-          "title": "Upgrade",
+          "title": "upgrade",
           "href": "/cli/upgrade",
           "file": "docs/cli/upgrade.mdx"
+        },
+        {
+          "title": "version",
+          "href": "/cli/version",
+          "file": "docs/cli/version.mdx"
         }
       ]
     },
