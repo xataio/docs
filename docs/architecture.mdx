@@ -39,7 +39,7 @@ From a total-cost-of-ownership perspective, the combination of thin-provisioned 
 
 ### 3. Copy-on-write branching
 
-![Copy-on-write branch (no writes yet)](/assets/images/copy-on-write-branching-step1.png)
+![Copy-on-write branch (no writes yet)](/assets/images/copy-on-write-branching-1.png)
 
 Instant branching in Xata is implemented at the storage layer itself. When you create a new branch the platform simply clones the metadata index that maps logical blocks to their physical location; no data is copied, so the operation finishes in milliseconds whether the database is megabytes or terabytes in size.  
 As soon as either the parent or the child branch writes to a page, the storage layer allocates a fresh block for the modified data, leaving the original block untouched. The two branches therefore share all unchanged pages and diverge only where changes occur, which keeps additional disk usage minimal and enables hundreds of simultaneous branches without exploding storage costs.  
@@ -50,7 +50,7 @@ This model is a perfect match for developer workflows: feature branches usually 
 
 Copy-on-write also underpins the **merge-back** story. Because each modified chunk is tracked precisely, tools such as [**pgroll**](https://github.com/xataio/pgroll) can compare the branch with its parent, compute an idempotent migration plan, and apply it to production with zero downtime. Combined with [**pgstream**](https://github.com/xataio/pgstream) for continuous, masked replication, the result is a feedback loop where developers experiment freely and ship schema changes safely.
 
-![Copy-on-write branch (chunks 3 and 6 duplicated)](/assets/images/copy-on-write-branching-step2.png)
+![Copy-on-write branch (chunks 3 and 6 duplicated)](/assets/images/copy-on-write-branching-2.png)
 
 ## 4. Compute layer – Kubernetes & CloudNativePG
 
@@ -62,7 +62,7 @@ Running vanilla Postgres means you retain 100 % extension compatibility—if it 
 The storage and compute layers come together in a developer experience powered by two open-source projects from Xata. [**pgstream**](https://github.com/xataio/pgstream) taps into the logical replication stream, applies masking transforms on the fly and keeps an always-fresh, anonymised replica of production data. [**pgroll**](https://github.com/xataio/pgroll) builds on top of that replica to generate reversible, zero-downtime migration plans.  
 In practice a developer calls `xata clone` to obtain an anonymised copy of production, uses `xata branch create` to spin up an isolated branch, and later runs `xata roll migrate` (or `xata roll rollback`) to move the validated schema changes into production without downtime.
 
-## 6. Bring your own cloud (BYOC)
+## 6. Bring Your Own Cloud (BYOC)
 
 ![BYOC control plane and data plane](/assets/images/byoc-architecture.png)
 

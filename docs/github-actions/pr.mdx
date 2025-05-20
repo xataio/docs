@@ -35,131 +35,6 @@ permissions:
   packages: write
   pages: write
   pull-requests: write
-
-jobs:
-  xata-dev-branch:
-    name: Xata Dev Branch
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Find Previous Comment
-        id: find-comment
-        uses: peter-evans/find-comment@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ github.event.pull_request.number }}
-          comment-author: "github-actions[bot]"
-          body-includes: "Xata Dev Branch"
-
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 10
-
-      - name: Install Xata CLI
-        run: |
-          curl -fsSL https://xata.io/install.sh | bash
-          echo "/home/runner/.config/xata/bin" >> $GITHUB_PATH
-
-      - name: Check Xata Status
-        run: |
-          xata status
-          xata roll status
-          xata branch view
-
-      - name: Check Xata main branch pgroll status
-        id: xata-main-branch-roll-status
-        run: |
-          echo XATA_MAIN_BRANCH_ROLL_STATUS=`xata roll status | jq -r '.status'` >> $GITHUB_OUTPUT
-
-      - name: Create or Update Comment
-        id: create_comment
-        uses: peter-evans/create-or-update-comment@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          issue-number: ${{ github.event.pull_request.number }}
-          edit-mode: replace
-          body: |
-            ### Xata Dev Branch
-
-            Creating Xata Dev Branch for commit: ${{ github.sha }} / ${{ github.head_ref }}_${{ github.event.pull_request.number }}
-            ${{ steps.xata-main-branch-roll-status.outputs.XATA_MAIN_BRANCH_ROLL_STATUS == 'In progress' && 'Warning: A migration is currently running on the main branch. Please wait for it to complete before merging this PR.' || '' }}
-
-            *Please wait for the comment to be updated with branch details.*
-
-      - name: Delete Any Existing Xata Dev Branch
-        run: xata branch delete ${{ github.head_ref }}_${{ github.event.pull_request.number }} --yes
-        continue-on-error: true
-
-      - name: Create Xata Dev Branch
-        run: xata branch create --name ${{ github.head_ref }}_${{ github.event.pull_request.number }}
-
-      - name: Checkout Xata Dev Branch
-        run: |
-          echo XATA_BRANCHID=`xata branch checkout ${{ github.head_ref }}_${{ github.event.pull_request.number }} --json | jq -r '.id'` >> $GITHUB_ENV
-
-      - name: Check Xata Branch Status
-        run: xata branch view
-
-      - name: Wait for Branch to be healthy
-        run: xata branch wait-ready ${{ github.head_ref }}_${{ github.event.pull_request.number }}
-
-      - name: Complete Any Pending Migrations (inherited from main)
-        if: ${{ steps.xata-main-branch-roll-status.outputs.XATA_MAIN_BRANCH_ROLL_STATUS == 'In progress' }}
-        run: |
-          xata roll complete
-
-      - name: Apply Xata Roll Migrations
-        run: xata roll migrate
-
-      - name: Get Latest Schema
-        id: xata-roll-get-latest-schema
-        run: |
-          echo LATEST_SCHEMA=`xata roll latest --with-schema=true` >> $GITHUB_OUTPUT
-
-      - name: Setup New Preview Environment
-        run: |
-          echo DATABASE_URL=`xata branch url` >> $GITHUB_ENV
-          echo SEARCH_PATH=${{ steps.xata-roll-get-latest-schema.outputs.LATEST_SCHEMA }} >> $GITHUB_ENV
-
-      - name: Print Environment Variables
-        run: |
-          echo DATABASE_URL=${{ env.DATABASE_URL }}
-          echo SEARCH_PATH=${{ env.SEARCH_PATH }}
-
-      - name: Update Comment with Branch Details
-        uses: peter-evans/create-or-update-comment@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          issue-number: ${{ github.event.pull_request.number }}
-          edit-mode: replace
-          body: |
-            ### Xata Dev Branch
-
-            Created Xata Dev Branch for commit: ${{ github.sha }} / ${{ github.head_ref }}_${{ github.event.pull_request.number }}
-            ${{ steps.xata-main-branch-roll-status.outputs.XATA_MAIN_BRANCH_ROLL_STATUS == 'In progress' && 'Warning: A migration is currently running on the main branch. Please wait for it to complete before merging this PR.' || '' }}
-
-            Set the following schemas as the search_path:
-            ```
-            ${{ steps.xata-roll-get-latest-schema.outputs.LATEST_SCHEMA }}
-            ```
-
-            You can drop into the psql shell for this branch with the following command:
-            ```
-            xata branch checkout ${{ github.head_ref }}_${{ github.event.pull_request.number }}
-            psql `xata branch url`
-            ```
-
-            | Xata Branch URL |
-            |---|
-            | [Branch Link](https://console.xata.io/organizations/123xyz/projects/prj_i3qsq56h3p3d3crnk7htnc75d0/branches/s99l2grl6d3nr1cqcbaaa5piic) |
 ```
 
 ## Authentication and Environment Variables
@@ -177,6 +52,7 @@ The workflow requires several environment variables to be set:
 ## Required Permissions
 
 The workflow requires the following GitHub permissions:
+
 ```yaml
 permissions:
   id-token: write
@@ -249,7 +125,7 @@ These steps install the required dependencies:
 
 These steps verify the current state of your Xata environment and check for any pending migrations.
 
-### 5. Create Initial PR Comment
+### 5. Create or Update Comment
 
 ```yaml
 - name: Create or Update Comment
@@ -269,9 +145,7 @@ These steps verify the current state of your Xata environment and check for any 
       *Please wait for the comment to be updated with branch details.*
 ```
 
-This step creates or updates a comment on the PR to indicate that the workflow is running.
-
-### 6. Manage Dev Branch
+### 6. Branch Management
 
 ```yaml
 - name: Delete Any Existing Xata Dev Branch
@@ -286,18 +160,10 @@ This step creates or updates a comment on the PR to indicate that the workflow i
     echo XATA_BRANCHID=`xata branch checkout ${{ github.head_ref }}_${{ github.event.pull_request.number }} --json | jq -r '.id'` >> $GITHUB_ENV
 ```
 
-These steps:
-- Delete any existing branch for this PR
-- Create a new branch
-- Checkout the new branch
-
-### 7. Handle Migrations
+### 7. Migration Handling
 
 ```yaml
-- name: Wait for Branch to be healthy
-  run: xata branch wait-ready ${{ github.head_ref }}_${{ github.event.pull_request.number }}
-
-- name: Complete Any Pending Migrations (inherited from main)
+- name: Complete Any Pending Migrations
   if: ${{ steps.xata-main-branch-roll-status.outputs.XATA_MAIN_BRANCH_ROLL_STATUS == 'In progress' }}
   run: |
     xata roll complete
@@ -306,12 +172,7 @@ These steps:
   run: xata roll migrate
 ```
 
-These steps:
-- Wait for the branch to be ready
-- Complete any pending migrations from main
-- Apply any new migrations
-
-### 8. Setup Preview Environment
+### 8. Environment Setup
 
 ```yaml
 - name: Get Latest Schema
@@ -325,11 +186,7 @@ These steps:
     echo SEARCH_PATH=${{ steps.xata-roll-get-latest-schema.outputs.LATEST_SCHEMA }} >> $GITHUB_ENV
 ```
 
-These steps:
-- Get the latest schema version
-- Set up environment variables for the preview environment
-
-### 9. Update PR Comment
+### 9. Final Comment Update
 
 ```yaml
 - name: Update Comment with Branch Details
@@ -360,12 +217,6 @@ These steps:
       |---|
       | [Branch Link](https://console.xata.io/organizations/123xyz/projects/prj_i3qsq56h3p3d3crnk7htnc75d0/branches/s99l2grl6d3nr1cqcbaaa5piic) |
 ```
-
-This step updates the PR comment with:
-- Branch creation confirmation
-- Schema search path
-- Connection instructions
-- Branch URL
 
 ## Concurrency Control
 
