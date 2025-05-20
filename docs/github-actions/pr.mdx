@@ -203,15 +203,11 @@ These steps verify the current state of your Xata environment and check for any 
       Branch name: ${{ github.head_ref }}_${{ github.event.pull_request.number }}
 
       Set the following schemas as the search_path:
-      ```
-      ${{ steps.xata-roll-get-latest-schema.outputs.LATEST_SCHEMA }}
-      ```
+          ${{ steps.xata-roll-get-latest-schema.outputs.LATEST_SCHEMA }}
 
       You can drop into the psql shell for this branch with:
-      ```
-      xata branch checkout ${{ github.head_ref }}_${{ github.event.pull_request.number }}
-      psql `xata branch url`
-      ```
+          xata branch checkout ${{ github.head_ref }}_${{ github.event.pull_request.number }}
+          psql `xata branch url`
 
       Branch URL: [View in Console](https://console.xata.io/organizations/123xyz/projects/prj_i3qsq56h3p3d3crnk7htnc75d0/branches/s99l2grl6d3nr1cqcbaaa5piic)
 ```
