@@ -1,6 +1,142 @@
 ---
-title: Tutorial – Developer workflow
+title: Developer Workflow
+description: Learn how to use Xata's branching and migration features for zero-downtime deployments
 ---
 
-TODO: 
-End to end tutorial with github actions, schema changes and staging replica for dev env
+This guide walks through a typical developer workflow using Xata's branching and migration features. We'll cover:
+
+- Setting up your development environment
+- Creating and managing branches
+- Making schema changes
+- Testing changes in isolation
+- Deploying to production
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+1. A Xata account (sign up at [console.xata.io](https://console.xata.io))
+2. The Xata CLI installed:
+   ```bash
+   curl -fsSL https://maki.tech/install.sh | bash
+   ```
+3. Authenticated with Xata:
+   ```bash
+   xata auth login
+   ```
+
+## Initial Setup
+
+1. Create a new project:
+   ```bash
+   xata init
+   ```
+
+2. Create your first branch:
+   ```bash
+   xata branch create main
+   ```
+
+3. Initialize your database schema:
+   ```bash
+   xata init
+   ```
+
+## Development Workflow
+
+### 1. Create a Feature Branch
+
+Create a new branch for your feature:
+
+```bash
+xata branch create feature/new-column
+```
+
+This creates an isolated copy of your database where you can safely make changes.
+
+### 2. Make Schema Changes
+
+Edit your schema file (e.g., `schema.json`) to add your changes. For example, adding a new column:
+
+```json
+{
+  "tables": [
+    {
+      "name": "users",
+      "columns": [
+        {
+          "name": "email",
+          "type": "string"
+        },
+        {
+          "name": "last_login",
+          "type": "datetime"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### 3. Apply Changes
+
+Apply your schema changes to the feature branch:
+
+```bash
+xata branch apply
+```
+
+This will:
+- Validate your schema changes
+- Apply the changes to your feature branch
+- Show you a preview of the changes
+
+### 4. Test Your Changes
+
+Your application can now connect to the feature branch and test the changes:
+
+```bash
+xata branch url
+```
+
+Use the URL to connect your application to the feature branch.
+
+### 5. Deploy to Production
+
+When you're ready to deploy:
+
+1. Merge your changes to main:
+   ```bash
+   xata branch merge main
+   ```
+
+2. Apply the changes to production:
+   ```bash
+   xata branch apply --branch main
+   ```
+
+The changes will be applied with zero downtime, and your application can continue running during the migration.
+
+## Best Practices
+
+1. **Always use branches** for development work
+2. **Test thoroughly** in your feature branch before merging
+3. **Review schema changes** before applying to production
+4. **Use meaningful branch names** that describe the changes
+5. **Keep branches up to date** with main to avoid conflicts
+
+## Common Commands
+
+- List branches: `xata branch list`
+- Switch branches: `xata branch switch <name>`
+- Delete branches: `xata branch delete <name>`
+- View branch status: `xata branch status`
+- Get branch URL: `xata branch url`
+
+## Next Steps
+
+- Learn about [staging environments](/core-concepts/staging)
+- Set up [GitHub Actions](/github-actions) for automation
+- Explore [data anonymization](/core-concepts/anonymization)
+- Read about [schema changes](/core-concepts/schema-changes)
+
