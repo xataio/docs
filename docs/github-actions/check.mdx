@@ -5,58 +5,46 @@ description: GitHub Actions workflow for validating main branch status and migra
 
 This workflow validates that the main branch is in a ready state for merging pull requests. It checks the migration status and ensures no pending migrations are running that could affect the merge process.
 
-## Workflow Configuration
+## Workflow configuration
 
 ```yaml
 name: Check merge readiness
 
 on:
   pull_request:
-    ignore-branches:
-      - main
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
-env:
-  FORCE_COLOR: 3
-  XATA_API_REFRESH_TOKEN: ${{ secrets.XATA_API_REFRESH_TOKEN }}
-  XATA_API_ENVIRONMENT: staging
-  XATA_ORGANIZATIONID: 123xyz
-  XATA_PROJECTID: prj_i3qsq56h3p3d3crnk7htnc75d0
-  XATA_BRANCHID: s99l2grl6d3nr1cqcbaaa5piic
-  XATA_BRANCHNAME: main
-  XATA_DATABASENAME: app
+    types: [opened, synchronize, reopened]
 
 jobs:
-  xata-dev-branch:
-    name: Xata Dev Branch
+  check:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    name: Xata dev branch
     steps:
+      - uses: actions/checkout@v3
+
       - name: Install Xata CLI
         run: |
           curl -fsSL https://xata.io/install.sh | bash
-          echo "/home/runner/.config/xata/bin" >> $GITHUB_PATH
-      - name: Check Xata Status
+
+      - name: Check Xata status
         run: |
           xata status
           xata roll status
           xata branch view
+
       - name: Check Xata main branch pgroll status
         id: xata-main-branch-roll-status
         run: |
           xata roll status | jq -r '.status'
           echo XATA_MAIN_BRANCH_ROLL_STATUS=`xata roll status | jq -r '.status'` >> $GITHUB_OUTPUT
-      - name: Complete Any Pending Migrations (inherited from main)
+
+      - name: Complete any pending migrations (inherited from main)
         if: ${{ steps.xata-main-branch-roll-status.outputs.XATA_MAIN_BRANCH_ROLL_STATUS == 'In progress' }}
         run: |
           echo "Warning: A migration is currently running on the main branch. Please wait for it to complete before merging this PR."
           exit 1
 ```
 
-## Authentication and Environment Variables
+## Authentication and environment variables
 
 The workflow requires several environment variables to be set:
 
@@ -68,7 +56,7 @@ The workflow requires several environment variables to be set:
 - `XATA_BRANCHNAME`: The name of the main branch
 - `XATA_DATABASENAME`: Your database name
 
-## Workflow Steps
+## Workflow steps
 
 ### 1. Install Xata CLI
 
@@ -76,15 +64,14 @@ The workflow requires several environment variables to be set:
 - name: Install Xata CLI
   run: |
     curl -fsSL https://xata.io/install.sh | bash
-    echo "/home/runner/.config/xata/bin" >> $GITHUB_PATH
 ```
 
 This step installs the Xata CLI using the official installer script and adds it to the GitHub Actions PATH.
 
-### 2. Check Xata Status
+### 2. Check Xata status
 
 ```yaml
-- name: Check Xata Status
+- name: Check Xata status
   run: |
     xata status
     xata roll status
@@ -93,45 +80,10 @@ This step installs the Xata CLI using the official installer script and adds it 
 
 This step performs three checks:
 - Verifies CLI and connection status
-- Checks the current migration status
-- Views branch information
+- Checks for any pending migrations
+- Views the current branch status
 
-For more details, see:
-- [status command documentation](../cli/status.mdx)
-- [roll status command documentation](../cli/roll.mdx#status)
-- [branch view command documentation](../cli/branch.mdx#view)
-
-### 3. Check Main Branch Migration Status
-
-```yaml
-- name: Check Xata main branch pgroll status
-  id: xata-main-branch-roll-status
-  run: |
-    xata roll status | jq -r '.status'
-    echo XATA_MAIN_BRANCH_ROLL_STATUS=`xata roll status | jq -r '.status'` >> $GITHUB_OUTPUT
-```
-
-This step:
-- Checks the migration status of the main branch
-- Extracts the status using `jq`
-- Stores the status in a step output variable for conditional execution
-
-### 4. Handle Pending Migrations
-
-```yaml
-- name: Complete Any Pending Migrations (inherited from main)
-  if: ${{ steps.xata-main-branch-roll-status.outputs.XATA_MAIN_BRANCH_ROLL_STATUS == 'In progress' }}
-  run: |
-    echo "Warning: A migration is currently running on the main branch. Please wait for it to complete before merging this PR."
-    exit 1
-```
-
-This step:
-- Runs only if a migration is in progress on main
-- Prevents merging by failing the workflow
-- Provides a clear warning message
-
-## Concurrency Control
+## Concurrency control
 
 The workflow uses GitHub Actions concurrency to prevent multiple runs from interfering with each other:
 
@@ -146,7 +98,7 @@ This ensures that:
 - New runs cancel any in-progress runs
 - Prevents race conditions during status checks
 
-## When to Use
+## When to use
 
 Use this workflow when you want to:
 - Ensure main branch is ready for merging
@@ -154,22 +106,22 @@ Use this workflow when you want to:
 - Validate branch and migration status
 - Maintain database consistency
 
-## Best Practices
+## Best practices
 
-1. **Set Appropriate Timeout**
+1. **Set appropriate timeout**
    - The workflow has a 10-minute timeout
    - Adjust based on your typical migration duration
 
-2. **Use Environment Variables**
+2. **Use environment variables**
    - Store sensitive information in GitHub secrets
    - Use environment variables for configuration
 
-3. **Handle Migration States**
+3. **Handle migration states**
    - Check for in-progress migrations
    - Prevent merging during active migrations
    - Provide clear error messages
 
-## Related Workflows
+## Related workflows
 
-- [Clone Workflow](./clone.mdx) - For cloning databases in CI/CD
-- [PR Workflow](./pr.mdx) - For managing pull request environments 
+- [Clone workflow](./clone.mdx) - For cloning databases in CI/CD
+- [PR workflow](./pr.mdx) - For managing pull request environments 

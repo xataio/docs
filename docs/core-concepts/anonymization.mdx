@@ -1,99 +1,96 @@
 ---
-title: Data Anonymization
+title: Data anonymization
 description: Secure data handling with automatic PII detection and anonymization for development environments
 ---
 
 Xata's data anonymization system automatically detects and masks sensitive information during database replication, enabling secure development and testing environments.
 
-## Implementation
-
-### PII Detection
+## PII detection
 
 The system uses a combination of techniques to identify sensitive data:
 
-1. **Column Name Analysis**: Detects common PII field names
-2. **Pattern Matching**: Identifies data formats (emails, phone numbers, etc.)
-3. **Content Analysis**: Examines data patterns and distributions
-4. **Custom Rules**: Supports user-defined detection rules
+1. **Column name analysis**: Detects common PII field names
+2. **Pattern matching**: Identifies data formats (emails, phone numbers, etc.)
+3. **Content analysis**: Examines data patterns and distributions
+4. **Custom rules**: Supports user-defined detection rules
 
-### Anonymization Methods
+## Anonymization methods
 
 Multiple anonymization strategies are available:
 
-1. **Consistent Hashing**: Same input produces same output
-2. **Format Preservation**: Maintains data structure and format
-3. **Type Safety**: Preserves data types and constraints
-4. **Referential Integrity**: Maintains relationships between tables
+1. **Consistent hashing**: Same input produces same output
+2. **Format preservation**: Maintains data structure and format
+3. **Type safety**: Preserves data types and constraints
+4. **Referential integrity**: Maintains relationships between tables
 
-## Configuration
-
-### Rule Definition
+## Rule definition
 
 Configure anonymization rules in your project:
 
 ```json
 {
-  "users": {
-    "email": "email",
-    "phone": "phone",
-    "address": "address",
-    "ssn": "ssn"
-  },
-  "orders": {
-    "customer_id": "preserve",
-    "payment_info": "mask"
+  "rules": {
+    "email": {
+      "type": "email",
+      "preserve_domain": true
+    },
+    "phone": {
+      "type": "phone",
+      "preserve_country": true
+    }
   }
 }
 ```
 
-### Custom Transformers
+## Custom transformers
 
 Create custom anonymization functions:
 
 ```sql
-CREATE FUNCTION anonymize_custom(value text) 
+CREATE FUNCTION anonymize_custom(value text)
 RETURNS text AS $$
 BEGIN
   -- Custom anonymization logic
-  RETURN 'ANONYMIZED_' || md5(value);
+  RETURN value;
 END;
 $$ LANGUAGE plpgsql;
 ```
 
-## Integration Points
+## Integration points
 
-### Replication Pipeline
+### Replication pipeline
 
-1. **Source Connection**: Connect to production database
-2. **Data Extraction**: Read tables and columns
+1. **Source connection**: Connect to production database
+2. **Data extraction**: Read tables and columns
 3. **Anonymization**: Apply rules during transfer
-4. **Target Loading**: Write to staging database
+4. **Target loading**: Write to staging database
 
-### CI/CD Integration
+### CI/CD integration
 
 ```yaml
-steps:
-  - name: Create Anonymized Branch
-    run: xata branch create --anonymize
-  - name: Run Tests
-    run: npm test
+- name: Create anonymized branch
+  run: xata branch create --anonymize
+- name: Run tests
+  run: npm test
 ```
 
-## Security Features
+## Security features
 
-- **Deterministic Anonymization**: Same input always produces same output
-- **Format Preservation**: Maintains data structure for testing
-- **Relationship Preservation**: Foreign keys remain valid
-- **Type Safety**: No data type violations
+- **Deterministic anonymization**: Same input always produces same output
+- **Format preservation**: Maintains data structure for testing
+- **Relationship preservation**: Foreign keys remain valid
+- **Type safety**: No data type violations
 
-## Getting Started
+## Getting started
 
 1. Configure detection rules:
+
 ```bash
 xata config set detection.rules '{"email": "email", "phone": "phone"}'
 ```
 
 2. Set up anonymization:
+
 ```bash
 xata config set anonymization.enabled true
 ```

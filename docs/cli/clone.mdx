@@ -1,42 +1,22 @@
 ---
-title: Database Clone Commands
-description: Commands for cloning PostgreSQL databases with anonymization
+title: Clone Command
+description: Command for cloning Xata databases
 ---
 
-The `clone` commands help you create copies of PostgreSQL databases with data anonymization capabilities.
+The `clone` command helps you create a copy of your Xata database.
 
-## start {#start}
+## clone
 
-Start cloning a PostgreSQL database.
-
-```bash
-xata clone start --source-url <url>
-```
-
-Arguments:
-- `--source-url` - The connection URL of the source PostgreSQL database
-
-This command initiates the cloning process, which:
-- Creates a snapshot of the source database
-- Applies configured data transformations
-- Loads the anonymized data into your Xata database
-
-## config {#config}
-
-Configure transforms for the clone command.
+Create a clone of your Xata database.
 
 ```bash
-xata clone config --source-url <url>
+xata clone
 ```
 
-Arguments:
-- `--source-url` - The connection URL of the source PostgreSQL database
-
-This command helps you set up data transformation rules for the cloning process, including:
-- Column anonymization rules
-- Data type mappings
-- Table selection
-- Row filtering
+This command:
+- Creates a new database branch
+- Copies all data from the source branch
+- Sets up the new branch for development
 
 ## Global Flags
 

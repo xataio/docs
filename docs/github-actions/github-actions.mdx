@@ -5,9 +5,9 @@ description: Reference documentation for Xata GitHub Actions workflows
 
 Xata provides several GitHub Actions workflows to help you automate database operations in your CI/CD pipeline. These workflows help you manage database branches, migrations, and deployments in a safe and automated way.
 
-## Available Workflows
+## Available workflows
 
-### [Ensure Main is Ready for Merge](./github-actions/check.mdx)
+### [Ensure main is ready for merge](./github-actions/check.mdx)
 
 This workflow validates that the main branch is in a ready state for merging pull requests. It checks the migration status and ensures no pending migrations are running that could affect the merge process.
 
@@ -17,7 +17,7 @@ Key features:
 - Prevents merging during active migrations
 - Provides clear status messages
 
-### [Create Xata Dev Branch](./github-actions/pr.mdx)
+### [Create Xata dev branch](./github-actions/pr.mdx)
 
 This workflow creates a dedicated Xata branch for each pull request, allowing you to test database changes in isolation. It also manages PR comments to provide branch information and status updates.
 
@@ -27,7 +27,7 @@ Key features:
 - Handles migrations automatically
 - Provides connection details in PR comments
 
-### [Xata Clone Workflow](./github-actions/clone.mdx)
+### [Xata clone workflow](./github-actions/clone.mdx)
 
 This workflow helps you clone your database on a schedule or manually trigger it. It's useful for creating regular backups or setting up test environments.
 
@@ -37,7 +37,7 @@ Key features:
 - Backup management
 - Test environment setup
 
-## Common Features
+## Common features
 
 All workflows share some common features:
 
@@ -46,10 +46,11 @@ All workflows share some common features:
 Each workflow requires a Xata API refresh token, which should be stored as a GitHub secret:
 
 ```yaml
-XATA_API_REFRESH_TOKEN: ${{ secrets.XATA_API_REFRESH_TOKEN }}
+env:
+  XATA_API_REFRESH_TOKEN: ${{ secrets.XATA_API_REFRESH_TOKEN }}
 ```
 
-### Environment Variables
+### Environment variables
 
 Common environment variables used across workflows:
 

@@ -5,66 +5,45 @@ description: GitHub Actions workflow for cloning databases on a schedule or on-d
 
 This workflow helps you clone your database on a schedule or manually trigger it. It's useful for creating regular backups or setting up test environments.
 
-## Workflow Configuration
+## Workflow configuration
 
 ```yaml
 name: Xata clone (daily, on-demand)
 
 on:
   schedule:
-    - cron: "0 8 * * *"
-  workflow_dispatch:
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
-env:
-  FORCE_COLOR: 3
-  XATA_API_REFRESH_TOKEN: ${{ secrets.XATA_API_REFRESH_TOKEN }}
-  XATA_API_ENVIRONMENT: staging
-  XATA_ORGANIZATIONID: 123xyz
-  XATA_PROJECTID: prj_i3qsq56h3p3d3crnk7htnc75d0
-  XATA_BRANCHID: s99l2grl6d3nr1cqcbaaa5piic
-  XATA_BRANCHNAME: main
-  XATA_DATABASENAME: app
-  XATA_CLI_SOURCE_POSTGRES_URL: ${{ secrets.SOURCE_DATABASE_URL }}
+    - cron: '0 0 * * *'  # Run daily at midnight
+  workflow_dispatch:      # Allow manual triggers
 
 jobs:
-  xata-dev-branch:
-    name: Xata Dev Branch
+  clone:
+    name: Xata dev branch
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          persist-credentials: false
       - name: Install Xata CLI
         run: |
           curl -fsSL https://xata.io/install.sh | bash
-          echo "/home/runner/.config/xata/bin" >> $GITHUB_PATH
 
-      - name: Check Xata Status
+      - name: Check Xata status
         run: |
           xata status
           xata branch view
 
-      - name: Checkout Xata Dev Branch
+      - name: Checkout Xata dev branch
         run: |
           echo XATA_BRANCHID=`xata branch checkout clone_demo --json | jq -r '.id'` >> $GITHUB_ENV
 
-      - name: Check Xata Status
+      - name: Check Xata status
         run: |
           xata status
           xata branch view
 
-      - name: Xata Clone
+      - name: Xata clone
         run: |
           xata clone start --source-url ${{ env.XATA_CLI_SOURCE_POSTGRES_URL }}
 ```
 
-## Authentication and Environment Variables
+## Authentication and environment variables
 
 The workflow requires several environment variables to be set:
 
@@ -77,15 +56,14 @@ The workflow requires several environment variables to be set:
 - `XATA_DATABASENAME`: Your database name
 - `XATA_CLI_SOURCE_POSTGRES_URL`: The source PostgreSQL database URL (set as a GitHub secret)
 
-## Workflow Steps
+## Workflow steps
 
-### 1. Checkout Code
+### 1. Checkout code
 
 ```yaml
-- uses: actions/checkout@v4
+- uses: actions/checkout@v3
   with:
     fetch-depth: 0
-    persist-credentials: false
 ```
 
 This step checks out your repository code with full history and proper credentials configuration.
@@ -96,15 +74,14 @@ This step checks out your repository code with full history and proper credentia
 - name: Install Xata CLI
   run: |
     curl -fsSL https://xata.io/install.sh | bash
-    echo "/home/runner/.config/xata/bin" >> $GITHUB_PATH
 ```
 
 This step installs the Xata CLI using the official installer script and adds it to the GitHub Actions PATH.
 
-### 3. Check Xata Status
+### 3. Check Xata status
 
 ```yaml
-- name: Check Xata Status
+- name: Check Xata status
   run: |
     xata status
     xata branch view
@@ -116,10 +93,10 @@ For more details, see:
 - [status command documentation](../cli/status.mdx)
 - [branch view command documentation](../cli/branch.mdx#view)
 
-### 4. Checkout Clone Branch
+### 4. Checkout clone branch
 
 ```yaml
-- name: Checkout Xata Dev Branch
+- name: Checkout Xata dev branch
   run: |
     echo XATA_BRANCHID=`xata branch checkout clone_demo --json | jq -r '.id'` >> $GITHUB_ENV
 ```
@@ -129,10 +106,10 @@ This step:
 - Extracts the branch ID using `jq`
 - Stores it in an environment variable
 
-### 5. Start Clone Process
+### 5. Start clone process
 
 ```yaml
-- name: Xata Clone
+- name: Xata clone
   run: |
     xata clone start --source-url ${{ env.XATA_CLI_SOURCE_POSTGRES_URL }}
 ```
@@ -141,24 +118,24 @@ This step initiates the cloning process from your source PostgreSQL database.
 
 For more details, see the [clone start command documentation](../cli/clone.mdx#start).
 
-## Triggering the Workflow
+## Triggering the workflow
 
 The workflow can be triggered in two ways:
 
-1. **Scheduled Run**
+1. **Scheduled run**
    ```yaml
    schedule:
      - cron: "0 8 * * *"
    ```
    Runs daily at 8:00 AM UTC
 
-2. **Manual Trigger**
+2. **Manual trigger**
    ```yaml
    workflow_dispatch:
    ```
    Can be triggered manually from the GitHub Actions UI
 
-## Concurrency Control
+## Concurrency control
 
 The workflow uses GitHub Actions concurrency to prevent multiple runs from interfering with each other:
 
@@ -173,7 +150,7 @@ This ensures that:
 - New runs cancel any in-progress runs
 - Prevents race conditions during cloning
 
-## When to Use
+## When to use
 
 Use this workflow when you want to:
 - Create regular database backups
@@ -181,21 +158,21 @@ Use this workflow when you want to:
 - Clone production data for development
 - Maintain a separate clone of your database
 
-## Best Practices
+## Best practices
 
-1. **Set Appropriate Timeout**
+1. **Set appropriate timeout**
    - The workflow has a 10-minute timeout
    - Adjust based on your database size and cloning duration
 
-2. **Use Environment Variables**
+2. **Use environment variables**
    - Store sensitive information in GitHub secrets
    - Use environment variables for configuration
 
-3. **Schedule Regular Clones**
+3. **Schedule regular clones**
    - Set up a schedule that matches your backup needs
    - Consider your database size and update frequency
 
-## Related Workflows
+## Related workflows
 
-- [Check Workflow](./check.mdx) - For validating main branch status
-- [PR Workflow](./pr.mdx) - For managing pull request environments 
+- [Check workflow](./check.mdx) - For validating main branch status
+- [PR workflow](./pr.mdx) - For managing pull request environments 

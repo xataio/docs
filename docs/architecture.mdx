@@ -3,29 +3,23 @@ title: Architecture
 description: Deep technical dive into Xata's PostgreSQL platform architecture
 ---
 
-# Overview
-
 Xata delivers "Postgres at scale" by combining a globally hosted control-plane with a data-plane that can be either hosted by Xata or deployed in your own cloud. The platform brings together three core building blocks:
 
-1. **A cloud-native storage layer** that separates storage from compute and enables instant Copy-on-Write (CoW) branching.
+1. **A cloud-native storage layer** that separates storage from compute and enables instant copy-on-write (CoW) branching.
 2. **Vanilla PostgreSQL on Kubernetes** orchestrated by **CloudNativePG (CNPG)** for high availability, rolling upgrades, and self-healing.
 3. **A developer-centric workflow** powered by open-source projects **pgstream** (replication & data masking) and **pgroll** (zero-downtime schema changes).
 
----
-
-## 1. High-Level Architecture
+## 1. High-level architecture
 
 | Layer | Responsibilities | Runs in |
-| --- | --- | --- |
+|-------|------------------|---------|
 | **Control plane** | Web UI, API, auth, organizations & projects metadata | Xata cloud (multi-region) |
-| **Data plane – compute** | PostgreSQL instances, read replicas, backups, pgroll workers | Xata cloud (standard) or Customer cloud (BYOC) |
-| **Data plane – storage** | Distributed NVMe/TCP storage cluster (Simplyblock) | Xata cloud (standard) or Customer cloud (BYOC) |
+| **Data plane – compute** | PostgreSQL instances, read replicas, backups, pgroll workers | Xata cloud (standard) or customer cloud (BYOC) |
+| **Data plane – storage** | Distributed NVMe/TCP storage cluster (Simplyblock) | Xata cloud (standard) or customer cloud (BYOC) |
 
 In the standard Xata architecture, both the control plane and data plane are hosted and managed by Xata in our cloud infrastructure. This provides a fully managed experience with automatic scaling, backups, and maintenance.
 
----
-
-## 2. Storage Layer – Distributed, Bottomless, NVMe/TCP
+## 2. Storage layer – distributed, bottomless, NVMe/TCP
 
 ![Compute Kubernetes cluster and storage cluster](/assets/images/k8s-and-storage.png)
 
@@ -37,18 +31,18 @@ Xata provides a software-defined storage cluster that exposes logical NVMe volum
 * **User-space I/O via SPDK/DPDK** – bypassing the kernel reduces latency and context switches.
 * **Bottomless storage billing** – pay per-GB-month for only the bytes actually in use.
 
-### 3. Copy-on-Write Branching
+### 3. Copy-on-write branching
 
 CoW happens **inside the storage layer**. Creating a branch copies only the metadata index; data blocks are duplicated lazily on first write.
 
-![CoW branching without writes](/assets/images/copy-on-write-diagram-2.png)
+![CoW branching without writes](/assets/images/copy-on-write-branching-2.png)
 
 The branching process involves several steps:
 
-1. **Metadata Copy**: Only the metadata index is copied, which contains pointers to data blocks
-2. **Lazy Block Duplication**: Data blocks are duplicated only when modified
-3. **Write Tracking**: Modified blocks are tracked to maintain branch isolation
-4. **Block Sharing**: Unmodified blocks are shared between branches to save space
+1. **Metadata copy**: Only the metadata index is copied, which contains pointers to data blocks
+2. **Lazy block duplication**: Data blocks are duplicated only when modified
+3. **Write tracking**: Modified blocks are tracked to maintain branch isolation
+4. **Block sharing**: Unmodified blocks are shared between branches to save space
 
 Benefits:
 
@@ -57,9 +51,7 @@ Benefits:
 * Works on multi-TB databases because no full copy is required
 * Efficient storage utilization through block sharing
 
----
-
-## 4. Compute Layer – Kubernetes & CloudNativePG
+## 4. Compute layer – Kubernetes & CloudNativePG
 
 We run **unmodified PostgreSQL** inside Kubernetes pods managed by **CloudNativePG**. CNPG handles:
 
@@ -71,9 +63,9 @@ We run **unmodified PostgreSQL** inside Kubernetes pods managed by **CloudNative
 
 Because Postgres is unmodified, **all extensions work** out-of-the-box. You can request additional extensions and Xata will validate & enable them quickly.
 
-### 4.1 Developer Workflow Components
+### 4.1 Developer workflow components
 
-#### pgstream – Replication & Data Masking
+#### pgstream – Replication & data masking
 
 * Logical replication stream augmented with **in-flight masking transforms**
 * Detects and anonymizes PII/PHI based on configurable transformers
@@ -85,7 +77,7 @@ The replication process:
 3. Replicates to target database
 4. Maintains consistency through transaction boundaries
 
-#### pgroll – Zero-Downtime Schema Changes
+#### pgroll – Zero-downtime schema changes
 
 * Generates migration plans that can be **rolled forward or rolled back**
 * Uses dual-schema execution so reads/writes work during migrations
@@ -98,15 +90,13 @@ Migration workflow:
 4. Switch to new schema
 5. Clean up old schema
 
-### 4.2 CI/CD & GitHub Actions
+### 4.2 CI/CD & GitHub actions
 
-* **Ensure Main is Ready for Merge** – blocks PRs if pending migrations exist
-* **Dev Branch per PR** – automatically `xata branch create` & tear-down
-* **Nightly Clone** – scheduled `xata clone` to refresh anonymized staging data
+* **Ensure main is ready for merge** – blocks PRs if pending migrations exist
+* **Dev branch per PR** – automatically `xata branch create` & tear-down
+* **Nightly clone** – scheduled `xata clone` to refresh anonymized staging data
 
----
-
-## 5. Bring Your Own Cloud (BYOC)
+## 5. Bring your own cloud (BYOC)
 
 ![BYOC control plane and data plane](/assets/images/byoc-architecture.png)
 
@@ -122,7 +112,7 @@ Security highlights:
 
 * **No inbound ports** need to be opened
 * All data remains within your cloud account – meets strict compliance requirements
-* Leverage existing **Reserved Instances / Savings Plans** for cost reductions
+* Leverage existing **Reserved instances / Savings plans** for cost reductions
 
 ---
 

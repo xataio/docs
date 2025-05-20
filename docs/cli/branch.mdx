@@ -5,7 +5,7 @@ description: Commands for managing Xata database branches
 
 The `branch` commands help you manage your Xata database branches, including creating, switching, and managing branch configurations.
 
-## list {#list}
+## list
 
 List all branches in the current project.
 
@@ -19,7 +19,7 @@ This command displays all branches in your project, including:
 - Creation date
 - Status
 
-## describe {#describe}
+## describe
 
 Describe a branch in detail.
 
@@ -33,7 +33,7 @@ This command shows detailed information about the current branch, including:
 - Migration status
 - Connection details
 
-## create {#create}
+## create
 
 Create a new branch.
 
@@ -43,7 +43,7 @@ xata branch create
 
 This command creates a new branch from the current branch, allowing you to make isolated changes to your database schema.
 
-## delete {#delete}
+## delete
 
 Delete a branch.
 
@@ -53,7 +53,7 @@ xata branch delete
 
 This command permanently deletes the current branch and all its data. This action cannot be undone.
 
-## url {#url}
+## url
 
 Print the connection URL for a branch.
 
@@ -63,7 +63,7 @@ xata branch url
 
 This command outputs the connection string (DSN) for the current branch, which can be used to connect your application to the database.
 
-## checkout {#checkout}
+## checkout
 
 Switch to a different branch.
 
@@ -76,7 +76,7 @@ Arguments:
 
 This command switches your working context to the specified branch.
 
-## tree {#tree}
+## tree
 
 List all branches as a tree.
 
@@ -86,7 +86,7 @@ xata branch tree
 
 This command displays the branch hierarchy in a tree format, showing the relationships between branches.
 
-## get {#get}
+## get
 
 Get a field from a branch description.
 
@@ -99,7 +99,7 @@ Arguments:
 
 This command retrieves specific information about the current branch.
 
-## wait-ready {#wait-ready}
+## wait-ready
 
 Wait for a branch to be ready.
 

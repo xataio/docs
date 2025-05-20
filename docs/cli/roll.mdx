@@ -1,11 +1,11 @@
 ---
-title: Schema Migration Commands
-description: Commands for managing PostgreSQL schema migrations using pgroll
+title: Roll Commands
+description: Commands for managing database migrations
 ---
 
-The `roll` commands help you manage PostgreSQL schema migrations using pgroll, providing zero-downtime schema changes and rollbacks.
+The `roll` commands help you manage database migrations using pgroll.
 
-## complete {#complete}
+## complete
 
 Complete an ongoing migration.
 
@@ -13,9 +13,9 @@ Complete an ongoing migration.
 xata roll complete
 ```
 
-This command finalizes a migration that was started with `roll start`, applying all pending changes to the database.
+This command finalizes a migration that has been started but not yet completed.
 
-## init {#init}
+## init
 
 Initialize pgroll in the target database.
 
@@ -23,12 +23,9 @@ Initialize pgroll in the target database.
 xata roll init
 ```
 
-This command sets up the necessary pgroll infrastructure in your database, including:
-- Creating required tables
-- Setting up triggers
-- Initializing the migration tracking system
+This command sets up pgroll in your database, creating necessary tables and functions.
 
-## latest {#latest}
+## latest
 
 Print the name of the latest schema version.
 
@@ -36,21 +33,19 @@ Print the name of the latest schema version.
 xata roll latest
 ```
 
-This command shows the most recent schema version, either from:
-- The target database
-- A local migration directory
+This command shows the most recent schema version in your database.
 
-## migrate {#migrate}
+## migrate
 
-Apply outstanding migrations to the database.
+Apply outstanding migrations.
 
 ```bash
 xata roll migrate
 ```
 
-This command applies all pending migrations from your local migration directory to the target database.
+This command applies any pending migrations to your database.
 
-## pull {#pull}
+## pull
 
 Pull migration history from the target database.
 
@@ -58,9 +53,9 @@ Pull migration history from the target database.
 xata roll pull
 ```
 
-This command retrieves the migration history from the target database and writes it to your local migration directory.
+This command synchronizes your local migration history with the database.
 
-## rollback {#rollback}
+## rollback
 
 Roll back an ongoing migration.
 
@@ -68,22 +63,19 @@ Roll back an ongoing migration.
 xata roll rollback
 ```
 
-This command reverts a migration that was started with `roll start` but not yet completed.
+This command reverts a migration that has been started but not yet completed.
 
-## start {#start}
+## start
 
-Start a new migration.
+Start a migration.
 
 ```bash
-xata roll start <file>
+xata roll start
 ```
 
-Arguments:
-- `file` - The migration file containing the schema changes
+This command begins a new migration process.
 
-This command begins a new migration using the specified migration file.
-
-## status {#status}
+## status
 
 Show pgroll status.
 
@@ -91,23 +83,17 @@ Show pgroll status.
 xata roll status
 ```
 
-This command displays the current state of pgroll, including:
-- Active migrations
-- Pending changes
-- Migration history
+This command displays the current state of migrations in your database.
 
-## convert {#convert}
+## convert
 
 Convert SQL statements to a pgroll migration.
 
 ```bash
-xata roll convert <file>
+xata roll convert
 ```
 
-Arguments:
-- `file` - The SQL file to convert
-
-This command converts traditional SQL migration statements into a pgroll-compatible migration file.
+This command helps you convert raw SQL into a pgroll migration.
 
 ## Global Flags
 
