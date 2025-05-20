@@ -1,0 +1,192 @@
+---
+title: Branches API
+description: Manage database branches and their settings
+---
+
+The Branches API allows you to manage your database branches, including listing, creating, updating, and deleting branches.
+
+## List branches
+
+Retrieves a list of all branches within a project.
+
+```bash
+GET /organizations/{organizationID}/projects/{projectID}/branches
+```
+
+### Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| organizationID | string | Unique identifier for the organization |
+| projectID | string | Unique identifier for the project |
+
+### Response
+
+```json
+{
+  "branches": [
+    {
+      "id": "br_123",
+      "name": "main",
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-01-01T00:00:00Z",
+      "region": "us-east-1",
+      "publicAccess": false,
+      "description": "Main branch"
+    }
+  ]
+}
+```
+
+## Create branch
+
+Creates a new branch within a project. Branches can be created from scratch or derived from an existing parent branch.
+
+```bash
+POST /organizations/{organizationID}/projects/{projectID}/branches
+```
+
+### Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| organizationID | string | Unique identifier for the organization |
+| projectID | string | Unique identifier for the project |
+
+### Request Body
+
+```json
+{
+  "name": "new-branch",
+  "description": "Development branch",
+  "parentID": "br_123",
+  "configuration": {
+    "image": "postgresql:16",
+    "instanceType": "standard",
+    "instances": 1,
+    "region": "us-east-1",
+    "storage": 10
+  }
+}
+```
+
+### Response
+
+```json
+{
+  "id": "br_456",
+  "name": "new-branch",
+  "createdAt": "2024-01-01T00:00:00Z",
+  "updatedAt": "2024-01-01T00:00:00Z",
+  "region": "us-east-1",
+  "publicAccess": false,
+  "description": "Development branch",
+  "connectionString": "postgresql://..."
+}
+```
+
+## Get branch
+
+Retrieves detailed information about a specific branch.
+
+```bash
+GET /organizations/{organizationID}/projects/{projectID}/branches/{branchID}
+```
+
+### Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| organizationID | string | Unique identifier for the organization |
+| projectID | string | Unique identifier for the project |
+| branchID | string | Unique identifier for the branch |
+
+### Response
+
+```json
+{
+  "id": "br_123",
+  "name": "main",
+  "createdAt": "2024-01-01T00:00:00Z",
+  "updatedAt": "2024-01-01T00:00:00Z",
+  "region": "us-east-1",
+  "publicAccess": false,
+  "description": "Main branch",
+  "connectionString": "postgresql://...",
+  "status": {
+    "status": "healthy",
+    "instanceCount": 1,
+    "instanceReadyCount": 1,
+    "instances": [
+      {
+        "id": "inst_123",
+        "status": "ready"
+      }
+    ],
+    "lifecycle": {
+      "phase": "running"
+    }
+  }
+}
+```
+
+## Update branch
+
+Updates the configuration of a branch.
+
+```bash
+PATCH /organizations/{organizationID}/projects/{projectID}/branches/{branchID}
+```
+
+### Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| organizationID | string | Unique identifier for the organization |
+| projectID | string | Unique identifier for the project |
+| branchID | string | Unique identifier for the branch |
+
+### Request Body
+
+```json
+{
+  "name": "updated-branch",
+  "description": "Updated description",
+  "instances": 2,
+  "storage": 20
+}
+```
+
+### Response
+
+```json
+{
+  "id": "br_123",
+  "name": "updated-branch",
+  "createdAt": "2024-01-01T00:00:00Z",
+  "updatedAt": "2024-01-01T00:00:00Z",
+  "region": "us-east-1",
+  "publicAccess": false,
+  "description": "Updated description"
+}
+```
+
+## Delete branch
+
+Permanently deletes a branch and all its associated data. This action cannot be undone.
+
+```bash
+DELETE /organizations/{organizationID}/projects/{projectID}/branches/{branchID}
+```
+
+### Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| organizationID | string | Unique identifier for the organization |
+| projectID | string | Unique identifier for the project |
+| branchID | string | Unique identifier for the branch |
+
+### Response
+
+Returns a 204 status code with no content on success. 

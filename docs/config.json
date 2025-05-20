@@ -139,6 +139,28 @@
       ]
     },
     {
+      "title": "REST API",
+      "href": "/api",
+      "file": "docs/api/index.mdx",
+      "items": [
+        {
+          "title": "Organizations",
+          "href": "/api/organizations",
+          "file": "docs/api/organizations.mdx"
+        },
+        {
+          "title": "Projects",
+          "href": "/api/projects",
+          "file": "docs/api/projects.mdx"
+        },
+        {
+          "title": "Branches",
+          "href": "/api/branches",
+          "file": "docs/api/branches.mdx"
+        }
+      ]
+    },
+    {
       "title": "GitHub Actions",
       "href": "/github-actions",
       "file": "docs/github-actions/github-actions.mdx",
