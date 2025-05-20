@@ -14,7 +14,6 @@
       "title": "Core Concepts",
       "href": "/core-concepts",
       "file": "docs/core-concepts/core-concepts.mdx",
-      "noLink": true,
       "items": [
         {
           "title": "Instant Branching",
@@ -47,7 +46,6 @@
       "title": "Connect",
       "href": "/connect",
       "file": "docs/connect/connect.mdx",
-      "noLink": true,
       "items": [
         {
           "title": "Languages",
@@ -70,7 +68,6 @@
       "title": "Tutorials",
       "href": "/tutorials",
       "file": "docs/tutorials/tutorials.mdx",
-      "noLink": true,
       "items": [
         {
           "title": "Developer Workflow",
@@ -88,7 +85,6 @@
       "title": "Command-line Interface",
       "href": "/cli",
       "file": "docs/cli/cli.mdx",
-      "noLink": true,
       "items": [
         {
           "title": "Auth",
@@ -151,20 +147,19 @@
       "title": "GitHub Actions",
       "href": "/github-actions",
       "file": "docs/github-actions/github-actions.mdx",
-      "noLink": true,
       "items": [
         {
-          "title": "Ensure Main is Ready for Merge",
+          "title": "Check merge readiness",
           "href": "/github-actions/check",
           "file": "docs/github-actions/check.mdx"
         },
         {
-          "title": "Create Xata Dev Branch",
+          "title": "Create Xata dev branch",
           "href": "/github-actions/pr",
           "file": "docs/github-actions/pr.mdx"
         },
         {
-          "title": "Xata Clone (daily, on-demand)",
+          "title": "Xata clone (daily, on-demand)",
           "href": "/github-actions/clone",
           "file": "docs/github-actions/clone.mdx"
         }
@@ -174,7 +169,6 @@
       "title": "Resources",
       "href": "/resources",
       "file": "docs/resources/resources.mdx",
-      "noLink": true,
       "items": [
         {
           "title": "Troubleshooting & FAQ",
