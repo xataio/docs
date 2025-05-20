@@ -139,8 +139,8 @@ These steps verify the current state of your Xata environment and check for any 
     body: |
       ### Xata Dev Branch
 
-      Creating Xata Dev Branch for commit: ${{ github.sha }} / ${{ github.head_ref }}_${{ github.event.pull_request.number }}
-      ${{ steps.xata-main-branch-roll-status.outputs.XATA_MAIN_BRANCH_ROLL_STATUS == 'In progress' && 'Warning: A migration is currently running on the main branch. Please wait for it to complete before merging this PR.' || '' }}
+      Creating Xata Dev Branch for commit: ${{ github.sha }}
+      Branch name: ${{ github.head_ref }}_${{ github.event.pull_request.number }}
 
       *Please wait for the comment to be updated with branch details.*
 ```
@@ -199,23 +199,21 @@ These steps verify the current state of your Xata environment and check for any 
     body: |
       ### Xata Dev Branch
 
-      Created Xata Dev Branch for commit: ${{ github.sha }} / ${{ github.head_ref }}_${{ github.event.pull_request.number }}
-      ${{ steps.xata-main-branch-roll-status.outputs.XATA_MAIN_BRANCH_ROLL_STATUS == 'In progress' && 'Warning: A migration is currently running on the main branch. Please wait for it to complete before merging this PR.' || '' }}
+      Created Xata Dev Branch for commit: ${{ github.sha }}
+      Branch name: ${{ github.head_ref }}_${{ github.event.pull_request.number }}
 
       Set the following schemas as the search_path:
       ```
       ${{ steps.xata-roll-get-latest-schema.outputs.LATEST_SCHEMA }}
       ```
 
-      You can drop into the psql shell for this branch with the following command:
+      You can drop into the psql shell for this branch with:
       ```
       xata branch checkout ${{ github.head_ref }}_${{ github.event.pull_request.number }}
       psql `xata branch url`
       ```
 
-      | Xata Branch URL |
-      |---|
-      | [Branch Link](https://console.xata.io/organizations/123xyz/projects/prj_i3qsq56h3p3d3crnk7htnc75d0/branches/s99l2grl6d3nr1cqcbaaa5piic) |
+      Branch URL: [View in Console](https://console.xata.io/organizations/123xyz/projects/prj_i3qsq56h3p3d3crnk7htnc75d0/branches/s99l2grl6d3nr1cqcbaaa5piic)
 ```
 
 ## Concurrency Control
