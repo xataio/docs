@@ -1,0 +1,74 @@
+---
+title: REST API
+description: Interact with Xata programmatically using our REST API
+---
+
+The Xata REST API allows you to programmatically manage your databases, branches, and data. All API endpoints are available at `https://api.xata.tech`.
+
+## Authentication
+
+All API requests require authentication using an API key. You can create API keys in the [Xata dashboard](https://app.xata.io). Include your API key in the `Authorization` header:
+
+```bash
+curl -H "Authorization: Bearer YOUR_API_KEY" https://api.xata.tech/...
+```
+
+## Available Endpoints
+
+The API is organized into the following sections:
+
+### Organizations
+
+- [List organizations](/api/organizations#list-organizations)
+- [Get organization details](/api/organizations#get-organization)
+- [Update organization](/api/organizations#update-organization)
+- [Delete organization](/api/organizations#delete-organization)
+
+### Projects
+
+- [List projects](/api/projects#list-projects)
+- [Create project](/api/projects#create-project)
+- [Get project details](/api/projects#get-project)
+- [Update project](/api/projects#update-project)
+- [Delete project](/api/projects#delete-project)
+- [Get available regions](/api/projects#get-regions)
+
+### Branches
+
+- [List branches](/api/branches#list-branches)
+- [Create branch](/api/branches#create-branch)
+- [Get branch details](/api/branches#get-branch)
+- [Update branch](/api/branches#update-branch)
+- [Delete branch](/api/branches#delete-branch)
+
+## Error Handling
+
+The API uses standard HTTP status codes to indicate the success or failure of requests:
+
+- `200 OK`: The request was successful
+- `201 Created`: A new resource was successfully created
+- `400 Bad Request`: The request was malformed or contained invalid parameters
+- `401 Unauthorized`: Authentication failed or is missing
+- `404 Not Found`: The requested resource does not exist
+- `5XX`: Server error
+
+Error responses include a JSON object with a `message` field describing the error:
+
+```json
+{
+  "message": "Error description"
+}
+```
+
+## Rate Limiting
+
+API requests are subject to rate limiting. The current limits are:
+
+- 100 requests per minute per API key
+- 1000 requests per hour per API key
+
+Rate limit headers are included in all responses:
+
+- `X-RateLimit-Limit`: The maximum number of requests allowed per time window
+- `X-RateLimit-Remaining`: The number of requests remaining in the current time window
+- `X-RateLimit-Reset`: The time when the current rate limit window resets (Unix timestamp)

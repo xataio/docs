@@ -1,0 +1,28 @@
+---
+title: Upgrade Command
+description: Command for upgrading the Xata CLI
+---
+
+The `upgrade` command helps you update the Xata CLI to the latest version.
+
+## upgrade
+
+Upgrade the Xata CLI.
+
+```bash
+xata upgrade [--channel <channel>] [--version <version>]
+```
+
+Arguments:
+- `--channel` - The channel to upgrade from (dev|next|latest, default = latest)
+- `--version` - The specific version to upgrade to
+
+This command:
+- Checks for available updates
+- Downloads the latest version
+- Installs the update
+- Verifies the installation
+
+## Global Flags
+
+- `-h, --help` - Print help information and exit 

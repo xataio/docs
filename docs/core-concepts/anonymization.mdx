@@ -1,0 +1,68 @@
+---
+title: Data anonymization
+description: Secure data handling with automatic PII detection and anonymization for development environments
+---
+
+Xata's data anonymization system automatically detects and masks sensitive information during database replication, enabling secure development and testing environments.
+
+When a staging replica is built with `xata clone --anonymize`, the replication pipeline passes every row through a streaming transformation layer powered by [**pgstream**](https://github.com/xataio/pgstream). This layer inspects column names, data types and actual values to decide whether the field contains personally-identifiable information (PII) or other sensitive content. Out-of-the-box detectors recognise emails, phone numbers, names, street addresses, credit-card numbers and more. You can also register custom detectors for domain-specific patterns.
+
+Once a value is flagged as sensitive, a *transformer* replaces it on-the-fly. The most common transformer is **consistent hashing**—the same input always yields the same opaque token—so application logic that relies on equality checks continues to work. Other transformers preserve formatting (for example keeping the `@domain.com` part of an e-mail) or maintain referential integrity by applying the same hash across foreign-key relationships. Because the masking happens inside the replication stream, no unmasked data ever lands in the staging database.
+
+## Configuring rules
+
+Anonymisation behaviour is controlled by JSON rules stored in the project configuration. A typical snippet looks like this:
+
+```json
+{
+  "rules": {
+    "users.email": { "type": "email", "preserve_domain": true },
+    "users.phone": { "type": "phone", "preserve_country": true },
+    "orders.cc_number": { "type": "credit_card", "format": "****-****-****-####" }
+  }
+}
+```
+
+If a column is not covered by a rule but matches a built-in detector, the platform applies a sensible default transformer (usually consistent hashing). You can opt-out by explicitly setting `"action": "ignore"`.
+
+## Workflow integration
+
+A typical CI job that prepares an anonymised test environment looks like this:
+
+```yaml
+steps:
+  - name: Checkout repo
+    uses: actions/checkout@v4
+  - name: Install Xata CLI
+    run: curl -fsSL https://xata.io/install.sh | bash
+  - name: Create anonymised replica
+    run: xata clone --anonymize --branch ci-${{ github.sha }}
+  - name: Run integration tests
+    run: npm test
+```
+
+The staging branch behaves exactly like production—but with all sensitive data masked—so you can run load tests, debug migrations or train machine-learning models without violating compliance policies.
+
+## Why deterministic anonymisation matters
+
+Because hashing is consistent, the same e-mail address in two tables maps to the same anonymised value, preserving JOIN semantics. Foreign keys are never broken, and applications that rely on lookups or unique constraints continue to work unmodified. At the same time, the hash is irreversible without the secret key held by the masking service, so the original data cannot be reconstructed.
+
+## Security and compliance
+
+Anonymisation happens before the data leaves the production network segment, ensuring PII never traverses the wire in clear form. The process is compatible with GDPR, HIPAA and SOC-2 requirements and can be tuned further for region-specific regulations such as Schrems II or LGPD.
+
+## Getting started
+
+```bash
+# Enable anonymisation for future clones
+xata config set anonymization.enabled true
+
+# Create the first anonymised replica
+xata clone --anonymize staging
+```
+
+If you want to experiment locally, you can preview the transformation result:
+
+```bash
+echo 'john.doe@example.com' | xata anonymize --type email
+``` 

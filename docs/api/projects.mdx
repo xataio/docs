@@ -1,0 +1,174 @@
+---
+title: Projects API
+description: Manage projects and their settings
+---
+
+The Projects API allows you to manage your Xata projects, including listing, creating, updating, and deleting projects.
+
+## List projects
+
+Retrieves a list of all projects within an organization.
+
+```bash
+GET /organizations/{organizationID}/projects
+```
+
+### Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| organizationID | string | Unique identifier for the organization |
+
+### Response
+
+```json
+{
+  "projects": [
+    {
+      "id": "proj_123",
+      "name": "My Project",
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+## Create project
+
+Creates a new project within an organization.
+
+```bash
+POST /organizations/{organizationID}/projects
+```
+
+### Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| organizationID | string | Unique identifier for the organization |
+
+### Request Body
+
+```json
+{
+  "name": "New Project"
+}
+```
+
+### Response
+
+```json
+{
+  "id": "proj_123",
+  "name": "New Project",
+  "createdAt": "2024-01-01T00:00:00Z",
+  "updatedAt": "2024-01-01T00:00:00Z"
+}
+```
+
+## Get project
+
+Retrieves detailed information about a specific project.
+
+```bash
+GET /organizations/{organizationID}/projects/{projectID}
+```
+
+### Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| organizationID | string | Unique identifier for the organization |
+| projectID | string | Unique identifier for the project |
+
+### Response
+
+```json
+{
+  "id": "proj_123",
+  "name": "My Project",
+  "createdAt": "2024-01-01T00:00:00Z",
+  "updatedAt": "2024-01-01T00:00:00Z"
+}
+```
+
+## Update project
+
+Updates the name of a project.
+
+```bash
+PATCH /organizations/{organizationID}/projects/{projectID}
+```
+
+### Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| organizationID | string | Unique identifier for the organization |
+| projectID | string | Unique identifier for the project |
+
+### Request Body
+
+```json
+{
+  "name": "Updated Project Name"
+}
+```
+
+### Response
+
+```json
+{
+  "id": "proj_123",
+  "name": "Updated Project Name",
+  "createdAt": "2024-01-01T00:00:00Z",
+  "updatedAt": "2024-01-01T00:00:00Z"
+}
+```
+
+## Delete project
+
+Permanently deletes a project and all its associated data. This action cannot be undone.
+
+```bash
+DELETE /organizations/{organizationID}/projects/{projectID}
+```
+
+### Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| organizationID | string | Unique identifier for the organization |
+| projectID | string | Unique identifier for the project |
+
+### Response
+
+Returns a 204 status code with no content on success.
+
+## Get available regions
+
+Retrieves a list of all regions where new branches can be deployed for the specified organization.
+
+```bash
+GET /organizations/{organizationID}/regions
+```
+
+### Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| organizationID | string | Unique identifier for the organization |
+
+### Response
+
+```json
+{
+  "regions": [
+    {
+      "id": "us-east-1",
+      "publicAccess": true
+    }
+  ]
+}
+``` 

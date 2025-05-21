@@ -1,0 +1,139 @@
+---
+title: Troubleshooting & FAQ
+description: Frequently asked questions and troubleshooting guides for Xata's PostgreSQL platform
+---
+
+## General Questions
+
+### What is Xata?
+Xata is a PostgreSQL platform that provides instant Copy-on-Write branching, data masking, and separation of storage from compute. It's designed for teams running PostgreSQL at scale, offering features like zero-downtime schema changes, realistic staging environments, and cloud-agnostic deployment options.
+
+### Is Xata production ready?
+Yes, Xata is production-ready with features like high availability, automatic backups, and monitoring. The platform is built on proven technologies including CloudNativePG for PostgreSQL management and Simplyblock for distributed storage.
+
+### Do you offer a free tier?
+Yes, we offer a free tier for development and testing. Contact us for details about the current free tier offerings.
+
+### What about a free trial?
+We offer a free trial period for all paid plans. Contact us to get started with your trial.
+
+## Staging & Development
+
+### How does Xata handle staging environments?
+Xata creates a "staging replica" that combines Copy-on-Write branching with data anonymization. This allows you to:
+- Create instant dev branches from the staging replica
+- Work with realistic, anonymized versions of your production data
+- Test schema changes safely before applying them to production
+
+### Will Xata alter my production database?
+No, your production database stays exactly as it is. Xata works with your existing PostgreSQL service, whether it's AWS RDS, Amazon Aurora, GCP CloudSQL, Azure Database, or self-hosted Postgres.
+
+### How do ephemeral environments improve development speed?
+By providing instant Copy-on-Write branches, developers can:
+- Work in isolation without waiting for others
+- Test changes against realistic data
+- Avoid conflicts with other developers
+- Quickly create and destroy environments as needed
+
+### Can I test complex schema changes with Xata?
+Yes, you can use `xata roll` (powered by [pgroll](https://github.com/xataio/pgroll)) to test schema changes and safely apply them with zero-downtime to production. This allows you to test complex changes in isolation before applying them to production.
+
+## Data Privacy & Security
+
+### How does data anonymization work?
+Xata uses [pgstream](https://github.com/xataio/pgstream) to copy and anonymize data on the fly. The system:
+- Detects and masks PII/PHI and sensitive data
+- Maintains referential integrity
+- Preserves data relationships
+- Allows configurable transformers for different data types
+
+### Is my data secure in staging environments?
+Yes, Xata ensures data security by:
+- Automatically anonymizing sensitive data
+- Maintaining strict access controls
+- Providing audit trails
+- Supporting compliance requirements (SOC-2, HIPAA, GDPR)
+
+### Can I keep my data within my own infrastructure?
+Yes, through our Bring Your Own Cloud (BYOC) deployment model, you can run the full Xata platform in your own cloud account or on-premises, ensuring data never leaves your infrastructure.
+
+## Performance & Storage
+
+### How does Xata's storage system work?
+Xata uses a distributed storage system that:
+- Separates storage from compute
+- Uses NVMe/TCP for high performance
+- Implements erasure coding for data resilience
+- Provides automatic storage growth
+- Charges only for actual storage used
+
+### Can Xata help with performance tuning?
+Yes, Xata provides the Xata Agent, an LLM-powered tool that helps:
+- Monitor PostgreSQL instances
+- Diagnose performance issues
+- Optimize queries
+- Tune PostgreSQL settings
+- Analyze active queries and statistics
+
+### Do you charge for bandwidth?
+No, we don't charge for bandwidth. You only pay for compute and storage resources.
+
+## Deployment & Integration
+
+### Can I bring my own cloud infrastructure?
+Yes, Xata offers a Bring Your Own Cloud (BYOC) deployment model that allows you to:
+- Deploy in your own AWS, GCP, or Azure account
+- Run on-premises if needed
+- Maintain full control over your infrastructure
+- Use your cloud provider's credits and discounts
+
+### Can Xata integrate with CI/CD pipelines?
+Yes, Xata integrates with:
+- GitHub Actions
+- Jenkins
+- Other CI/CD systems
+- Custom automation workflows
+
+### Do I need to modify my existing database schema for Xata?
+No, Xata works with your existing PostgreSQL schema. You can start using Xata's features without any schema modifications.
+
+## Pricing & Plans
+
+### Are all anonymization features and zero-downtime schema changes free?
+Yes, these features are included in both Pay As You Go and BYOC plans.
+
+### Is there a minimal number of nodes for the BYOC model?
+Yes, BYOC requires a minimum of 3 nodes for high availability. Contact us for specific requirements.
+
+### Do you offer instances with different CPU/RAM ratios?
+Yes, we can customize instance configurations. Contact us to discuss your specific needs.
+
+### Can I use Xata for white-labeling?
+Yes, we offer white-labeling options for PaaS providers. Contact us to discuss partnership opportunities.
+
+## Technical Details
+
+### How does Copy-on-Write branching work?
+Xata's Copy-on-Write branching:
+- Creates instant branches without copying data
+- Only copies modified chunks when writes occur
+- Maintains data integrity across branches
+- Provides significant disk space savings
+- Enables fast branch creation and deletion
+
+### What PostgreSQL extensions are supported?
+Because we run vanilla PostgreSQL, we support:
+- All standard PostgreSQL extensions
+- Custom extensions
+- Community extensions
+- We can quickly approve and deploy new extensions as needed
+
+### How does the storage system achieve high performance?
+The storage system:
+- Uses SPDK and DDPK for user-space operations
+- Implements NVMe-oF multipathing
+- Provides distributed parity data
+- Enables fault tolerance across the cluster
+- Minimizes latency and context switches
+
+[Contact us](mailto:info@xata.io) if you have any other questions or need assistance.

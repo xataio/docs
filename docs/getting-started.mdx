@@ -1,7 +1,42 @@
-# Getting started
+---
+title: Getting started
+description: Quick start guide for Xata's PostgreSQL platform
+---
 
-## Another heading 
+Xata is a PostgreSQL platform that provides instant Copy-on-Write branching, data masking, and separation of storage from compute. It's designed for modern teams running PostgreSQL at scale, with features like zero-downtime schema changes, realistic staging environments, and cloud-agnostic deployment options.
 
-Content goes here. Content goes here. Content goes here. Content goes here. Content goes here. Content goes here.Content goes here. Content goes here. Content goes here. Content goes here. Content goes here. Content goes here. Content goes here. Content goes here. Content goes here. Content goes here. Content goes here.
+## Quick start
+After signing up for your account, you can get started by installing the CLI and intializing your project.
 
+1. **Install the CLI**
+   ```bash
+   curl -fsSL https://xata.io/install.sh | bash
+   ```
 
+2. **Authenticate with Xata**
+   ```bash
+   xata auth login
+   ```
+
+3. **Initialize your project**
+   ```bash
+   xata init
+   ```
+
+## Next steps
+
+There are two primary workflows Xata supports natively.
+
+- **Developer workflow**: Set up staging and development environments with our [developer workflow](/tutorials/developer-workflow)
+- **Production migration**: Move your existing PostgreSQL database to Xata by [migrating to Xata](/tutorials/migrate-to-xata)
+
+## Additional resources
+
+Want to dive in further? Check out these pages.
+
+- [Architecture overview](/architecture) - Deep dive into Xata's technical architecture
+- [Core concepts](/core-concepts) - Learn about branching, staging, and data anonymization
+- [Command line interface](/cli) - Complete CLI reference
+- [GitHub actions](/github-actions) - Automate your development workflow
+
+**Need help?** Reach out to the Xata team at [info@xata.io](mailto:info@xata.io) or join our Discord community.

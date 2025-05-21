@@ -1,0 +1,113 @@
+---
+title: Schema Changes
+description: Zero-downtime schema migrations with automatic rollback support
+---
+
+Xata's schema migration system enables zero-downtime database changes with automatic rollback support, powered by the open-source [**pgroll**](https://github.com/xataio/pgroll) project. Instead of locking tables or waiting for long-running `ALTER TABLE` commands to finish, [pgroll](https://github.com/xataio/pgroll) creates a *new* schema version next to the live one and moves traffic over when everything is ready.
+
+## How online migrations work
+
+When you run `xata roll migrate`, [pgroll](https://github.com/xataio/pgroll) first generates a migration plan that can always be reversed. The plan creates a *shadow schema*—for example `v2`—that contains the target structure. Triggers and logical decoding keep the data between the two versions consistent while the migration is in progress. As soon as the shadow schema has caught up, [pgroll](https://github.com/xataio/pgroll) performs an atomic *switchover* by updating a search-path alias. Because the alias switch is a metadata operation, it takes microseconds and never blocks reads or writes.
+
+If something goes wrong—constraint violation, performance regression, unexpected app error—you can issue `xata roll rollback` and [pgroll](https://github.com/xataio/pgroll) flips the alias back to the original schema. No data is lost, and the cut-over is again instantaneous.
+
+### Behind the scenes
+
+1. **Version tracking** – A dedicated table stores the current schema version and the planned next version.
+2. **Dual execution** – During the catch-up phase both versions accept writes; triggers forward changes to keep them in sync.
+3. **Progress monitoring** – [pgroll](https://github.com/xataio/pgroll) streams progress metrics so you can observe long-running back-fills.
+4. **Automatic cleanup** – After a successful switchover the old version is kept for a configurable grace period and then dropped.
+
+## Operational benefits
+
+* **No query interruption** – Clients continue to read and write while the migration runs in the background.
+* **No table locks** – Large `ADD COLUMN` or `ALTER TYPE` operations no longer freeze traffic.
+* **Safe experimentation** – Because every plan is reversible you can abort at any point without risking data divergence.
+
+## Typical workflow
+
+```bash
+# Initialise pgroll once per database
+gxata roll init
+
+# Generate a new migration skeleton
+xata roll create add_user_status
+
+# Edit `migrations/add_user_status.sql` (DDL only)
+
+# Test locally against a branch
+xata branch create schema-test --from main
+xata roll migrate --branch schema-test
+
+# Apply to staging / production
+xata roll migrate  # runs against current branch (main)
+```
+
+In a CI pipeline you would usually call `xata roll migrate --non-interactive` during the *deploy* phase and `xata roll status` to wait until the catch-up is complete before flipping traffic.
+
+## Best practices
+
+* Keep individual migrations small; several tiny steps are safer than one large one.
+* Avoid back-filling huge columns inside the migration; use incremental jobs where possible.
+* Clean up old schema versions to prevent catalog bloat.
+
+For a GitHub Actions reference see the [check merge readiness workflow](/github-actions/check) that blocks a pull-request until all pending migrations have completed.
+
+## Features
+
+### Zero-Downtime Operations
+
+- **No Table Locks**: Operations don't block reads or writes
+- **Atomic Switches**: Instant schema version changes
+- **Background Processing**: Data sync happens in background
+- **Consistent Views**: Applications see consistent data
+
+### Safety Mechanisms
+
+- **Automatic Rollback**: Reverts on validation failure
+- **Data Integrity**: Maintains constraints and relationships
+- **Version Control**: Tracks all schema changes
+- **Audit Trail**: Logs all migration operations
+
+## Supported operations
+
+Xata migrations, powered by pgroll, support a wide range of schema evolution tasks. Here are the currently supported operations:
+
+- [Add column](https://pgroll.com/docs/latest/operations/add_column)
+- [Alter column](https://pgroll.com/docs/latest/operations/alter_column)
+- [Change type](https://pgroll.com/docs/latest/operations/alter_column_type)
+- [Change default](https://pgroll.com/docs/latest/operations/alter_column_default)
+- [Change comment](https://pgroll.com/docs/latest/operations/alter_column_comment)
+- [Add check constraint](https://pgroll.com/docs/latest/operations/add_check_constraint)
+- [Add foreign key](https://pgroll.com/docs/latest/operations/add_foreign_key)
+- [Add not null constraint](https://pgroll.com/docs/latest/operations/add_not_null_constraint)
+- [Drop not null constraint](https://pgroll.com/docs/latest/operations/drop_not_null_constraint)
+- [Add unique constraint](https://pgroll.com/docs/latest/operations/add_unique_constraint)
+- [Create index](https://pgroll.com/docs/latest/operations/create_index)
+- [Create table](https://pgroll.com/docs/latest/operations/create_table)
+- [Create constraint](https://pgroll.com/docs/latest/operations/create_constraint)
+- [Drop column](https://pgroll.com/docs/latest/operations/drop_column)
+- [Drop multi column constraint](https://pgroll.com/docs/latest/operations/drop_multi_column_constraint)
+- [Drop index](https://pgroll.com/docs/latest/operations/drop_index)
+- [Drop table](https://pgroll.com/docs/latest/operations/drop_table)
+- [Raw SQL](https://pgroll.com/docs/latest/operations/raw_sql)
+- [Rename table](https://pgroll.com/docs/latest/operations/rename_table)
+- [Rename column](https://pgroll.com/docs/latest/operations/rename_column)
+- [Rename constraint](https://pgroll.com/docs/latest/operations/rename_constraint)
+- [Add sequence](https://pgroll.com/docs/latest/operations/add_sequence)
+- [Drop sequence](https://pgroll.com/docs/latest/operations/drop_sequence)
+- [Alter sequence](https://pgroll.com/docs/latest/operations/alter_sequence)
+- [Add view](https://pgroll.com/docs/latest/operations/add_view)
+- [Drop view](https://pgroll.com/docs/latest/operations/drop_view)
+- [Rename view](https://pgroll.com/docs/latest/operations/rename_view)
+- [Add trigger](https://pgroll.com/docs/latest/operations/add_trigger)
+- [Drop trigger](https://pgroll.com/docs/latest/operations/drop_trigger)
+- [Add function](https://pgroll.com/docs/latest/operations/add_function)
+- [Drop function](https://pgroll.com/docs/latest/operations/drop_function)
+- [Rename function](https://pgroll.com/docs/latest/operations/rename_function)
+- [Alter function](https://pgroll.com/docs/latest/operations/alter_function)
+- [Add schema](https://pgroll.com/docs/latest/operations/add_schema)
+- [Drop schema](https://pgroll.com/docs/latest/operations/drop_schema)
+- [Rename schema](https://pgroll.com/docs/latest/operations/rename_schema)
+
+For the full syntax, advanced options, and the latest supported operations, see the [pgroll documentation](https://pgroll.com/docs/latest/) and the [CLI reference for roll commands](/cli/roll).

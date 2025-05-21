@@ -1,0 +1,90 @@
+---
+title: Instant branching
+description: Copy-on-Write branching system for PostgreSQL databases with instant branch creation and efficient storage
+---
+
+Xata's branching system uses Copy-on-Write (CoW) at the storage layer to create instant database branches. This enables developers to create isolated environments for testing and development without duplicating data unnecessarily.
+
+Copy-on-Write works by splitting the physical data into immutable *chunks* that are shared by every branch. A lightweight metadata index keeps track of which chunk belongs to which logical page of the database. Creating a branch therefore means cloning only that index—a metadata-only operation that finishes in milliseconds, regardless of whether the database holds a few megabytes or several terabytes.
+
+![Copy-on-Write branch — no writes yet](/assets/images/copy-on-write-diagram-1.png)
+
+After the branch exists, reads from either the parent or the child still hit the same chunks. The first time one of the branches writes to a page, the storage layer allocates a brand-new chunk, applies the change there and updates *only* that branch's index to reference it. Every other chunk continues to be shared, so additional disk usage grows in proportion to the amount of data that actually changes.
+
+![Copy-on-Write branch — chunks diverged](/assets/images/copy-on-write-branching-2.png)
+
+## How it works
+
+### Storage-level implementation
+
+Because the mechanism lives entirely below PostgreSQL, it is compatible with vanilla Postgres and every extension you might load. There is no performance penalty on reads—unchanged chunks are served directly—and the write-amplification is limited to a single additional chunk copy per modified page.
+
+### Developer workflow
+
+A typical flow looks like this:
+
+1. A staging replica kept in sync by [**pgstream**](https://github.com/xataio/pgstream) holds an anonymised copy of production.
+2. `xata branch create feature-xyz` clones the metadata index and gives the developer a fully isolated environment that behaves like production.
+3. The developer makes schema edits, runs tests and benchmarks against realistic data.
+4. Once validated, [**pgroll**](https://github.com/xataio/pgroll) compares the branch with its parent, generates a reversible migration plan and applies it to production with zero-downtime.
+
+Because CoW tracks every changed chunk, the merge-back step knows *exactly* which pages were touched, enabling deterministic, audit-ready schema migrations.
+
+## Benefits at scale
+
+* **Speed** – branch creation takes milliseconds, enabling per-PR ephemeral environments.
+* **Storage efficiency** – only the modified chunks consume additional space; dozens of branches cost little more than a single copy.
+* **Safety** – experiments happen against realistic data without risking production state.
+
+### Integration with any Postgres provider
+
+The storage layer is provider-agnostic: you can run instant branches on AWS RDS, Aurora, Google Cloud SQL, Azure Database or even self-hosted Postgres. Xata improves rather than replaces your existing production setup.
+
+## Technical Benefits
+
+### Performance
+
+- **Instant Branch Creation**: No data copying means branches are created in seconds
+- **Storage Efficiency**: Only modified data is duplicated
+- **Write Performance**: CoW operations are optimized at the storage layer
+
+### Integration
+
+Works with any PostgreSQL cloud provider:
+- AWS RDS
+- Amazon Aurora
+- Google Cloud SQL
+- Azure Database
+- Self-hosted PostgreSQL
+
+## Use Cases
+
+### Development Workflow
+
+1. Create a branch from production
+2. Make schema changes
+3. Test with real data
+4. Merge changes back to production
+
+### Testing
+
+1. Create multiple test branches
+2. Run parallel test suites
+3. Compare results across branches
+4. No storage overhead for read-only operations
+
+## Getting Started
+
+To create a branch:
+
+```bash
+xata branch create my-feature-branch
+```
+
+To switch between branches:
+
+```bash
+xata branch checkout my-feature-branch
+```
+
+[Learn more about branch management in the CLI documentation](/cli/branch) 

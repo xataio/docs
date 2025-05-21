@@ -1,0 +1,39 @@
+---
+title: Connect from programming languages
+description: Connect to Xata from various programming languages
+---
+
+Below are minimal examples that assume you exported `DATABASE_URL` via `xata branch url`.
+
+## Node.js (pg)
+
+```js
+import { Pool } from 'pg';
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const res = await pool.query('SELECT 1');
+```
+
+## Python (psycopg3)
+
+```python
+import psycopg
+conn = psycopg.connect(conninfo=os.environ['DATABASE_URL'], autocommit=True)
+```
+
+## Go (pgx)
+
+```go
+conn, _ := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
+```
+
+## Java (JDBC)
+
+```java
+Connection c = DriverManager.getConnection(System.getenv("DATABASE_URL"));
+```
+
+## Rust (tokio-postgres)
+
+```rust
+let (client, connection) = tokio_postgres::connect(&env::var("DATABASE_URL")?, NoTls).await?;
+```

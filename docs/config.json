@@ -6,14 +6,206 @@
       "file": "docs/getting-started.mdx"
     },
     {
-      "title": "Command-line interface",
-      "href": "/cli",
-      "file": "docs/cli/index.mdx",
+      "title": "Architecture",
+      "href": "/architecture",
+      "file": "docs/architecture.mdx"
+    },
+    {
+      "title": "Core concepts",
+      "href": "/core-concepts",
+      "file": "docs/core-concepts/core-concepts.mdx",
       "items": [
         {
-          "title": "Init",
+          "title": "Instant branching",
+          "href": "/core-concepts/branching",
+          "file": "docs/core-concepts/branching.mdx"
+        },
+        {
+          "title": "Data anonymization",
+          "href": "/core-concepts/anonymization",
+          "file": "docs/core-concepts/anonymization.mdx"
+        },
+        {
+          "title": "Schema changes",
+          "href": "/core-concepts/schema-changes",
+          "file": "docs/core-concepts/schema-changes.mdx"
+        },
+        {
+          "title": "Bring Your Own Cloud",
+          "href": "/core-concepts/byoc",
+          "file": "docs/core-concepts/byoc.mdx"
+        }
+      ]
+    },
+    {
+      "title": "Connect",
+      "href": "/connect",
+      "file": "docs/connect/connect.mdx",
+      "items": [
+        {
+          "title": "Languages",
+          "href": "/connect/languages",
+          "file": "docs/connect/languages.mdx"
+        },
+        {
+          "title": "Frameworks",
+          "href": "/connect/frameworks",
+          "file": "docs/connect/frameworks.mdx"
+        },
+        {
+          "title": "ORMs",
+          "href": "/connect/orms",
+          "file": "docs/connect/orms.mdx"
+        }
+      ]
+    },
+    {
+      "title": "Tutorials",
+      "href": "/tutorials",
+      "file": "docs/tutorials/tutorials.mdx",
+      "items": [
+        {
+          "title": "Developer workflow",
+          "href": "/tutorials/developer-workflow",
+          "file": "docs/tutorials/developer-workflow.mdx"
+        },
+        {
+          "title": "Migrate to Xata",
+          "href": "/tutorials/migrate-to-xata",
+          "file": "docs/tutorials/migrate-to-xata.mdx"
+        }
+      ]
+    },
+    {
+      "title": "Command-line Interface",
+      "href": "/cli",
+      "file": "docs/cli/cli.mdx",
+      "items": [
+        {
+          "title": "auth",
+          "href": "/cli/auth",
+          "file": "docs/cli/auth.mdx"
+        },
+        {
+          "title": "branch",
+          "href": "/cli/branch",
+          "file": "docs/cli/branch.mdx"
+        },
+        {
+          "title": "clone",
+          "href": "/cli/clone",
+          "file": "docs/cli/clone.mdx"
+        },
+        {
+          "title": "completions",
+          "href": "/cli/completions",
+          "file": "docs/cli/completions.mdx"
+        },
+        {
+          "title": "init",
           "href": "/cli/init",
           "file": "docs/cli/init.mdx"
+        },
+        {
+          "title": "organization",
+          "href": "/cli/organization",
+          "file": "docs/cli/organization.mdx"
+        },
+        {
+          "title": "project",
+          "href": "/cli/project",
+          "file": "docs/cli/project.mdx"
+        },
+        {
+          "title": "roll",
+          "href": "/cli/roll",
+          "file": "docs/cli/roll.mdx"
+        },
+        {
+          "title": "status",
+          "href": "/cli/status",
+          "file": "docs/cli/status.mdx"
+        },
+        {
+          "title": "upgrade",
+          "href": "/cli/upgrade",
+          "file": "docs/cli/upgrade.mdx"
+        },
+        {
+          "title": "version",
+          "href": "/cli/version",
+          "file": "docs/cli/version.mdx"
+        }
+      ]
+    },
+    {
+      "title": "REST API",
+      "href": "/api",
+      "file": "docs/api/index.mdx",
+      "items": [
+        {
+          "title": "Organizations",
+          "href": "/api/organizations",
+          "file": "docs/api/organizations.mdx"
+        },
+        {
+          "title": "Projects",
+          "href": "/api/projects",
+          "file": "docs/api/projects.mdx"
+        },
+        {
+          "title": "Branches",
+          "href": "/api/branches",
+          "file": "docs/api/branches.mdx"
+        }
+      ]
+    },
+    {
+      "title": "GitHub Actions",
+      "href": "/github-actions",
+      "file": "docs/github-actions/github-actions.mdx",
+      "items": [
+        {
+          "title": "Check merge readiness",
+          "href": "/github-actions/check",
+          "file": "docs/github-actions/check.mdx"
+        },
+        {
+          "title": "Create Xata dev branch",
+          "href": "/github-actions/pr",
+          "file": "docs/github-actions/pr.mdx"
+        },
+        {
+          "title": "Xata clone (daily, on-demand)",
+          "href": "/github-actions/clone",
+          "file": "docs/github-actions/clone.mdx"
+        }
+      ]
+    },
+    {
+      "title": "Resources",
+      "href": "/resources",
+      "file": "docs/resources/resources.mdx",
+      "items": [
+        {
+          "title": "Troubleshooting & FAQ",
+          "href": "/resources/troubleshooting",
+          "file": "docs/resources/troubleshooting.mdx"
+        },
+        {
+          "title": "Compliance",
+          "href": "/resources/compliance",
+          "file": "docs/resources/compliance.mdx"
+        },
+        {
+          "title": "Roadmap",
+          "href": "/resources/roadmap",
+          "file": "docs/resources/roadmap.mdx"
+        },
+        {
+          "title": "Pricing",
+          "href": "/resources/pricing",
+          "file": "docs/resources/pricing.mdx"
         }
       ]
     }

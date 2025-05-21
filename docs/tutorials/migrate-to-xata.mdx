@@ -1,0 +1,122 @@
+---
+title: Tutorial – migrate an existing database to Xata
+description: Step-by-step guide for moving data from any PostgreSQL service to Xata with minimal downtime
+---
+
+Migrating to Xata is straightforward because the platform speaks pure PostgreSQL wire-protocol. You can start with a one-time dump/restore and, if you need *near-zero downtime*, finish the cut-over with real-time replication powered by our open-source project [**pgstream**](https://github.com/xataio/pgstream).
+
+---
+
+## 1. Choose a migration strategy
+
+| Strategy | Downtime | When to use |
+| --- | --- | --- |
+| **Snapshot** – `pg_dump` → `pg_restore` | requires a maintenance window equal to dump + upload time | personal projects, non-critical services, small (< 50 GB) databases |
+| **Continuous streaming** – snapshot + [**pgstream**](https://github.com/xataio/pgstream) logical replication | seconds | production workloads that cannot tolerate extended read-only periods |
+
+Regardless of the option you pick, the first step is identical: create a database branch in Xata that will receive the data.
+
+```bash
+# create a dedicated migration branch so you can test safely
+xata branch create migrate-prod
+
+# grab the connection URL
+export XATA_MIGRATE_URL=$(xata branch url --branch migrate-prod)
+```
+
+---
+
+## 2. One-time snapshot with `pg_dump` / `pg_restore`
+
+1. Dump your existing database (source Postgres, RDS, CloudSQL, etc.):
+   ```bash
+   pg_dump \
+     --format=directory \
+     --jobs=4 \
+     --no-owner \
+     --dbname=$SOURCE_DATABASE_URL \
+     --file=/tmp/pgdump
+   ```
+2. Restore into the Xata branch:
+   ```bash
+   pg_restore \
+     --jobs=4 \
+     --clean \
+     --if-exists \
+     --dbname=$XATA_MIGRATE_URL \
+     /tmp/pgdump
+   ```
+3. Validate data counts and run application smoke-tests against the branch.
+4. Promote the branch to **main** (or switch your app's `DATABASE_URL`) once satisfied.
+
+> **Tip:** Large objects & extensions are included automatically because Xata runs unmodified Postgres.
+
+---
+
+## 3. Near-zero-downtime migration with [**pgstream**](https://github.com/xataio/pgstream)
+
+If you run a 24×7 service or the dump window is too long, use [**pgstream**](https://github.com/xataio/pgstream) to replicate changes while users keep writing to the source database.
+
+### 3.1. Install pgstream
+
+```bash
+go install github.com/xataio/pgstream/cmd/pgstream@latest
+```
+
+### 3.2. Prepare the source database
+
+Ensure **logical replication** is enabled:
+
+```sql
+ALTER SYSTEM SET wal_level = logical;
+ALTER SYSTEM SET max_replication_slots = 10;
+SELECT pg_reload_conf();
+```
+
+Create a replication user:
+
+```sql
+CREATE ROLE pgstream REPLICATION LOGIN PASSWORD 'secret';
+```
+
+### 3.3. Run the initial snapshot + streaming
+
+```bash
+pgstream \
+  --source $SOURCE_DATABASE_URL \
+  --target $XATA_MIGRATE_URL \
+  --slot pgstream_slot \
+  --create-snapshot
+```
+
+The tool first copies a consistent snapshot (similar to `pg_basebackup`) and then switches to logical decoding to stream ongoing changes.
+
+You can monitor progress with:
+
+```bash
+pgstream status --slot pgstream_slot --source $SOURCE_DATABASE_URL
+```
+
+### 3.4. Cut over
+
+1. Stop writes on the source (e.g. put the app in maintenance mode).
+2. Wait for `pgstream` lag to reach **0 bytes**.
+3. Point the application to the Xata branch URL and resume traffic.
+4. Shut down `pgstream` and decommission the old cluster.
+
+Downtime is limited to the seconds it takes to restart the application.
+
+---
+
+## 4. Post-migration housekeeping
+
+* **Apply [pgroll](https://github.com/xataio/pgroll) migrations** – initialise roll on the new database with `xata roll init`.
+* **Enable anonymised staging branches** – `xata clone --anonymize` for preview environments.
+* **Set up GitHub Actions** – see the [check merge readiness workflow](/github-actions/check).
+
+---
+
+## 5. Need help?
+
+Our team is happy to review migration plans and help tune `pg_dump`, `pg_restore` or [**pgstream**](https://github.com/xataio/pgstream) settings.  
+Reach us at [support@xata.io](mailto:support@xata.io) or join the community Discord.
