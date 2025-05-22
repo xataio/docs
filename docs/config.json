@@ -38,28 +38,6 @@
       ]
     },
     {
-      "title": "Connect",
-      "href": "/connect",
-      "file": "docs/connect/connect.mdx",
-      "items": [
-        {
-          "title": "Languages",
-          "href": "/connect/languages",
-          "file": "docs/connect/languages.mdx"
-        },
-        {
-          "title": "Frameworks",
-          "href": "/connect/frameworks",
-          "file": "docs/connect/frameworks.mdx"
-        },
-        {
-          "title": "ORMs",
-          "href": "/connect/orms",
-          "file": "docs/connect/orms.mdx"
-        }
-      ]
-    },
-    {
       "title": "Tutorials",
       "href": "/tutorials",
       "file": "docs/tutorials/tutorials.mdx",
