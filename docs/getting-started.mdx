@@ -5,38 +5,145 @@ description: Quick start guide for Xata's PostgreSQL platform
 
 Xata is a PostgreSQL platform that provides instant Copy-on-Write branching, data masking, and separation of storage from compute. It's designed for modern teams running PostgreSQL at scale, with features like zero-downtime schema changes, realistic staging environments, and cloud-agnostic deployment options.
 
-## Quick start
-After signing up for your account, you can get started by installing the CLI and intializing your project.
+## 1. Sign up
 
-1. **Install the CLI**
-   ```bash
-   curl -fsSL https://xata.io/install.sh | bash
-   ```
+Create your free Xata account at [console.xata.io](https://console.xata.io). You can sign up with GitHub, Google, or your email address.
 
-2. **Authenticate with Xata**
-   ```bash
-   xata auth login
-   ```
+![Xata sign-up page](/img/getting-started/signup.png)
 
-3. **Initialize your project**
-   ```bash
-   xata init
-   ```
+## 2. Create a project
 
-## Next steps
+After signing in, create a new project. A project is the top-level container for all your branches and Postgres instances.
 
-There are two primary workflows Xata supports natively.
+![Create project page](/img/getting-started/create-project.png)
 
-- **Developer workflow**: Set up staging and development environments with our [developer workflow](/tutorials/developer-workflow)
-- **Production migration**: Move your existing PostgreSQL database to Xata by [migrating to Xata](/tutorials/migrate-to-xata)
+## 3. Create a branch
 
-## Additional resources
+Within your project, create your first branch (e.g., `main`). A branch is a Postgres cluster—a collection of one or more Postgres instances, which can include a primary and optional replicas. When creating your main branch, you can choose the Postgres version, region, and instance size to fit your needs. This branch can serve as your production branch or a staging environment. You can branch off `main` at any time to create isolated development or test environments.
 
-Want to dive in further? Check out these pages.
+![Create branch page](/img/getting-started/create-branch.png)
 
-- [Architecture overview](/architecture) - Deep dive into Xata's technical architecture
-- [Core concepts](/core-concepts) - Learn about branching, staging, and data anonymization
-- [Command line interface](/cli) - Complete CLI reference
-- [GitHub actions](/github-actions) - Automate your development workflow
+- To learn more about developer workflows, see the [developer workflow tutorial](/tutorials/developer-workflow).
+- To migrate an existing database, see [migrate to Xata](/tutorials/migrate-to-xata).
+
+## 4. Add sample xata (data)
+
+Navigate to the **Queries** section in your project and run the following SQL to create sample tables and data:
+
+```sql
+CREATE TABLE products(id SERIAL PRIMARY KEY,name TEXT,price NUMERIC);
+CREATE TABLE orders(id SERIAL PRIMARY KEY,created_at TIMESTAMPTZ DEFAULT now());
+CREATE TABLE order_items(order_id INT REFERENCES orders(id),product_id INT REFERENCES products(id),qty INT,PRIMARY KEY(order_id,product_id));
+INSERT INTO products(name,price) SELECT LEFT(md5(i::text),8),round(random()*90+10,2) FROM generate_series(1,10)i;
+WITH o AS (INSERT INTO orders DEFAULT VALUES RETURNING id) INSERT INTO order_items(order_id,product_id,qty) SELECT o.id,(1+floor(random()*10))::int,(1+floor(random()*3))::int FROM o,generate_series(1,5);
+```
+
+![Queries/SQL editor page](/img/getting-started/queries.png)
+
+## 5. View your branch schema and enable schema history
+
+Go to the **Branches** section and select your branch (e.g., `main`). Here you can view your schema and enable schema history for zero-downtime migrations.
+
+To enable schema history, install the CLI and initialize your branch:
+
+```bash
+curl -fsSL https://xata.io/install.sh | bash
+xata auth login
+xata init
+xata roll init
+```
+
+![Branch details/schema view](/img/getting-started/branch-details.png)
+
+## 6. Create a development branch with the CLI
+
+List your branches:
+
+```bash
+xata branch list
+```
+
+Create a new branch from `main`:
+
+```bash
+xata branch create dev --from main
+```
+
+## 7. Modify your schema from the terminal
+
+You can make schema changes directly in the Xata query view, but here we'll show how to do it from your terminal using `psql` for a more hands-on workflow.
+
+If you don't have `psql` installed:
+
+**macOS:**
+```bash
+brew install libpq
+echo 'export PATH="/opt/homebrew/opt/libpq/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+**Linux:**
+```bash
+sudo apt-get install postgresql-client
+```
+
+**Windows:**
+Download from [PostgreSQL official site](https://www.postgresql.org/download/windows/).
+
+Get your branch connection string using the Xata CLI:
+
+```bash
+xata branch get-connection-string dev
+```
+
+Connect to your branch with psql:
+
+```bash
+psql <paste-connection-string-here>
+```
+
+Add a new column to your `products` table:
+
+```sql
+ALTER TABLE products ADD COLUMN rating INT;
+```
+
+You can now use SQL to update or query the new column.
+
+## 8. Check the schema diff in the branch details page
+
+After making changes in a branch, use the **Schema Diff** feature in the branch details page to compare your branch with its parent.
+
+![Schema diff page](/img/getting-started/schema-diff.png)
+
+## 9. Merge your changes into main and clean up your dev branch
+
+To merge your schema changes from `dev` into `main`, use the Xata CLI migration command:
+
+```bash
+xata roll migrate --branch main
+```
+
+This will apply any outstanding migrations from your development branch to main.
+
+Once merged, you can delete the `dev` branch:
+
+```bash
+xata branch delete dev
+```
+
+## 10. Reset main and delete the sample data
+
+If you want to start fresh, you can reset your main branch and remove the sample data. Connect to your main branch using `psql` and run the following SQL:
+
+```sql
+DROP TABLE IF EXISTS order_items;
+DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS products;
+```
+
+This will remove all the sample tables and data, leaving your main branch clean for your next project or migration.
+
+---
 
 **Need help?** Reach out to the Xata team at [info@xata.io](mailto:info@xata.io) or join our Discord community.
