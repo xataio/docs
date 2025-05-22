@@ -9,19 +9,19 @@ Xata is a PostgreSQL platform that provides instant Copy-on-Write branching, dat
 
 Create your free Xata account at [console.xata.io](https://console.xata.io). You can sign up with GitHub, Google, or your email address.
 
-![Xata sign-up page](images/getting-started/signup.png)
+![Xata sign-up page](assets/images/getting-started/signup.png)
 
 ## 2. Create a project
 
 After signing in, create a new project. A project is the top-level container for all your branches and Postgres instances.
 
-![Create project page](images/getting-started/create-project.png)
+![Create project page](assets/images/getting-started/create-project.png)
 
 ## 3. Create a branch
 
 Within your project, create your first branch (e.g., `main`). A branch is a Postgres cluster—a collection of one or more Postgres instances, which can include a primary and optional replicas. When creating your main branch, you can choose the Postgres version, region, and instance size to fit your needs. This branch can serve as your production branch or a staging environment. You can branch off `main` at any time to create isolated development or test environments.
 
-![Create branch page](images/getting-started/create-branch.png)
+![Create branch page](assets/images/getting-started/create-branch.png)
 
 - To learn more about developer workflows, see the [developer workflow tutorial](/tutorials/developer-workflow).
 - To migrate an existing database, see [migrate to Xata](/tutorials/migrate-to-xata).
@@ -38,7 +38,7 @@ INSERT INTO products(name,price) SELECT LEFT(md5(i::text),8),(random()*90+10)::n
 WITH o AS (INSERT INTO orders DEFAULT VALUES RETURNING id) INSERT INTO order_items(order_id,product_id,qty) SELECT o.id,pid,(1+floor(random()*3))::int FROM o,(SELECT id pid FROM products ORDER BY random() LIMIT 5)p;
 ```
 
-![Queries/SQL editor page](images/getting-started/queries.png)
+![Queries/SQL editor page](assets/images/getting-started/queries.png)
 
 ## 5. View your branch schema and enable schema history
 
@@ -48,21 +48,12 @@ To enable schema history, install the CLI and initialize your branch:
 
 ```bash
 curl -fsSL https://xata.io/install.sh | bash
-```
-
-```bash
 xata auth login
-```
-
-```bash
 xata init
-```
-
-```bash
 xata roll init
 ```
 
-![Branch details/schema view](images/getting-started/branch-details.png)
+![Branch details/schema view](assets/images/getting-started/branch-details.png)
 
 ## 6. Create a development branch with the CLI
 
@@ -99,11 +90,12 @@ sudo apt-get install postgresql-client
 **Windows:**
 Download from [PostgreSQL official site](https://www.postgresql.org/download/windows/).
 
-Get your branch connection string using the Xata CLI:
+Get your branch connection string using the Xata CLI. First, checkout your new `dev` branch:
 
 ```bash
 xata branch checkout dev
 ```
+Then grab the connection string:
 
 ```bash
 xata branch url
@@ -127,7 +119,7 @@ You can now use SQL to update or query the new column.
 
 After making changes in a branch, use the **Schema Diff** feature in the `dev` branch details page to compare your branch with its parent.
 
-![Schema diff page](images/getting-started/schema-diff.png)
+![Schema diff page](assets/images/getting-started/schema-diff.png)
 
 ## 9. Start from a clean slate
 
