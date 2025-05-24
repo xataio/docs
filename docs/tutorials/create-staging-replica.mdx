@@ -1,0 +1,141 @@
+---
+title: Set up staging replica
+description: Use Xata's clone and branching features to create a safe, anonymized staging environment and test schema changes before production.
+---
+
+This guide shows you how to create a realistic staging environment in Xata by cloning your production database, anonymizing sensitive data, and safely testing schema changes before applying them to production.
+
+## 1. Prerequisites
+
+- A Xata account ([sign up here](https://console.xata.io))
+- The Xata CLI installed:
+  ```bash
+  curl -fsSL https://xata.io/install.sh | bash
+  ```
+- Access to your production PostgreSQL database (connection string)
+- [pgroll](https://github.com/xataio/pgroll) or `xata roll` initialized on your production database (for zero-downtime migrations)
+
+---
+
+## 2. Clone your production database to Xata
+
+We'll use the `xata clone` command to create a new `staging` branch in Xata, copying data from your production database and applying anonymization rules.
+
+### a. Create and checkout the staging branch
+
+If you haven't already, create and switch to the `staging` branch:
+
+```bash
+xata branch create staging
+xata checkout staging
+```
+
+### b. Configure anonymization
+
+First, generate a configuration for anonymization transforms:
+
+```bash
+xata clone config --source-url postgres://user:pass@host:5432/prod_db --mode prompt
+```
+
+Follow the prompts to specify which columns should be masked or transformed.
+
+### c. Start the clone
+
+Now, run the clone command to snapshot your production database into Xata:
+
+```bash
+xata clone start --source-url postgres://user:pass@host:5432/prod_db --target-url `xata branch url`
+```
+
+- The clone process will copy data and apply your anonymization rules to the current (staging) branch.
+
+---
+
+## 3. Create a development branch from staging
+
+Now, list your branches to get the staging branch ID:
+
+```bash
+xata branch list
+```
+
+Grab the `staging` branch ID from the list and create a new `dev` branch from `staging`:
+
+```bash
+xata branch create --name dev --parent-branch [staging branch id]
+```
+
+Switch to your dev branch:
+
+```bash
+xata checkout dev
+```
+
+---
+
+## 4. Make and test schema changes in dev
+
+Suppose you want to add a new column to a table. You can do this using SQL or a migration file. For example, to add a `rating` column to `products`:
+
+```sql
+ALTER TABLE products ADD COLUMN rating INT;
+```
+
+Apply the migration using pgroll or the Xata CLI:
+
+```bash
+xata roll migrate
+```
+
+Test your application against the `dev` branch to ensure everything works as expected.
+
+---
+
+## 5. Merge changes back to staging
+
+Once you're satisfied with your changes, merge them back to the `staging` branch:
+
+```bash
+xata checkout staging
+xata roll migrate
+```
+
+This applies the tested schema changes to your staging environment.
+
+---
+
+## 6. Apply changes to production
+
+When you're ready to promote the changes to production:
+
+- Ensure `pgroll` or `xata roll` is initialized on your production database.
+- Pull the latest migrations to your local environment:
+
+```bash
+xata roll pull
+```
+
+- Apply the migrations to production (replace with your production connection string or context):
+
+```bash
+xata roll migrate --branch production
+```
+or, if using pgroll directly:
+```bash
+pgroll migrate
+```
+
+**Note:** Always review your migration plan and ensure you have backups before applying changes to production.
+
+---
+
+## Summary
+
+- You now have a realistic, anonymized staging environment in Xata.
+- You can safely test schema changes in a dev branch, merge to staging, and then promote to production with zero downtime.
+
+For more details on advanced migration workflows, see the [zero-downtime migrations guide](/core-concepts/schema-changes).
+
+---
+
