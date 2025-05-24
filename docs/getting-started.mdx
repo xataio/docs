@@ -7,7 +7,7 @@ Xata is a PostgreSQL platform that provides instant Copy-on-Write branching, dat
 
 ## 1. Sign up
 
-Create your free Xata account at [console.xata.io](https://console.xata.io). You can sign up with GitHub, Google, or your email address.
+Create your free Xata account at [console.xata.io](https://console.xata.io). You can sign up with GitHub, Google, or your email address. **Note:** Xata is currently in private beta, please request access and wait for approval before proceeding.
 
 ![Xata sign-up page](assets/images/getting-started/signup.png)
 
@@ -37,22 +37,29 @@ WITH o AS (INSERT INTO orders DEFAULT VALUES RETURNING id) INSERT INTO order_ite
 
 ![Queries/SQL editor page](assets/images/getting-started/queries.png)
 
-## 5. View your branch schema and enable schema history
+## 5. Install the CLI
 
-Go to the **Branches** section and select your branch (e.g., `main`). Here you can view your schema and enable schema history for zero-downtime migrations.
-
-To enable schema history, install the CLI and initialize your branch:
+To use advanced features like schema history, migrations, cloning and database management you need to install the Xata CLI:
 
 ```bash
 curl -fsSL https://xata.io/install.sh | bash
 xata auth login
 xata init
+```
+
+## 6. Enable schema history
+
+Go to the **Branches** section and select your branch (e.g., `main`). Here you can view your schema and enable schema history for zero-downtime migrations.
+
+To enable schema history, run:
+
+```bash
 xata roll init
 ```
 
 ![Branch details/schema view](assets/images/getting-started/branch-details.png)
 
-## 6. Create a development branch with the CLI
+## 7. Create a development branch with the CLI
 
 List your branches:
 
@@ -66,22 +73,24 @@ Grab the `main` branch ID from the list and create a new branch from `main`:
  xata branch create --name dev --parent-branch [main branch id]
 ```
 
-## 7. Modify your schema from the terminal
+## 8. Modify your schema from the terminal
 
 You can make schema changes directly in the Xata query view, but here we'll show how to do it from your terminal using `psql` for a more hands-on workflow.
 
 If you don't have `psql` installed:
 
 **macOS:**
+If you are using bash, replace `~/.zshrc` with `~/.bash_profile` in the above.
+
 ```bash
 brew install libpq
 echo 'export PATH="/opt/homebrew/opt/libpq/bin:$PATH"' >> ~/.zshrc
 source ~/.zshrc
 ```
 
-**Linux:**
+**Ubuntu:**
 ```bash
-sudo apt-get install postgresql-client
+sudo apt install postgresql-client-17
 ```
 
 **Windows:**
@@ -106,13 +115,13 @@ ALTER TABLE products ADD COLUMN rating INT;
 
 You can now use SQL to update or query the new column.
 
-## 8. Check the schema diff in the branch details page
+## 9. Check the schema diff in the branch details page
 
 After making changes in a branch, use the **Schema Diff** feature in the `dev` branch details page to compare your branch with its parent.
 
 ![Schema diff page](assets/images/getting-started/schema-diff.png)
 
-## 9. Merge your changes back to main
+## 10. Merge your changes back to main
 
 Now that you've made changes in your dev branch, merge them back to main:
 
@@ -123,7 +132,7 @@ xata roll migrate
 
 This will apply your dev branch's schema changes to main.
 
-## 10. Start from a clean slate
+## 11. Start from a clean slate
 
 Now that you're all set up, let's get you reset and ready to start building.
 
@@ -143,7 +152,7 @@ DROP TABLE IF EXISTS products;
 
 This will leave your main branch clean for your next project or migration.
 
-## 11. Next steps: choose your workflow
+## 12. Next steps: choose your workflow
 
 Now that your environment is clean, you're ready to dive deeper:
 
