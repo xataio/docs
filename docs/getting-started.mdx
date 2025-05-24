@@ -90,18 +90,12 @@ Download from [PostgreSQL official site](https://www.postgresql.org/download/win
 Get your branch connection string using the Xata CLI. First, checkout your new `dev` branch:
 
 ```bash
-xata branch checkout dev
+xata checkout dev
 ```
-Then grab the connection string:
+Then use the connection string to connect with `psql`
 
 ```bash
-xata branch url
-```
-
-Connect to your branch with psql:
-
-```bash
-psql <paste-connection-string-here>
+psql `xata branch url`
 ```
 
 Add a new column to your `products` table:
@@ -118,17 +112,22 @@ After making changes in a branch, use the **Schema Diff** feature in the `dev` b
 
 ![Schema diff page](assets/images/getting-started/schema-diff.png)
 
-## 9. Start from a clean slate
+## 9. Merge your changes back to main
+
+Now that you've made changes in your dev branch, merge them back to main:
+
+```bash
+xata checkout main
+xata roll migrate
+```
+
+This will apply your dev branch's schema changes to main.
+
+## 10. Start from a clean slate
 
 Now that you're all set up, let's get you reset and ready to start building.
 
-First, switch to your main branch:
-
-```bash
-xata branch checkout main
-```
-
-Then, delete the `dev` branch:
+Delete the `dev` branch:
 
 ```bash
 xata branch delete dev
@@ -144,7 +143,7 @@ DROP TABLE IF EXISTS products;
 
 This will leave your main branch clean for your next project or migration.
 
-## 10. Next steps: choose your workflow
+## 11. Next steps: choose your workflow
 
 Now that your environment is clean, you're ready to dive deeper:
 
