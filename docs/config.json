@@ -43,9 +43,9 @@
       "file": "docs/tutorials/tutorials.mdx",
       "items": [
         {
-          "title": "Developer workflow",
-          "href": "/tutorials/developer-workflow",
-          "file": "docs/tutorials/developer-workflow.mdx"
+          "title": "Set up staging replica",
+          "href": "/tutorials/create-staging-replica",
+          "file": "docs/tutorials/create-staging-replica.mdx"
         },
         {
           "title": "Migrate to Xata",
