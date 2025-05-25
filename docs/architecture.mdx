@@ -3,7 +3,7 @@ title: Architecture
 description: Xata's PostgreSQL platform architecture
 ---
 
-Xata delivers "Postgres at scale" by combining a globally hosted control-plane with a data-plane that can be either hosted by Xata or deployed in your own cloud. The platform brings together three core building blocks:
+Xata delivers Postgres at scale by combining a globally hosted control-plane with a data-plane that can be either hosted by Xata or deployed in your own cloud. The platform brings together three core building blocks:
 
 1. **A cloud-native storage layer** that separates storage from compute and enables instant copy-on-write (CoW) branching.
 2. **Vanilla PostgreSQL on Kubernetes** orchestrated by **CloudNativePG (CNPG)** for high availability, rolling upgrades, and self-healing.
@@ -39,7 +39,7 @@ From a total-cost-of-ownership perspective, the combination of thin-provisioned 
 
 ### 3. Copy-on-write branching
 
-![Copy-on-write branch (no writes yet)](/assets/images/copy-on-write-branching-1.png)
+![Copy-on-write branch (no writes yet)](/assets/images/copy-on-write-diagram-1.png)
 
 Instant branching in Xata is implemented at the storage layer itself. When you create a new branch the platform simply clones the metadata index that maps logical blocks to their physical location; no data is copied, so the operation finishes in milliseconds whether the database is megabytes or terabytes in size.  
 As soon as either the parent or the child branch writes to a page, the storage layer allocates a fresh block for the modified data, leaving the original block untouched. The two branches therefore share all unchanged pages and diverge only where changes occur, which keeps additional disk usage minimal and enables hundreds of simultaneous branches without exploding storage costs.  
