@@ -23,14 +23,14 @@ Because the mechanism lives entirely below PostgreSQL, it is compatible with van
 
 A typical flow looks like this:
 
-1. A staging replica kept in sync by [**pgstream**](https://github.com/xataio/pgstream) holds an anonymised copy of production.
+1. A staging replica kept in sync by `xata clone` ([**pgstream**](https://github.com/xataio/pgstream)) holds an anonymised copy of production.
 2. `xata branch create feature-xyz` clones the metadata index and gives the developer a fully isolated environment that behaves like production.
 3. The developer makes schema edits, runs tests and benchmarks against realistic data.
-4. Once validated, [**pgroll**](https://github.com/xataio/pgroll) compares the branch with its parent, generates a reversible migration plan and applies it to production with zero-downtime.
+4. Once validated, `xata roll` ([**pgroll**](https://github.com/xataio/pgroll)) compares the branch with its parent, generates a reversible migration plan and applies it to production with zero-downtime.
 
 Because CoW tracks every changed chunk, the merge-back step knows *exactly* which pages were touched, enabling deterministic, audit-ready schema migrations.
 
-## Benefits at scale
+## Benefits
 
 * **Speed** – branch creation takes milliseconds, enabling per-PR ephemeral environments.
 * **Storage efficiency** – only the modified chunks consume additional space; dozens of branches cost little more than a single copy.
@@ -39,39 +39,6 @@ Because CoW tracks every changed chunk, the merge-back step knows *exactly* whic
 ### Integration with any Postgres provider
 
 The storage layer is provider-agnostic: you can run instant branches on AWS RDS, Aurora, Google Cloud SQL, Azure Database or even self-hosted Postgres. Xata improves rather than replaces your existing production setup.
-
-## Technical Benefits
-
-### Performance
-
-- **Instant Branch Creation**: No data copying means branches are created in seconds
-- **Storage Efficiency**: Only modified data is duplicated
-- **Write Performance**: CoW operations are optimized at the storage layer
-
-### Integration
-
-Works with any PostgreSQL cloud provider:
-- AWS RDS
-- Amazon Aurora
-- Google Cloud SQL
-- Azure Database
-- Self-hosted PostgreSQL
-
-## Use Cases
-
-### Development Workflow
-
-1. Create a branch from production
-2. Make schema changes
-3. Test with real data
-4. Merge changes back to production
-
-### Testing
-
-1. Create multiple test branches
-2. Run parallel test suites
-3. Compare results across branches
-4. No storage overhead for read-only operations
 
 ## Getting Started
 

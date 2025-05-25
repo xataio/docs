@@ -53,13 +53,30 @@ Anonymisation happens before the data leaves the production network segment, ens
 
 ## Getting started
 
-```bash
-# Enable anonymisation for future clones
-xata config set anonymization.enabled true
+To create an anonymized staging replica in Xata, follow these steps:
 
-# Create the first anonymised replica
-xata clone --anonymize staging
+1. **Create and checkout the staging branch:**
+
+```bash
+xata branch create staging
+xata checkout staging
 ```
+
+2. **Configure anonymization transforms:**
+
+```bash
+xata clone config --source-url postgres://user:pass@host:5432/prod_db --mode prompt
+```
+
+Follow the prompts to specify which columns should be masked or transformed.
+
+3. **Clone your production database into the staging branch:**
+
+```bash
+xata clone start --source-url postgres://user:pass@host:5432/prod_db --target-url `xata branch url`
+```
+
+This will copy your production data into the staging branch, applying the anonymization rules you configured.
 
 If you want to experiment locally, you can preview the transformation result:
 
