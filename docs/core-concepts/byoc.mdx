@@ -17,78 +17,37 @@ From an economics point of view, BYOC lets you pay for compute with the reservat
 
 *BYOC Architecture: Control plane managed by Xata, data plane deployed in your cloud account*
 
+Xata's BYOC architecture is designed to give you the best of both worlds: a fully managed control plane operated by Xata, and a data plane that runs entirely within your own cloud account. The control plane, hosted in Xata's multi-region cloud, is responsible for user authentication, project and organization management, monitoring, alerting, and backup orchestration. It also manages schema migrations and provides a unified UI and API for all your database operations. Because the control plane is decoupled from your data, upgrades and new features are rolled out instantly, without requiring any changes to your infrastructure.
+
+The data plane, on the other hand, is deployed in your own AWS, Azure, GCP, or on-premises Kubernetes cluster. Here, Xata provisions and manages PostgreSQL instances using the CloudNativePG operator, ensuring high availability through synchronous replication and automatic failover. The data plane also includes a distributed storage system, built on NVMe over Fabrics (NVMe-oF) and erasure coding for resilience and performance. All monitoring, logging, and backup storage are handled locally within your environment, and network connectivity to the control plane is outbound-only, secured by mutual-TLS gRPC. This means your data never leaves your VPC, and all telemetry is aggregated and anonymized before it is sent to Xata for compliance and support purposes.
+
+By separating the control and data planes, Xata BYOC allows you to maintain full control over your infrastructure and data residency, while still benefiting from the rapid innovation and operational simplicity of a managed service. You can leverage your existing cloud provider discounts, keep all network traffic within your private network, and satisfy even the strictest compliance requirements without sacrificing developer experience.
+
 ### Control Plane
 
-The Xata control plane manages:
-- User authentication and authorization
-- Project and organization management
-- Monitoring and alerting
-- Backup and restore operations
-- Schema migration management
+The control plane is the heart of Xata's managed experience. Hosted in Xata's secure, multi-region cloud, it handles all aspects of user authentication and authorization, project and organization management, and provides a unified interface for monitoring, alerting, and backup orchestration. The control plane is also responsible for managing schema migrations, ensuring that changes are coordinated and tracked across all environments. Because it is decoupled from your data, the control plane can be updated and improved continuously, delivering new features and security enhancements without requiring any changes to your infrastructure. All communication with the control plane is outbound-only and secured by mutual-TLS, so you never have to open inbound ports in your cloud environment.
 
 ### Data Plane
 
-The data plane runs in your cloud account:
-- PostgreSQL instances on Kubernetes
-- Distributed storage system
-- Network and security configuration
-- Monitoring and logging
-- Backup storage
+The data plane is deployed entirely within your own cloud account, giving you full control over your data and infrastructure. Xata provisions and manages PostgreSQL instances using the CloudNativePG operator, which provides high availability through synchronous replication, automatic failover, and support for read replicas. The data plane also includes a distributed storage system that leverages NVMe over Fabrics (NVMe-oF) and erasure coding to deliver high performance and resilience. Monitoring, logging, and backup storage are all handled locally, ensuring that sensitive information never leaves your environment. The data plane communicates with the control plane only over secure, outbound connections, and all telemetry is aggregated and anonymized before being sent to Xata for compliance and support purposes.
 
-## Implementation
+### Implementation
 
-### Kubernetes Integration
-
-Xata uses CloudNativePG operator for PostgreSQL management:
-- High availability via synchronous replication
-- Read replicas for scaling
-- Automatic failover
-- Rolling updates
-- Backup management
-
-### Storage System
-
-The platform uses a distributed storage system:
-- NVMe over Fabrics (NVMe-oF) for high performance
-- Erasure coding for data resilience
-- Node-level redundancy
-- Automatic failover
-- Unlimited storage growth
+Xata's BYOC solution is built on top of proven, cloud-native technologies. PostgreSQL clusters are managed using the CloudNativePG operator, which automates high availability, rolling updates, and backup management. The distributed storage system is designed for performance and resilience, using NVMe-oF for fast data access and erasure coding for data protection. Integration with Kubernetes allows you to deploy and scale your database infrastructure alongside your application workloads, using the same tools and processes you already know. All components are delivered as Kubernetes manifests or Terraform modules, making it easy to integrate Xata into your existing infrastructure-as-code workflows. The entire deployment is idempotent, so you can tear down and recreate your cluster from source control at any time, ensuring consistency and repeatability.
 
 ## Deployment Options
 
-### Cloud Providers
+Xata BYOC supports deployment on all major cloud providers, including AWS, Azure, GCP, and Hetzner, as well as on self-managed Kubernetes clusters. On AWS, you can use EKS for Kubernetes orchestration, EC2 for compute, and EBS for storage. Azure users can leverage AKS, virtual machines, and managed disks, while GCP users can deploy on GKE, Compute Engine, and persistent disks. Hetzner is also supported for those running self-managed Kubernetes environments.
 
-- **AWS**: EKS, EC2, EBS
-- **Azure**: AKS, VMs, Managed Disks
-- **GCP**: GKE, Compute Engine, Persistent Disks
-- **Hetzner**: Self-managed Kubernetes
+To ensure high availability and performance, your Kubernetes cluster should be running version 1.20 or later and consist of at least three nodes equipped with NVMe storage. This setup provides the necessary redundancy and throughput for production workloads. Network connectivity to the Xata control plane is required, but all communication is outbound-only and secured by mutual-TLS. You will also need to configure IAM roles or service principals for secure access and automation, depending on your cloud provider.
 
-### Infrastructure Requirements
-
-- Kubernetes cluster (1.20+)
-- 3+ nodes for high availability
-- NVMe storage support
-- Network connectivity to control plane
-- IAM/Service Principal configuration
+By meeting these infrastructure requirements, you can deploy Xata's data plane alongside your existing workloads, taking full advantage of your cloud provider's reliability, scalability, and cost optimization features while maintaining strict control over data residency and security.
 
 ## Security
 
-### Data Protection
+Security is a foundational principle of Xata's BYOC deployments. All customer data remains entirely within your own cloud account—never leaving your VPC or VNet—ensuring that you retain full control over data residency and access. Data is encrypted both at rest and in transit, leveraging your cloud provider's native encryption capabilities and Xata's own security protocols. Network isolation is enforced through private networking, and all access to the data plane is governed by your own IAM roles or service principals, allowing you to integrate with your existing access control policies. Comprehensive audit logging is available, so every access and operation is tracked for compliance and security monitoring.
 
-- Data never leaves your cloud account
-- Encryption at rest and in transit
-- Network isolation via VPC/VNet
-- IAM integration for access control
-- Audit logging
-
-### Compliance
-
-- GDPR compliance
-- HIPAA compliance
-- SOC 2 compliance
-- Custom compliance requirements
-- Data residency controls
+Xata BYOC is designed to meet the highest standards of regulatory compliance, including GDPR, HIPAA, and SOC 2. The platform supports custom compliance requirements and provides fine-grained data residency controls, allowing you to specify exactly where your data is stored and processed. By keeping all telemetry and logs within your own environment and only sending anonymized, aggregated metrics to the control plane, Xata ensures that your compliance and privacy requirements are always met.
 
 ## Security posture
 
@@ -96,41 +55,3 @@ The platform uses a distributed storage system:
 * **No shared tenancy** – storage and compute nodes belong exclusively to your account.
 * **Key management** – integrate with KMS / HSM services for at-rest encryption keys.
 * **Auditability** – logs and metrics stay inside your logging stack (CloudWatch, Stackdriver, etc.).
-
-## Typical rollout
-
-1. Provision a Kubernetes cluster of three or more nodes with NVMe disks.
-2. Install the CloudNativePG operator and the Simplyblock storage Helm chart.
-3. Run `xata byoc init` to register the cluster; the control plane issues an agent token.
-4. Apply the generated manifests; Postgres and storage pods come online and self-register.
-5. Migrate data from the previous provider using `xata clone --target byoc-prod` or start with a fresh database.
-
-The entire process is idempotent, so you can treat the cluster as cattle: tear it down and recreate it from Git at any time.
-
-> **Tip:** BYOC pairs well with multi-region fail-over. You can deploy a second BYOC data plane in another region and let Xata orchestrate asynchronous replication.
-
-## Getting Started
-
-1. Set up Kubernetes cluster:
-```bash
-# AWS
-eksctl create cluster --name xata-cluster
-
-# Azure
-az aks create --name xata-cluster
-
-# GCP
-gcloud container clusters create xata-cluster
-```
-
-2. Configure Xata deployment:
-```bash
-xata init --byoc
-```
-
-3. Deploy Xata platform:
-```bash
-xata deploy
-```
-
-[Learn more about project management](/cli/project) 
