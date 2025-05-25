@@ -5,7 +5,7 @@ description: Secure data handling with automatic PII detection and anonymization
 
 Xata's data anonymization system automatically detects and masks sensitive information during database replication, enabling secure development and testing environments.
 
-When a staging replica is built with `xata clone --anonymize`, the replication pipeline passes every row through a streaming transformation layer powered by [**pgstream**](https://github.com/xataio/pgstream). This layer inspects column names, data types and actual values to decide whether the field contains personally-identifiable information (PII) or other sensitive content. Out-of-the-box detectors recognise emails, phone numbers, names, street addresses, credit-card numbers and more. You can also register custom detectors for domain-specific patterns.
+When a staging replica is built with `xata clone`, the replication pipeline passes every row through a streaming transformation layer powered by [**pgstream**](https://github.com/xataio/pgstream). This layer inspects column names, data types and actual values to decide whether the field contains personally-identifiable information (PII) or other sensitive content. Out-of-the-box detectors recognise emails, phone numbers, names, street addresses, credit-card numbers and more. You can also register custom detectors for domain-specific patterns.
 
 Once a value is flagged as sensitive, a *transformer* replaces it on-the-fly. The most common transformer is **consistent hashing**—the same input always yields the same opaque token—so application logic that relies on equality checks continues to work. Other transformers preserve formatting (for example keeping the `@domain.com` part of an e-mail) or maintain referential integrity by applying the same hash across foreign-key relationships. Because the masking happens inside the replication stream, no unmasked data ever lands in the staging database.
 
@@ -35,8 +35,10 @@ steps:
     uses: actions/checkout@v4
   - name: Install Xata CLI
     run: curl -fsSL https://xata.io/install.sh | bash
-  - name: Create anonymised replica
-    run: xata clone --anonymize --branch ci-${{ github.sha }}
+  - name: Configure anonymization
+    run: xata clone config --source-url $PROD_DB_URL
+  - name: Create anonymized replica
+    run: xata clone start --source-url $PROD_DB_URL --target-url ${{ secrets.XATA_BRANCH_URL }}
   - name: Run integration tests
     run: npm test
 ```
@@ -53,13 +55,30 @@ Anonymisation happens before the data leaves the production network segment, ens
 
 ## Getting started
 
-```bash
-# Enable anonymisation for future clones
-xata config set anonymization.enabled true
+To create an anonymized staging replica in Xata, follow these steps:
 
-# Create the first anonymised replica
-xata clone --anonymize staging
+1. **Create and checkout the staging branch:**
+
+```bash
+xata branch create staging
+xata checkout staging
 ```
+
+2. **Configure anonymization transforms:**
+
+```bash
+xata clone config --source-url postgres://user:pass@host:5432/prod_db --mode prompt
+```
+
+Follow the prompts to specify which columns should be masked or transformed.
+
+3. **Clone your production database into the staging branch:**
+
+```bash
+xata clone start --source-url postgres://user:pass@host:5432/prod_db --target-url `xata branch url`
+```
+
+This will copy your production data into the staging branch, applying the anonymization rules you configured.
 
 If you want to experiment locally, you can preview the transformation result:
 
