@@ -38,7 +38,7 @@ xata clone start (--source-url value) [flags]
 - `--postgres-url`  Source postgres database to perform the snapshot from
 - `--profile`       Whether to produce CPU and memory profile files, as well as exposing a /debug/pprof endpoint on localhost:6060
 - `--reset`         Whether to reset the target before snapshotting (only for postgres target)
-- `--tables`        List of tables to snapshot, in the format <schema>.<table>. If not specified, the schema `public` will be assumed. Wildcards are supported
+- `--tables`        List of tables to snapshot. If not specified, the schema `public` will be assumed. Wildcards are supported
 - `--target`        Target type. One of postgres, opensearch, elasticsearch, kafka
 - `--target-url`    Target URL
 - `--source-url`    The source URL of the database to clone (required)
