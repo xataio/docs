@@ -6,9 +6,9 @@
       "file": "docs/getting-started.mdx"
     },
     {
-      "title": "Architecture",
-      "href": "/architecture",
-      "file": "docs/architecture.mdx"
+      "title": "Deployment models",
+      "href": "/deployment",
+      "file": "docs/deployment.mdx"
     },
     {
       "title": "Core concepts",
