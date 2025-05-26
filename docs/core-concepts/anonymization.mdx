@@ -13,7 +13,7 @@ Xata clone is a tool for copying data efficiently between different PostgreSQL i
 
 Xata clone offers the ability to anonymize and mask the data on the fly while it is being copied. The process for cloning is typically set up on a periodic schedule (for example, nightly).
 
-## Transformers
+## Transformers basics
 
 The primary mechanism to configure anonymization are _transformers_. Transformers typically work at the column level and anonymize or mask the data depending on the column type and purpose.
 
@@ -28,6 +28,14 @@ Transformers can be **deterministic** which means that the same input value will
 Transformers can **mask** data. Masking means that parts of the input are hidden (`info@xata.io -> i***o@xata.io`).
 
 Transformers can use **templating** to implement conditional logic (e.g. don't anonymize particular values) or to generate composed values (e.g. `LastName, FirstName`).
+
+### Supported transformers
+
+Xata clone uses [pgstream](https://github.com/xataio/pgstream) under the hood, a project for PostgreSQL CDC and replication. `pgstream` implements it's own transformers library, but it can also import transformers from other open source projects, in particular: [Greenmask](https://www.greenmask.io/), [NeoSync](https://www.neosync.dev/) and [go-masker](https://github.com/ggwhite/go-masker).
+
+The supported transformers are documented [here](https://github.com/xataio/pgstream/blob/main/docs/README.md#supported-transformers).
+
+It is also possible to write your own **custom transformers** in the Go programming language.
 
 ## Getting started
 
