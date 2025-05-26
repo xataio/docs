@@ -1,57 +1,33 @@
 ---
 title: Data anonymization
-description: Secure data handling with automatic PII detection and anonymization for development environments
+description: Sensitive data anonymization and masking for PostgreSQL
 ---
 
-Xata's data anonymization system automatically detects and masks sensitive information during database replication, enabling secure development and testing environments.
+Data anonymization and masking provide significant benefits for ephemeral database environments, such as those created for development, testing, and staging. By transforming sensitive data into anonymized or masked formats, these techniques ensure that developers and testers work with realistic but secure datasets that do not expose actual personally identifiable information (PII) or confidential data.
 
-When a staging replica is built with `xata clone`, the replication pipeline passes every row through a streaming transformation layer powered by [**pgstream**](https://github.com/xataio/pgstream). This layer inspects column names, data types and actual values to decide whether the field contains personally-identifiable information (PII) or other sensitive content. Out-of-the-box detectors recognise emails, phone numbers, names, street addresses, credit-card numbers and more. You can also register custom detectors for domain-specific patterns.
+This dramatically reduces the risk of data breaches and compliance violations, aligning with data protection regulations like GDPR and HIPAA. Furthermore, anonymization and masking simplify data handling in non-production environments by offering developers realistic data-sets based on the production data.
 
-Once a value is flagged as sensitive, a *transformer* replaces it on-the-fly. The most common transformer is **consistent hashing**—the same input always yields the same opaque token—so application logic that relies on equality checks continues to work. Other transformers preserve formatting (for example keeping the `@domain.com` part of an e-mail) or maintain referential integrity by applying the same hash across foreign-key relationships. Because the masking happens inside the replication stream, no unmasked data ever lands in the staging database.
+## How it works
 
-## Configuring rules
+Xata clone is a tool for copying data efficiently between different PostgreSQL instances. Note that data cloning is different from branching. Branching is faster but only works within the Xata platform. Xata clone can be used to copy data from other Postgres providers (e.g. AWS RDS) to Xata, as well as to copy data between different Xata instances. 
 
-Anonymisation behaviour is controlled by JSON rules stored in the project configuration. A typical snippet looks like this:
+Xata clone offers the ability to anonymize and mask the data on the fly while it is being copied. The process for cloning is typically set up on a periodic schedule (for example, nightly).
 
-```json
-{
-  "rules": {
-    "users.email": { "type": "email", "preserve_domain": true },
-    "users.phone": { "type": "phone", "preserve_country": true },
-    "orders.cc_number": { "type": "credit_card", "format": "****-****-****-####" }
-  }
-}
-```
+## Transformers
 
-If a column is not covered by a rule but matches a built-in detector, the platform applies a sensible default transformer (usually consistent hashing). You can opt-out by explicitly setting `"action": "ignore"`.
+The primary mechanism to configure anonymization are _transformers_. Transformers typically work at the column level and anonymize or mask the data depending on the column type and purpose.
 
-## Workflow integration
+For example, an "email" transformer can be used to anonymize email addresses, and is guaranteed to generate syntactically correct email addresses (`info@xata.io -> a1dsa1fedfq@example.com`). Dedicated transformers are possible for many types of data, like names, addresses, phone numbers, IP addresses, and so on.
 
-A typical CI job that prepares an anonymised test environment looks like this:
+![Transformers](assets/images/transformers.png)
 
-```yaml
-steps:
-  - name: Checkout repo
-    uses: actions/checkout@v4
-  - name: Install Xata CLI
-    run: curl -fsSL https://xata.io/install.sh | bash
-  - name: Configure anonymization
-    run: xata clone config --source-url $PROD_DB_URL
-  - name: Create anonymized replica
-    run: xata clone start --source-url $PROD_DB_URL --target-url ${{ secrets.XATA_BRANCH_URL }}
-  - name: Run integration tests
-    run: npm test
-```
+A transformer can have configuration options, for example, whether to keep the domain part of the email address (`info@xata.io -> a1dsa1fedfq@xata.io`).
 
-The staging branch behaves exactly like production—but with all sensitive data masked—so you can run load tests, debug migrations or train machine-learning models without violating compliance policies.
+Transformers can be **deterministic** which means that the same input value will always generate the same output value. For example, `info@xata.io` always results `a1dsa1fedfq@example.com` even if it shows up multiple times in the database. This is particular important for maintaining data integrity in relational databases.
 
-## Why deterministic anonymisation matters
+Transformers can **mask** data. Masking means that parts of the input are hidden (`info@xata.io -> i***o@xata.io`).
 
-Because hashing is consistent, the same e-mail address in two tables maps to the same anonymised value, preserving JOIN semantics. Foreign keys are never broken, and applications that rely on lookups or unique constraints continue to work unmodified. At the same time, the hash is irreversible without the secret key held by the masking service, so the original data cannot be reconstructed.
-
-## Security and compliance
-
-Anonymisation happens before the data leaves the production network segment, ensuring PII never traverses the wire in clear form. The process is compatible with GDPR, HIPAA and SOC-2 requirements and can be tuned further for region-specific regulations such as Schrems II or LGPD.
+Transformers can use **templating** to implement conditional logic (e.g. don't anonymize particular values) or to generate composed values (e.g. `LastName, FirstName`).
 
 ## Getting started
 
@@ -70,18 +46,12 @@ xata checkout staging
 xata clone config --source-url postgres://user:pass@host:5432/prod_db --mode prompt
 ```
 
-Follow the prompts to specify which columns should be masked or transformed.
+Follow the prompts to specify which columns should be transformed.
 
 3. **Clone your production database into the staging branch:**
 
 ```bash
-xata clone start --source-url postgres://user:pass@host:5432/prod_db --target-url `xata branch url`
+xata clone start --source-url postgres://user:pass@host:5432/prod_db 
 ```
 
 This will copy your production data into the staging branch, applying the anonymization rules you configured.
-
-If you want to experiment locally, you can preview the transformation result:
-
-```bash
-echo 'john.doe@example.com' | xata anonymize --type email
-``` 
