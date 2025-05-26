@@ -17,13 +17,13 @@ Xata clone offers the ability to anonymize and mask the data on the fly while it
 
 The primary mechanism to configure anonymization are _transformers_. Transformers typically work at the column level and anonymize or mask the data depending on the column type and purpose.
 
-For example, an "email" transformer can be used to anonymize email addresses, and is guaranteed to generate syntactically correct email addresses (`info@xata.io -> a1dsa1fedfq@example.com`). Dedicated transformers are possible for many types of data, like names, addresses, phone numbers, IP addresses, and so on.
+For example, an "email" transformer can be used to anonymize email addresses, and is guaranteed to generate syntactically correct email addresses (`info@xata.io -> a2asd112@example.com`). Dedicated transformers are possible for many types of data, like names, addresses, phone numbers, IP addresses, and so on.
 
 ![Transformers](assets/images/transformers.png)
 
-A transformer can have configuration options, for example, whether to keep the domain part of the email address (`info@xata.io -> a1dsa1fedfq@xata.io`).
+A transformer can have configuration options, for example, whether to keep the domain part of the email address (`info@xata.io -> a2asd112@xata.io`).
 
-Transformers can be **deterministic** which means that the same input value will always generate the same output value. For example, `info@xata.io` always results `a1dsa1fedfq@example.com` even if it shows up multiple times in the database. This is particular important for maintaining data integrity in relational databases.
+Transformers can be **deterministic** which means that the same input value will always generate the same output value. For example, `info@xata.io` always results `a2asd112@example.com` even if it shows up multiple times in the database. This is particular important for maintaining data integrity in relational databases.
 
 Transformers can **mask** data. Masking means that parts of the input are hidden (`info@xata.io -> i***o@xata.io`).
 
