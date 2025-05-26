@@ -29,11 +29,6 @@
           "title": "Schema changes",
           "href": "/core-concepts/schema-changes",
           "file": "docs/core-concepts/schema-changes.mdx"
-        },
-        {
-          "title": "Bring Your Own Cloud",
-          "href": "/core-concepts/byoc",
-          "file": "docs/core-concepts/byoc.mdx"
         }
       ]
     },
