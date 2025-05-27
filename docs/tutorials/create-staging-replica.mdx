@@ -1,9 +1,12 @@
 ---
 title: Set up staging replica
-description: Use Xata's clone and branching features to create a safe, anonymized staging environment and test schema changes before production.
+description: Use Xata's clone and branching features to create a safe, anonymized staging environment.
 ---
 
-This guide shows you how to create a realistic staging environment in Xata by cloning your production database, anonymizing sensitive data, and safely testing schema changes before applying them to production.
+This guide shows you how to create a realistic staging environment in Xata by cloning your production database, optionally anonymizing sensitive data.
+
+![Creating a staging replica of your prod database](assets/images/xata-deployment-staging.png)
+
 
 ## 1. Prerequisites
 
@@ -13,7 +16,6 @@ This guide shows you how to create a realistic staging environment in Xata by cl
   curl -fsSL https://xata.io/install.sh | bash
   ```
 - Access to your production PostgreSQL database (connection string)
-- [pgroll](https://github.com/xataio/pgroll) or `xata roll` initialized on your production database (for zero-downtime migrations)
 
 ---
 
@@ -30,22 +32,30 @@ xata branch create staging
 xata checkout staging
 ```
 
-### b. Configure anonymization
+### b. Configure cloning
 
-First, generate a configuration for anonymization transforms:
+First, generate a configuration for the Xata clone process:
 
 ```bash
-xata clone config --source-url postgres://user:pass@host:5432/prod_db --mode prompt
+xata clone config --source-url 'postgres://user:pass@host:5432/prod_db' --mode prompt
 ```
 
-Follow the prompts to specify which columns should be masked or transformed.
+Note: if your Postgres hosting provider uses self-signed certificates, you can disable the strict certificate verification like this:
+
+```bash
+NODE_TLS_REJECT_UNAUTHORIZED=0 xata clone config --source-url 'postgres://user:pass@host:5432/prod_db' --mode prompt
+```
+
+Follow the prompts to specify whether you want anonymization enabled, which tables and columns to anonymize, and which transformers to use. For more details about transformers, see the [anonymization](/core-concepts/anonymization) page.
+
+The result is a YAML configuration file written in `.xata/clone.yaml`. You can edit this file to further configure your anonymization process.
 
 ### c. Start the clone
 
 Now, run the clone command to snapshot your production database into Xata:
 
 ```bash
-xata clone start --source-url postgres://user:pass@host:5432/prod_db --target-url `xata branch url`
+xata clone start --source-url 'postgres://user:pass@host:5432/prod_db'
 ```
 
 - The clone process will copy data and apply your anonymization rules to the current (staging) branch.
@@ -74,68 +84,9 @@ xata checkout dev
 
 ---
 
-## 4. Make and test schema changes in dev
-
-Suppose you want to add a new column to a table. You can do this using SQL or a migration file. For example, to add a `rating` column to `products`:
-
-```sql
-ALTER TABLE products ADD COLUMN rating INT;
-```
-
-Apply the migration using pgroll or the Xata CLI:
-
-```bash
-xata roll migrate
-```
-
-Test your application against the `dev` branch to ensure everything works as expected.
-
----
-
-## 5. Merge changes back to staging
-
-Once you're satisfied with your changes, merge them back to the `staging` branch:
-
-```bash
-xata checkout staging
-xata roll migrate
-```
-
-This applies the tested schema changes to your staging environment.
-
----
-
-## 6. Apply changes to production
-
-When you're ready to promote the changes to production:
-
-- Ensure `pgroll` or `xata roll` is initialized on your production database.
-- Pull the latest migrations to your local environment:
-
-```bash
-xata roll pull
-```
-
-- Apply the migrations to production (replace with your production connection string or context):
-
-```bash
-xata roll migrate --branch production
-```
-or, if using pgroll directly:
-```bash
-pgroll migrate
-```
-
-**Note:** Always review your migration plan and ensure you have backups before applying changes to production.
-
----
-
 ## Summary
 
 - You now have a realistic, anonymized staging environment in Xata.
-- You can safely test schema changes in a dev branch, merge to staging, and then promote to production with zero downtime.
+- You can safely test schema migrations, new indexes, or any other database changes using instant Copy-on-Write branches.
 
-For more details on advanced migration workflows, see the [zero-downtime migrations guide](/core-concepts/schema-changes).
-
----
-
+For more details on how to set up an advanced schema changes workflow, see the [schema changes](/core-concepts/schema-changes) section.
