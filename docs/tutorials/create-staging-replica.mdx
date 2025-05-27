@@ -40,7 +40,7 @@ First, generate a configuration for the Xata clone process:
 xata clone config --source-url 'postgres://user:pass@host:5432/prod_db' --mode prompt
 ```
 
-Note: if your Postgres hosting provider uses self-signed certificates, you might can disable the strict certificate verification like this:
+Note: if your Postgres hosting provider uses self-signed certificates, you can disable the strict certificate verification like this:
 
 ```bash
 NODE_TLS_REJECT_UNAUTHORIZED=0 xata clone config --source-url 'postgres://user:pass@host:5432/prod_db' --mode prompt
