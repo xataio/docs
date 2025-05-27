@@ -5,76 +5,42 @@ description: Command for cloning Xata databases and external PostgreSQL database
 
 The `clone` command helps you create a copy of your Xata database or clone an external PostgreSQL database into Xata. It supports data anonymization and advanced configuration for complex migration scenarios.
 
-## Overview
-
-Use `xata clone` to:
-- Clone another PostgreSQL database into Xata, optionally with data anonymization
-- Configure and run snapshot-based migrations
-- Copy all or selected tables from a source database to a target branch
-
-## Usage
-
-```bash
-xata clone <command> [flags]
-```
-
 ## Subcommands
 
-- `start` — Perform a snapshot of the configured source Postgres database into the configured target
-- `config` — Automatically configure the transforms for the clone command
-
 ### start
-
 Snapshot performs a snapshot of the configured source Postgres database into the configured target.
 
-**Usage:**
 ```bash
-xata clone start (--source-url value) [flags]
+xata clone start [--source-url <url>] [--config <file>] [--log-level <level>] [--postgres-url <url>] [--profile] [--reset] [--tables <tables>] [--target <type>] [--target-url <url>] [--organization <id>] [--project <id>] [--branch <id>] [--validation-mode <mode>] [-h|--help]
 ```
-
-**Flags:**
-- `--config`        .env or .yaml config file to use with pgstream if any
-- `--log-level`     Log level for the application. One of trace, debug, info, warn, error, fatal, panic
-- `--postgres-url`  Source postgres database to perform the snapshot from
-- `--profile`       Whether to produce CPU and memory profile files, as well as exposing a /debug/pprof endpoint on localhost:6060
-- `--reset`         Whether to reset the target before snapshotting (only for postgres target)
-- `--tables`        List of tables to snapshot. If not specified, the schema `public` will be assumed. Wildcards are supported
-- `--target`        Target type. One of postgres, opensearch, elasticsearch, kafka
-- `--target-url`    Target URL
-- `--source-url`    The source URL of the database to clone (required)
-- `--organization`  Organization ID [default = ""]
-- `--project`       Project ID [default = ""]
-- `--branch`        Branch ID [default = ""]
-- `-h, --help`      Print help information and exit
+- `--source-url`: The source URL of the database to clone
+- `--config`: .env or .yaml config file to use with pgstream if any
+- `--log-level`: Log level for the application. One of trace, debug, info, warn, error, fatal, panic
+- `--postgres-url`: Source postgres database to perform the snapshot from
+- `--profile`: Whether to produce CPU and memory profile files, as well as exposing a /debug/pprof endpoint on localhost:6060
+- `--reset`: Whether to reset the target before snapshotting (only for postgres target)
+- `--tables`: List of tables to snapshot, in the format <schema>.<table>. If not specified, the schema `public` will be assumed. Wildcards are supported
+- `--target`: Target type. One of postgres, opensearch, elasticsearch, kafka
+- `--target-url`: Target URL
+- `--organization`: Organization ID (default: "")
+- `--project`: Project ID (default: "")
+- `--branch`: Branch ID (default: "")
+- `--validation-mode`: Anonymization validation mode, strict implies that all tables and columns should be specified (strict|relaxed|prompt, default: prompt)
+- `-h, --help`: Print help information and exit
 
 ### config
-
 Automatically configure the transforms for the clone command.
 
-**Usage:**
 ```bash
-xata clone config (--source-url value) [flags]
+xata clone config [--source-url <url>] [--mode <mode>] [--validation-mode <mode>] [--organization <id>] [--project <id>] [--branch <id>] [-h|--help]
 ```
-
-**Flags:**
-- `--source-url`     The source URL of the database to clone (required)
-- `--mode`           The assisting mode to help with the configuration generation [auto|prompt|web, default = prompt]
-- `--organization`   Organization ID [default = ""]
-- `--project`        Project ID [default = ""]
-- `--branch`         Branch ID [default = ""]
-- `-h, --help`       Print help information and exit
-
-## Examples
-
-Clone a remote Postgres database into a new Xata branch:
-```bash
-xata clone start --source-url postgres://user:pass@host:5432/dbname --target-url <xata-branch-url>
-```
-
-Configure transforms for anonymization:
-```bash
-xata clone config --source-url postgres://user:pass@host:5432/dbname --mode prompt
-```
+- `--source-url`: The source URL of the database to clone
+- `--mode`: The assisting mode to help with the configuration generation (auto|prompt|web|ai, default: prompt)
+- `--validation-mode`: Anonymization validation mode, strict implies that all tables and columns should be specified (strict|relaxed|prompt, default: prompt)
+- `--organization`: Organization ID (default: "")
+- `--project`: Project ID (default: "")
+- `--branch`: Branch ID (default: "")
+- `-h, --help`: Print help information and exit
 
 ## Global Flags
 

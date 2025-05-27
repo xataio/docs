@@ -1,70 +1,63 @@
 ---
-title: Organization Commands
+title: Organization Command
 description: Commands for managing Xata organizations
 ---
 
-The `organization` commands help you manage your Xata organizations, including creating, listing, and configuring organizations.
+The `organization` command helps you create, list, describe, and manage organizations in Xata.
 
-## list
+## Subcommands
 
+### list
 List all organizations.
 
 ```bash
-xata organization list
+xata organization list [--json] [-h|--help]
 ```
+- Aliases: `ls`
+- `--json`: Output in JSON format (default: false)
+- `-h, --help`: Print help information and exit
 
-This command displays all organizations you have access to, including:
-- Organization name
-- Organization ID
-- Creation date
-- Status
-
-## describe
-
+### describe
 Describe an organization.
 
 ```bash
-xata organization describe
+xata organization describe [--organization <id>] [--json] [-h|--help]
 ```
+- Aliases: `view`, `show`
+- `--organization`: Organization ID (default: "")
+- `--json`: Output in JSON format (default: false)
+- `-h, --help`: Print help information and exit
 
-This command shows detailed information about the current organization, including:
-- Organization configuration
-- Member information
-- Project settings
-- Billing details
-
-## create
-
+### create
 Create a new organization.
 
 ```bash
-xata organization create
+xata organization create --name <name> [--json] [-h|--help]
 ```
+- `--name`: Organization Name (required)
+- `--json`: Output in JSON format (default: false)
+- `-h, --help`: Print help information and exit
 
-This command creates a new organization.
-
-## delete
-
+### delete
 Delete an organization.
 
 ```bash
-xata organization delete
+xata organization delete [--organization <id>] [--json] [--yes] [-h|--help]
 ```
+- `--organization`: Organization ID (default: "")
+- `--json`: Output in JSON format (default: false)
+- `--yes`: Do not ask for confirmation, assume yes (default: false)
+- `-h, --help`: Print help information and exit
 
-This command permanently deletes the current organization and all its data.
-
-## get
-
+### get
 Get a field from an organization description.
 
 ```bash
-xata organization get <field>
+xata organization get [--organization <id>] <field> [-h|--help]
 ```
-
-Arguments:
-- `field` - The field to retrieve from the organization description
-
-This command retrieves specific information about the current organization.
+- `--organization`: Organization ID (default: "")
+- `field`: The field to get (default: `.catalog`)
+- `-h, --help`: Print help information and exit
 
 ## Global Flags
 

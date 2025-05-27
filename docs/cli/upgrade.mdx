@@ -10,18 +10,12 @@ The `upgrade` command helps you update the Xata CLI to the latest version.
 Upgrade the Xata CLI.
 
 ```bash
-xata upgrade [--channel <channel>] [--version <version>]
+xata upgrade [--channel <channel>] [--version <version>] [--json] [-h|--help]
 ```
-
-Arguments:
-- `--channel` - The channel to upgrade from (dev|next|latest, default = latest)
-- `--version` - The specific version to upgrade to
-
-This command:
-- Checks for available updates
-- Downloads the latest version
-- Installs the update
-- Verifies the installation
+- `--channel`: The channel to upgrade from (dev|next|latest, default: latest)
+- `--version`: The specific version to upgrade to (default: "")
+- `--json`: Output in JSON format (default: false)
+- `-h, --help`: Print help information and exit
 
 ## Global Flags
 

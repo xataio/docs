@@ -1,75 +1,69 @@
 ---
-title: Authentication Commands
-description: Commands for managing Xata authentication
+title: Auth Command
+description: Commands for authenticating with Xata
 ---
 
-The `auth` commands help you manage your Xata authentication state, including logging in, switching accounts, and managing tokens.
+The `auth` command helps you manage authentication and account profiles for the Xata CLI.
 
-## login
+## Subcommands
 
-Log in to your Xata account.
+### login
+Log in to a Xata account.
 
 ```bash
-xata auth login
+xata auth login [--env dev|staging|prod] [--profile <name>] [-f|--force] [-h|--help]
 ```
+- `--env`: Environment to log in to (`dev|staging|prod`, default: `prod`)
+- `--profile`: Profile to log in to (default: `default`)
+- `-f, --force`: Force login even if already logged in
+- `-h, --help`: Print help information and exit
 
-This command will open your default web browser to authenticate with Xata. After successful authentication, your credentials will be stored locally.
-
-## logout
-
+### logout
 Log out of the current account.
 
 ```bash
-xata auth logout
+xata auth logout [--profile <name>] [--yes] [-h|--help]
 ```
+- `--profile`: Profile to log out of (default: `default`)
+- `--yes`: Do not ask for confirmation, assume yes
+- `-h, --help`: Print help information and exit
 
-This command removes the stored credentials for the current account.
-
-## status
-
+### status
 Display active account and authentication state.
 
 ```bash
-xata auth status
+xata auth status [--profile <name>] [-h|--help]
 ```
+- `--profile`: Profile to log in to (default: `default`)
+- `-h, --help`: Print help information and exit
 
-Shows information about your current authentication state, including:
-- Currently logged-in account
-- Authentication status
-- Token expiration (if applicable)
-
-## switch
-
+### switch
 Switch to a different Xata account profile.
 
 ```bash
 xata auth switch <profile>
+xata auth switch --help
 ```
+- `<profile>`: The profile to switch to
+- `-h, --help`: Print help information and exit
 
-Arguments:
-- `profile` - The name of the profile to switch to
-
-This command allows you to quickly switch between different Xata accounts that you've previously logged into.
-
-## access-token
-
+### access-token
 Print the current access token.
 
 ```bash
-xata auth access-token
+xata auth access-token [--profile <name>] [-h|--help]
 ```
+- `--profile`: Profile to log in to (default: `default`)
+- `-h, --help`: Print help information and exit
 
-This command outputs your current access token, which can be used for API authentication.
-
-## refresh-token
-
+### refresh-token
 Print the current refresh token.
 
 ```bash
-xata auth refresh-token
+xata auth refresh-token [--profile <name>] [-h|--help]
 ```
-
-This command outputs your current refresh token, which can be used to obtain new access tokens.
+- `--profile`: Profile to log in to (default: `default`)
+- `-h, --help`: Print help information and exit
 
 ## Global Flags
 

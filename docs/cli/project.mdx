@@ -1,80 +1,86 @@
 ---
-title: Project Commands
+title: Project Command
 description: Commands for managing Xata projects
 ---
 
-The `project` commands help you manage your Xata projects, including creating, listing, and configuring projects.
+The `project` command helps you create, list, describe, and manage projects in Xata.
 
-## list
+## Subcommands
 
+### list
 List all projects.
 
 ```bash
-xata project list
+xata project list [--organization <id>] [--json] [-h|--help]
 ```
+- Aliases: `ls`
+- `--organization`: Organization ID (default: "")
+- `--json`: Output in JSON format (default: false)
+- `-h, --help`: Print help information and exit
 
-This command displays all projects in your organization, including:
-- Project name
-- Project ID
-- Creation date
-- Status
-
-## describe
-
+### describe
 Describe a project.
 
 ```bash
-xata project describe
+xata project describe [--organization <id>] [--project <id>] [--json] [-h|--help]
 ```
+- Aliases: `view`, `show`
+- `--organization`: Organization ID (default: "")
+- `--project`: Project ID (default: "")
+- `--json`: Output in JSON format (default: false)
+- `-h, --help`: Print help information and exit
 
-This command shows detailed information about the current project, including:
-- Project configuration
-- Database settings
-- Branch information
-- Connection details
-
-## create
-
+### create
 Create a new project.
 
 ```bash
-xata project create
+xata project create --name <name> [--organization <id>] [--branch-name <name>] [--instance-type <type>] [--replicas <n>] [--region <region>] [--json] [-h|--help]
 ```
+- `--organization`: Organization ID (default: "")
+- `--name`: Project Name (required)
+- `--branch-name`: Branch Name (default: "")
+- `--instance-type`: Type of instance for this branch (default: "")
+- `--replicas`: Number of replicas for the branch (0-4, default: "")
+- `--region`: Region for the branch (default: "")
+- `--json`: Output in JSON format (default: false)
+- `-h, --help`: Print help information and exit
 
-This command creates a new project in your organization.
-
-## delete
-
+### delete
 Delete a project.
 
 ```bash
-xata project delete
+xata project delete [--organization <id>] [--project <id>] [--json] [--yes] [-h|--help]
 ```
+- `--organization`: Organization ID (default: "")
+- `--project`: Project ID (default: "")
+- `--json`: Output in JSON format (default: false)
+- `--yes`: Do not ask for confirmation, assume yes (default: false)
+- `-h, --help`: Print help information and exit
 
-This command permanently deletes the current project and all its data.
-
-## init
-
+### init
 Link a project to the folder.
 
 ```bash
-xata project init
+xata project init [--organization <id>] [--project <id>] [--branch <id>] [--database <name>] [--json] [-h|--help]
 ```
+- Aliases: `connect`, `switch`, `link`
+- `--organization`: Organization ID (default: "")
+- `--project`: Project ID (default: "")
+- `--branch`: Branch ID (default: "")
+- `--database`: Database name (default: "")
+- `--json`: Output in JSON format (default: false)
+- `-h, --help`: Print help information and exit
 
-This command links an existing project to your current directory.
-
-## get
-
+### get
 Get a field from a project description.
 
 ```bash
-xata project get <field>
+xata project get [--organization <id>] [--project <id>] <field> [-h|--help]
 ```
-
-Arguments:
-- `field` - The field to retrieve from the project description
-
-This command retrieves specific information about the current project.
+- `--organization`: Organization ID (default: "")
+- `--project`: Project ID (default: "")
+- `field`: The field to get (default: `.catalog`)
+- `-h, --help`: Print help information and exit
 
 ## Global Flags
 
