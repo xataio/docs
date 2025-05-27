@@ -1,57 +1,34 @@
 ---
 title: Instant branching
-description: Copy-on-Write branching system for PostgreSQL databases with instant branch creation and efficient storage
+description: Copy-on-Write branching system for PostgreSQL databases.
 ---
 
-Xata's branching system uses Copy-on-Write (CoW) at the storage layer to create instant database branches. This enables developers to create isolated environments for testing and development without duplicating data unnecessarily.
+Xata's branching system uses Copy-on-Write (CoW) at the storage layer to create instant database branches. The child branch contains the exact schema and data of the parent branch at the moment of branch creation. After creation, branches are independent PostgreSQL instances: modifying the data in the child branch doesn't affect the parent branch, nor the other way around.
 
-Copy-on-Write works by splitting the physical data into immutable *chunks* that are shared by every branch. A lightweight metadata index keeps track of which chunk belongs to which logical page of the database. Creating a branch therefore means cloning only that index—a metadata-only operation that finishes in milliseconds, regardless of whether the database holds a few megabytes or several terabytes.
-
-![Copy-on-Write branch — no writes yet](/assets/images/copy-on-write-diagram-1.png)
-
-After the branch exists, reads from either the parent or the child still hit the same chunks. The first time one of the branches writes to a page, the storage layer allocates a brand-new chunk, applies the change there and updates *only* that branch's index to reference it. Every other chunk continues to be shared, so additional disk usage grows in proportion to the amount of data that actually changes.
-
-![Copy-on-Write branch — chunks diverged](/assets/images/copy-on-write-branching-2.png)
+The typical use-cases of branching include ephemeral environments, preview databases, or ad-hoc testing. You can also use branches as a convenient way to "freeze" the data in time, or to have a quick data rollback mechanism.
 
 ## How it works
 
-### Storage-level implementation
+When a branching operation is started, the first step is to create a Copy-on-Write snapshot of the underlying logical volume. This is done at the storage level. A new PostgreSQL instance is started on a logical volume that is initialized from this Copy-on-Write snapshot.
 
-Because the mechanism lives entirely below PostgreSQL, it is compatible with vanilla Postgres and every extension you might load. There is no performance penalty on reads—unchanged chunks are served directly—and the write-amplification is limited to a single additional chunk copy per modified page.
+Because the mechanism lives entirely below PostgreSQL, Xata doesn't require any modifications to the PostgreSQL source code. Therefore, we run vanilla Postgres and can support any extension.
 
-### Developer workflow
+### Copy-on-Write
 
-A typical flow looks like this:
+In generic terms, [Copy-on-Write](https://en.wikipedia.org/wiki/Copy-on-write) is a mechanism used to share data efficiently between processes. Instead of copying data right away when multiple programs use it, the same data is shared between programs until one tries to modify it.
 
-1. A staging replica kept in sync by `xata clone` ([**pgstream**](https://github.com/xataio/pgstream)) holds an anonymised copy of production.
-2. `xata branch create feature-xyz` clones the metadata index and gives the developer a fully isolated environment that behaves like production.
-3. The developer makes schema edits, runs tests and benchmarks against realistic data.
-4. Once validated, `xata roll` ([**pgroll**](https://github.com/xataio/pgroll)) compares the branch with its parent, generates a reversible migration plan and applies it to production with zero-downtime.
+When stored on disk, the database volume is split into *blocks*. In the illustration below, the blocks are numbered from 1 to 8. Because we're using a distributed storage system, the blocks can be on different disks and nodes. A metadata index is used to keep track where the data blocks are stored. 
 
-Because CoW tracks every changed chunk, the merge-back step knows *exactly* which pages were touched, enabling deterministic, audit-ready schema migrations.
+![Copy-on-Write branching — initial state](/assets/images/copy-on-write-diagram-1.png)
 
-## Benefits
+When the Copy-on-Write volume snapshot is created, and the child database branch started from this snapshot, a new index is created. However, no data blocks are copied at this point, the index simply points to the original data blocks. This makes the branching operation instant, regardless of how large the database is.
 
-* **Speed** – branch creation takes milliseconds, enabling per-PR ephemeral environments.
-* **Storage efficiency** – only the modified chunks consume additional space; dozens of branches cost little more than a single copy.
-* **Safety** – experiments happen against realistic data without risking production state.
+![Copy-on-Write branch — new branch created](/assets/images/copy-on-write-branching-2.png)
 
-### Integration with any Postgres provider
+After the branch is created, whenever writes are received by a data block--either by the child or the parent branch--, that particular block is first copied. In the illustration below, this has happened for blocks 3 and 6. When a block diverges like this, the index from each branch references its own private copy of it.
 
-The storage layer is provider-agnostic: you can run instant branches on AWS RDS, Aurora, Google Cloud SQL, Azure Database or even self-hosted Postgres. Xata improves rather than replaces your existing production setup.
+![Copy-on-Write branch — new branch created](/assets/images/copy-on-write-branching-3.png)
 
-## Getting Started
-
-To create a branch:
-
-```bash
-xata branch create my-feature-branch
-```
-
-To switch between branches:
-
-```bash
-xata branch checkout my-feature-branch
-```
+Note that only the blocks that are modified need to be copied, which can result in significant IO and storage savings.
 
 [Learn more about branch management in the CLI documentation](/cli/branch) 

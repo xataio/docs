@@ -11,6 +11,23 @@
       "file": "docs/deployment.mdx"
     },
     {
+      "title": "Tutorials",
+      "href": "/tutorials",
+      "file": "docs/tutorials/tutorials.mdx",
+      "items": [
+        {
+          "title": "Set up staging replica",
+          "href": "/tutorials/create-staging-replica",
+          "file": "docs/tutorials/create-staging-replica.mdx"
+        },
+        {
+          "title": "Migrate to Xata",
+          "href": "/tutorials/migrate-to-xata",
+          "file": "docs/tutorials/migrate-to-xata.mdx"
+        }
+      ]
+    },
+    {
       "title": "Core concepts",
       "href": "/core-concepts",
       "file": "docs/core-concepts/core-concepts.mdx",
@@ -29,28 +46,6 @@
           "title": "Schema changes",
           "href": "/core-concepts/schema-changes",
           "file": "docs/core-concepts/schema-changes.mdx"
-        },
-        {
-          "title": "Bring Your Own Cloud",
-          "href": "/core-concepts/byoc",
-          "file": "docs/core-concepts/byoc.mdx"
-        }
-      ]
-    },
-    {
-      "title": "Tutorials",
-      "href": "/tutorials",
-      "file": "docs/tutorials/tutorials.mdx",
-      "items": [
-        {
-          "title": "Set up staging replica",
-          "href": "/tutorials/create-staging-replica",
-          "file": "docs/tutorials/create-staging-replica.mdx"
-        },
-        {
-          "title": "Migrate to Xata",
-          "href": "/tutorials/migrate-to-xata",
-          "file": "docs/tutorials/migrate-to-xata.mdx"
         }
       ]
     },
