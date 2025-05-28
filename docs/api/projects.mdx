@@ -13,7 +13,7 @@ Retrieves a list of all projects within an organization.
 GET /organizations/{organizationID}/projects
 ```
 
-### Path Parameters
+### Path parameters
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
@@ -42,13 +42,13 @@ Creates a new project within an organization.
 POST /organizations/{organizationID}/projects
 ```
 
-### Path Parameters
+### Path parameters
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | organizationID | string | Unique identifier for the organization |
 
-### Request Body
+### Request body
 
 ```json
 {
@@ -75,7 +75,7 @@ Retrieves detailed information about a specific project.
 GET /organizations/{organizationID}/projects/{projectID}
 ```
 
-### Path Parameters
+### Path parameters
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
@@ -101,14 +101,14 @@ Updates the name of a project.
 PATCH /organizations/{organizationID}/projects/{projectID}
 ```
 
-### Path Parameters
+### Path parameters
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | organizationID | string | Unique identifier for the organization |
 | projectID | string | Unique identifier for the project |
 
-### Request Body
+### Request body
 
 ```json
 {
@@ -135,7 +135,7 @@ Permanently deletes a project and all its associated data. This action cannot be
 DELETE /organizations/{organizationID}/projects/{projectID}
 ```
 
-### Path Parameters
+### Path parameters
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
@@ -154,7 +154,7 @@ Retrieves a list of all regions where new branches can be deployed for the speci
 GET /organizations/{organizationID}/regions
 ```
 
-### Path Parameters
+### Path parameters
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
