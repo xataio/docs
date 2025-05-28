@@ -7,17 +7,18 @@ The `init` command helps you set up a new Xata project in your current directory
 
 ## init
 
-Initialize a new Xata project.
+Link a project to the folder.
 
 ```bash
-xata init
+xata init [--organization <id>] [--project <id>] [--branch <id>] [--database <name>] [--json] [-h|--help]
 ```
-
-This command:
-- Creates a new project configuration
-- Sets up the project structure
-- Configures your local environment
+- `--organization`: Organization ID (default: "")
+- `--project`: Project ID (default: "")
+- `--branch`: Branch ID (default: "")
+- `--database`: Database name (default: "")
+- `--json`: Output in JSON format (default: false)
+- `-h, --help`: Print help information and exit
 
 ## Global Flags
 
-- `-h, --help` - Print help information and exit
+- `-h, --help`

@@ -1,115 +1,135 @@
 ---
-title: Branch Commands
+title: Branch Command
 description: Commands for managing Xata database branches
 ---
 
-The `branch` commands help you manage your Xata database branches, including creating, switching, and managing branch configurations.
+The `branch` command helps you create, list, describe, and manage branches in Xata.
 
-## list
+## Subcommands
 
-List all branches in the current project.
-
-```bash
-xata branch list
-```
-
-This command displays all branches in your project, including:
-- Branch name
-- Parent branch
-- Creation date
-- Status
-
-## describe
-
-Describe a branch in detail.
+### list
+List all branches.
 
 ```bash
-xata branch describe
+xata branch list [--organization <id>] [--project <id>] [--branch <id>] [--json] [-h|--help]
 ```
+- Aliases: `ls`
+- `--organization`: Organization ID (default: "")
+- `--project`: Project ID (default: "")
+- `--branch`: Branch ID (default: "")
+- `--json`: Output in JSON format (default: false)
+- `-h, --help`: Print help information and exit
 
-This command shows detailed information about the current branch, including:
-- Branch configuration
-- Schema version
-- Migration status
-- Connection details
+### describe
+Describe a branch.
 
-## create
+```bash
+xata branch describe [--organization <id>] [--project <id>] [--branch <id>] [--json] [-h|--help] <branch name>
+```
+- Aliases: `view`, `show`
+- `--organization`: Organization ID (default: "")
+- `--project`: Project ID (default: "")
+- `--branch`: Branch ID (default: "")
+- `--json`: Output in JSON format (default: false)
+- `-h, --help`: Print help information and exit
+- `branch name`: The branch to describe
 
+### create
 Create a new branch.
 
 ```bash
-xata branch create
+xata branch create [--organization <id>] [--project <id>] [--parent-branch <id>] [--name <name>] [--instance-type <type>] [--replicas <n>] [--region <region>] [--json] [-h|--help]
 ```
+- `--organization`: Organization ID (default: "")
+- `--project`: Project ID (default: "")
+- `--parent-branch`: Parent branch ID. Pass "None" to create a branch without a parent. (default: "")
+- `--name`: Branch name (default: "")
+- `--instance-type`: Type of instance for this branch (default: "")
+- `--replicas`: Number of replicas for the branch (0-4, default: "")
+- `--region`: Region for the branch (default: "")
+- `--json`: Output in JSON format (default: false)
+- `-h, --help`: Print help information and exit
 
-This command creates a new branch from the current branch, allowing you to make isolated changes to your database schema.
-
-## delete
-
+### delete
 Delete a branch.
 
 ```bash
-xata branch delete
+xata branch delete [--organization <id>] [--project <id>] [--branch <id>] [--yes] [--json] [-h|--help] <branch name>
 ```
+- `--organization`: Organization ID (default: "")
+- `--project`: Project ID (default: "")
+- `--branch`: Branch ID (default: "")
+- `--yes`: Do not ask for confirmation, assume yes (default: false)
+- `--json`: Output in JSON format (default: false)
+- `-h, --help`: Print help information and exit
+- `branch name`: The branch to switch to
 
-This command permanently deletes the current branch and all its data. This action cannot be undone.
-
-## url
-
-Print the connection URL for a branch.
+### url
+Print URL (connection string) for a branch.
 
 ```bash
-xata branch url
+xata branch url [--organization <id>] [--project <id>] [--branch <id>] [--database <name>] [-h|--help] <branch name>
 ```
+- Aliases: `connection-string`
+- `--organization`: Organization ID (default: "")
+- `--project`: Project ID (default: "")
+- `--branch`: Branch ID (default: "")
+- `--database`: Database name (default: "")
+- `-h, --help`: Print help information and exit
+- `branch name`: The branch to get URL for
 
-This command outputs the connection string (DSN) for the current branch, which can be used to connect your application to the database.
-
-## checkout
-
-Switch to a different branch.
+### checkout
+Checkout a branch.
 
 ```bash
-xata branch checkout <branch>
+xata branch checkout [--organization <id>] [--project <id>] [--branch <id>] [--database <name>] [--json] [-h|--help] <branch name>
 ```
+- `--organization`: Organization ID (default: "")
+- `--project`: Project ID (default: "")
+- `--branch`: Branch ID (default: "")
+- `--database`: Database name (default: "")
+- `--json`: Output in JSON format (default: false)
+- `-h, --help`: Print help information and exit
+- `branch name`: The branch to switch to
 
-Arguments:
-- `branch` - The name of the branch to switch to
-
-This command switches your working context to the specified branch.
-
-## tree
-
+### tree
 List all branches as a tree.
 
 ```bash
-xata branch tree
+xata branch tree [--organization <id>] [--project <id>] [--branch <id>] [--show-id] [-h|--help]
 ```
+- Aliases: `topology`
+- `--organization`: Organization ID (default: "")
+- `--project`: Project ID (default: "")
+- `--branch`: Branch ID (default: "")
+- `--show-id`: Project ID (default: false)
+- `-h, --help`: Print help information and exit
 
-This command displays the branch hierarchy in a tree format, showing the relationships between branches.
-
-## get
-
+### get
 Get a field from a branch description.
 
 ```bash
-xata branch get <field>
+xata branch get [--organization <id>] [--project <id>] [--branch <id>] [-h|--help] <field>
 ```
+- `--organization`: Organization ID (default: "")
+- `--project`: Project ID (default: "")
+- `--branch`: Branch ID (default: "")
+- `-h, --help`: Print help information and exit
+- `field`: The field to get (default: `.catalog`)
 
-Arguments:
-- `field` - The field to retrieve from the branch description
-
-This command retrieves specific information about the current branch.
-
-## wait-ready
-
+### wait-ready
 Wait for a branch to be ready.
 
 ```bash
-xata branch wait-ready
+xata branch wait-ready [--organization <id>] [--project <id>] [--branch <id>] [--json] [-h|--help] <branch name>
 ```
-
-This command waits until the current branch is fully provisioned and ready to accept connections.
+- `--organization`: Organization ID (default: "")
+- `--project`: Project ID (default: "")
+- `--branch`: Branch ID (default: "")
+- `--json`: Output in JSON format (default: false)
+- `-h, --help`: Print help information and exit
+- `branch name`: The branch to switch to
 
 ## Global Flags
 
-- `-h, --help` - Print help information and exit
-- `--json` - Output in JSON format 
+- `-h, --help`
