@@ -11,58 +11,82 @@ This guide shows you how to create a realistic staging environment in Xata by cl
 ## 1. Prerequisites
 
 - A Xata account ([sign up here](https://console.xata.io))
-- The Xata CLI installed:
+- The [Xata CLI](/cli) installed:
   ```bash
   curl -fsSL https://xata.io/install.sh | bash
   ```
 - Access to your production PostgreSQL database (connection string)
 
----
+## 2. Create a Xata project and branch
 
-## 2. Clone your production database to Xata
+In the Console, create a new project and then click the **Create main branch** button to create the PostgreSQL instance.
 
-We'll use the `xata clone` command to create a new `staging` branch in Xata, copying data from your production database and applying anonymization rules.
+![Create new branch](assets/images/create-new-branch.png)
 
-### a. Create and checkout the staging branch
+Since this this is a non-production setup, you can typically select 0 replicas. It is a good idea to start with a similar
+instance size as you use for production, but you can also use a smaller instance size if the staging traffic will be much smaller. You can adjust the size later.
 
-If you haven't already, create and switch to the `staging` branch:
+## 3. Configure the Xata CLI
 
-```bash
-xata branch create staging
-xata checkout staging
+Authenticate the CLI by running:
+
+```sh
+xata auth login
 ```
 
-### b. Configure cloning
+Initialize the project by running:
+
+```sh
+xata init
+```
+
+You would typically run `xata init` command in your application source directory, or in any directory/repository where you'd like to keep the configuration. It will create a `.xata` folder with several configuration files.
+
+Follow the instructions from the prompt to select the project and branch that you created at the previous step. Leave the database name set to `app`.
+
+## 4. Get the connection string of your current provider
+
+This step depends on your Postgres provider, but keep the following recommendations in mind:
+
+- If your provider offers a read-only endpoint, it is recommended to use that one in order to avoid extra load to your primary instance.
+- If your provider offers a "pooler" or "pgbouncer" endpoint, avoid that one, because `xata clone` uses a long running transaction.
+- The Postgres connection string generally has the form `postgres://user:pass@host:5432/dbname`.
+
+## 5. Configure cloning
 
 First, generate a configuration for the Xata clone process:
 
 ```bash
-xata clone config --source-url 'postgres://user:pass@host:5432/prod_db' --mode prompt
+xata clone config --source-url $CONN_STRING --mode=prompt
 ```
+
+Where the `CONN_STRING` variable is set to the production connection string from the previous step.
 
 Note: if your Postgres hosting provider uses self-signed certificates, you can disable the strict certificate verification like this:
 
 ```bash
-NODE_TLS_REJECT_UNAUTHORIZED=0 xata clone config --source-url 'postgres://user:pass@host:5432/prod_db' --mode prompt
+NODE_TLS_REJECT_UNAUTHORIZED=0 xata clone config --source-url $CONN_STRING --mode=prompt
 ```
 
 Follow the prompts to specify whether you want anonymization enabled, which tables and columns to anonymize, and which transformers to use. For more details about transformers, see the [anonymization](/core-concepts/anonymization) page.
 
+Note: To simplify the process, the interactive prompt suggests which columns require anonymization. This is based on simple heuristics (name, email, etc.)
+
 The result is a YAML configuration file written in `.xata/clone.yaml`. You can edit this file to further configure your anonymization process.
 
-### c. Start the clone
+### 6. Start the clone
 
 Now, run the clone command to snapshot your production database into Xata:
 
 ```bash
-xata clone start --source-url 'postgres://user:pass@host:5432/prod_db'
+xata clone start --source-url $CONN_STRING
 ```
 
 - The clone process will copy data and apply your anonymization rules to the current (staging) branch.
 
 ---
 
-## 3. Create a development branch from staging
+## 7. Create a development branch from staging
 
 Now, list your branches to get the staging branch ID:
 
@@ -73,13 +97,19 @@ xata branch list
 Grab the `staging` branch ID from the list and create a new `dev` branch from `staging`:
 
 ```bash
-xata branch create --name dev --parent-branch [staging branch id]
+xata branch create --name dev
 ```
 
-Switch to your dev branch:
+Wait for the branch to become ready:
 
 ```bash
-xata checkout dev
+xata branch wait-ready
+```
+
+Connect to the newly created dev branch:
+
+```sh
+psql `xata branch url`
 ```
 
 ---
