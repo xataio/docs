@@ -154,33 +154,6 @@
           "file": "docs/github-actions/clone.mdx"
         }
       ]
-    },
-    {
-      "title": "Resources",
-      "href": "/resources",
-      "file": "docs/resources/resources.mdx",
-      "items": [
-        {
-          "title": "Troubleshooting & FAQ",
-          "href": "/resources/troubleshooting",
-          "file": "docs/resources/troubleshooting.mdx"
-        },
-        {
-          "title": "Compliance",
-          "href": "/resources/compliance",
-          "file": "docs/resources/compliance.mdx"
-        },
-        {
-          "title": "Roadmap",
-          "href": "/resources/roadmap",
-          "file": "docs/resources/roadmap.mdx"
-        },
-        {
-          "title": "Pricing",
-          "href": "/resources/pricing",
-          "file": "docs/resources/pricing.mdx"
-        }
-      ]
     }
   ]
 }
