@@ -7,7 +7,7 @@ Xata provides several GitHub Actions workflows to help you automate database ope
 
 ## Available workflows
 
-### [Ensure main is ready for merge](./github-actions/check.mdx)
+### [Ensure main is ready for merge](./github-actions/check)
 
 This workflow validates that the main branch is in a ready state for merging pull requests. It checks the migration status and ensures no pending migrations are running that could affect the merge process.
 
@@ -17,7 +17,7 @@ Key features:
 - Prevents merging during active migrations
 - Provides clear status messages
 
-### [Create Xata dev branch](./github-actions/pr.mdx)
+### [Create Xata dev branch](./github-actions/pr)
 
 This workflow creates a dedicated Xata branch for each pull request, allowing you to test database changes in isolation. It also manages PR comments to provide branch information and status updates.
 
@@ -27,7 +27,7 @@ Key features:
 - Handles migrations automatically
 - Provides connection details in PR comments
 
-### [Xata clone workflow](./github-actions/clone.mdx)
+### [Xata clone workflow](./github-actions/clone)
 
 This workflow helps you clone your database on a schedule or manually trigger it. It's useful for creating regular backups or setting up test environments.
 
