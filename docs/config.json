@@ -154,18 +154,6 @@
           "file": "docs/github-actions/clone.mdx"
         }
       ]
-    },
-    {
-      "title": "Resources",
-      "href": "/resources",
-      "file": "docs/resources/resources.mdx",
-      "items": [
-        {
-          "title": "Troubleshooting & FAQ",
-          "href": "/resources/troubleshooting",
-          "file": "docs/resources/troubleshooting.mdx"
-        }
-      ]
     }
   ]
 }
