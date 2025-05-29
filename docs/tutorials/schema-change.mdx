@@ -43,14 +43,14 @@ xata init
 
 You would typically run `xata init` command in your application source directory, or in any directory/repository where you'd like to keep the configuration. It will create a `.xata` folder with several configuration files.
 
-Follow the instructions from the prompt to select the project and branch that you created at the previous step. Choose the same database name as you use in production.
+Follow the instructions from the prompt to select the project and branch that you created at the previous step.
 
 ## 4. Prepare a migration directory
 
 Create and initialize a directory for your migrations (e.g., `.xata/migrations`) using the following command:
 
 ```sh
-xata roll init --postgres-url `xata branch url`
+xata roll init
 ```
 
 This command sets up migration tracking on your current Xata branch and prepares the directory for your migration files.
