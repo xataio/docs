@@ -125,7 +125,7 @@ This command starts the migration but leaves it uncompleted and allows you to ro
 
 ## 9. Roll back the migration
 
-To test rolling back, run:
+When a migration has started, it is serving up both version of the schema simultaneously. You can instantly revert any schema changes during an active migraiton by rolling back the changes. To test rolling back, run:
 
 ```sh
 xata roll rollback
