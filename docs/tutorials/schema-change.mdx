@@ -46,13 +46,13 @@ Follow the instructions from the prompt to select the project and branch that yo
 
 ## 4. Prepare a migration directory
 
-Create and initialize a directory for your migrations (e.g., `.xata/migrations`) using the following command:
+Initialize migration tracking on your current Xata branch:
 
 ```sh
 xata roll init
 ```
 
-This command sets up migration tracking on your current Xata branch and prepares the directory for your migration files.
+This command sets up migration history for your branch.
 
 ## 5. Create initial tables
 
@@ -82,7 +82,7 @@ To pull the latest migrations locally, run:
 xata roll pull
 ```
 
-This will update your local migration files with any changes made to your database.
+This will write the complete schema history as .yaml files to the `.xata/migrations` directory.
 
 ## 7. Create a new schema change
 
