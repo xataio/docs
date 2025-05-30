@@ -3,7 +3,7 @@ title: Zero-downtime schema changes
 description: Learn how to safely apply and roll back schema changes in Xata using the CLI.
 ---
 
-This guide shows you how to safely apply and roll back schema changes in Xata using the CLI. You'll use the `xata roll` commands to manage migrations, and an example with changing column types.
+You'll use the `xata roll` commands to manage migrations, and an example with changing column types.
 
 To better understand the use case and our novel approach to the challenge of schema changes, see the [schema changes core concept](/core-concepts/schema-changes) page for more details.
 
@@ -16,8 +16,7 @@ To better understand the use case and our novel approach to the challenge of sch
   ```bash
   curl -fsSL https://xata.io/install.sh | bash
   ```
-- Access to your Xata PostgreSQL branch (connection string)
-- An initialized Xata project and branch
+- Access to your Xata PostgreSQL branch
 
 ## 2. Create a Xata project and branch
 
@@ -139,6 +138,8 @@ Let's start the migration again and check its status:
 xata roll start .xata/migrations/001_alter_order_items.yaml
 xata roll status
 ```
+
+The migration should be `In progress` and you can view all statuses available [here](https://pgroll.com/docs/latest/cli/status).
 
 ## 11. Complete the migration
 
