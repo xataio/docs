@@ -26,6 +26,8 @@ In the Console, create a new project and then click the **Create main branch** b
 Since this this is a non-production setup, you can typically select 0 replicas. It is a good idea to start with a similar
 instance size as you use for production, but you can also use a smaller instance size if the staging traffic will be much smaller. You can adjust the size later.
 
+> **Note:** If you're using Xata for production, we recommend creating a separate organization for your staging environment. This allows you to control access to production data more effectively by only granting production access to team members who need it. More granular role-based access control (RBAC) is on our roadmap.
+
 ## 3. Configure the Xata CLI
 
 Authenticate the CLI by running:

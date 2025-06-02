@@ -56,23 +56,68 @@ This command sets up migration history for your branch.
 
 ## 5. Create initial tables
 
-First, let's create some sample tables using the SQL from our [getting started guide](/getting-started). Connect to your database using psql:
+First, let's create a migration file for our initial schema:
+
+```sh
+cat > .xata/migrations/001_initial_schema.yaml << 'EOL'
+operations:
+  - create_table:
+      name: products
+      columns:
+        - name: id
+          type: serial
+          primary_key: true
+        - name: name
+          type: text
+        - name: price
+          type: numeric(7,2)
+  - create_table:
+      name: orders
+      columns:
+        - name: id
+          type: serial
+          primary_key: true
+        - name: created_at
+          type: timestamptz
+          default: now()
+  - create_table:
+      name: order_items
+      columns:
+        - name: order_id
+          type: int
+          references: orders(id)
+        - name: product_id
+          type: int
+          references: products(id)
+        - name: qty
+          type: int
+      primary_key: [order_id, product_id]
+EOL
+```
+
+Apply the migration:
+
+```sh
+xata roll migrate
+xata roll complete
+```
+
+## 6. Insert sample data
+
+Now let's insert some sample data using psql:
 
 ```sh
 psql `xata branch url`
 ```
 
-Then run the following SQL:
+Then run the following SQL to insert sample data:
 
 ```sql
-CREATE TABLE products(id SERIAL PRIMARY KEY,name TEXT,price NUMERIC(7,2));
-CREATE TABLE orders(id SERIAL PRIMARY KEY,created_at TIMESTAMPTZ DEFAULT now());
-CREATE TABLE order_items(order_id INT REFERENCES orders(id),product_id INT REFERENCES products(id),qty INT,PRIMARY KEY(order_id,product_id));
 INSERT INTO products(name,price) SELECT LEFT(md5(i::text),8),(random()*90+10)::numeric(7,2) FROM generate_series(1,10)i;
 WITH o AS (INSERT INTO orders DEFAULT VALUES RETURNING id) INSERT INTO order_items(order_id,product_id,qty) SELECT o.id,pid,(1+floor(random()*3))::int FROM o,(SELECT id pid FROM products ORDER BY random() LIMIT 5)p;
 ```
 
-## 6. View and pull changes
+## 7. View and pull changes
 
 You can view the changes in your branch details page in the [Xata Console](https://console.xata.io). The changes will be tracked automatically.
 
@@ -84,7 +129,7 @@ xata roll pull
 
 This will write the complete schema history as .yaml files to the `.xata/migrations` directory.
 
-## 7. Create a new schema change
+## 8. Create a new schema change
 
 Let's create a migration that:
 1. Changes the `qty` column in the `order_items` table from integer to float
@@ -112,17 +157,17 @@ operations:
 EOL
 ```
 
-## 8. Start the migration
+## 9. Start the migration
 
 Start the migration using:
 
 ```sh
-xata roll start .xata/migrations/001_alter_order_items.yaml
+xata roll migrate
 ```
 
-This command starts the migration but leaves it uncompleted and allows you to roll back if needed.
+This command starts the migration but leaves it uncompleted, allowing you to roll back if needed.
 
-## 9. Roll back the migration
+## 10. Roll back the migration
 
 When a migration has started, it is serving up both version of the schema simultaneously. You can instantly revert any schema changes during an active migraiton by rolling back the changes. To test rolling back, run:
 
@@ -130,18 +175,18 @@ When a migration has started, it is serving up both version of the schema simult
 xata roll rollback
 ```
 
-## 10. Check migration status
+## 11. Check migration status
 
 Let's start the migration again and check its status:
 
 ```sh
-xata roll start .xata/migrations/001_alter_order_items.yaml
+xata roll migrate
 xata roll status
 ```
 
 The migration should be `In progress` and you can view all statuses available [here](https://pgroll.com/docs/latest/cli/status).
 
-## 11. Complete the migration
+## 12. Complete the migration
 
 To finalize the migration, run:
 
@@ -151,15 +196,15 @@ xata roll complete
 
 In a production scenario, you would only complete the migration when the application code is up to date with the database changes.
 
-## 12. (Optional) Add to CI/CD with GitHub Actions
+## 13. (Optional) Add to CI/CD with GitHub Actions
 
 To automate schema changes in your CI/CD pipeline, you can use our GitHub Actions workflow. This workflow creates a dedicated Xata branch for each pull request, allowing you to test database changes in isolation.
 
 For details about setting up the workflow and available configuration options, see our [GitHub Actions PR workflow documentation](/github-actions/pr).
 
-## 13. Summary
+## 14. Summary
 
-- Use `xata roll start` to apply a specific migration
+- Use `xata roll migrate` to apply migrations
 - Use `xata roll status` to check migration state
 - Use `xata roll rollback` to undo migrations if needed
 - Use `xata roll complete` to finalize migrations when your application is ready
