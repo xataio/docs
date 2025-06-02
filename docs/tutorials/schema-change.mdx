@@ -125,7 +125,7 @@ EOL
 Apply the migration:
 
 ```sh
-xata roll migrate --complete
+xata roll migrate --complete true
 ```
 
 ## 6. Insert sample data
@@ -168,7 +168,7 @@ Let's create a migration that:
 Create the migration file with this command:
 
 ```sh
-cat > .xata/migrations/001_alter_order_items.yaml << 'EOL'
+cat > .xata/migrations/002_alter_order_items.yaml << 'EOL'
 operations:
   - alter_column:
       table: order_items
