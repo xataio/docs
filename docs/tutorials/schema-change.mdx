@@ -66,40 +66,66 @@ operations:
       columns:
         - name: id
           type: serial
-          primary_key: true
         - name: name
           type: text
         - name: price
           type: numeric(7,2)
+      constraints:
+        - name: products_pk
+          type: primary_key
+          columns:
+            - id
   - create_table:
       name: orders
       columns:
         - name: id
           type: serial
-          primary_key: true
         - name: created_at
           type: timestamptz
           default: now()
+      constraints:
+        - name: orders_pk
+          type: primary_key
+          columns:
+            - id
   - create_table:
       name: order_items
       columns:
         - name: order_id
           type: int
-          references: orders(id)
         - name: product_id
           type: int
-          references: products(id)
         - name: qty
           type: int
-      primary_key: [order_id, product_id]
+      constraints:
+        - name: order_items_pk
+          type: primary_key
+          columns:
+            - order_id
+            - product_id
+        - name: order_items_order_id_fk
+          type: foreign_key
+          columns:
+            - order_id
+          references:
+            table: orders
+            columns:
+              - id
+        - name: order_items_product_id_fk
+          type: foreign_key
+          columns:
+            - product_id
+          references:
+            table: products
+            columns:
+              - id
 EOL
 ```
 
 Apply the migration:
 
 ```sh
-xata roll migrate
-xata roll complete
+xata roll migrate --complete
 ```
 
 ## 6. Insert sample data
