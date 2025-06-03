@@ -7,7 +7,9 @@ Xata is a PostgreSQL platform that provides instant Copy-on-Write branching, dat
 
 ## 1. Sign up
 
-Create your free Xata account at [console.xata.io](https://console.xata.io). You can sign up with GitHub, Google, or your email address. **Note:** Xata is currently in private beta, please request access and wait for approval before proceeding.
+Create your free Xata account at [console.xata.io](https://console.xata.io). You can sign up with GitHub, Google, or your email address.
+
+**Note:** Xata is currently in private beta, please request access and wait for approval before proceeding.
 
 ![Xata sign-up page](assets/images/getting-started/signup.png)
 
@@ -43,7 +45,15 @@ To use advanced features like schema history, migrations, cloning and database m
 
 ```bash
 curl -fsSL https://xata.io/install.sh | bash
+```
+
+Authenticate the CLI by running:
+```bash
 xata auth login
+```
+
+Initialize the project by running:
+```bash
 xata init
 ```
 
@@ -61,17 +71,13 @@ xata roll init
 
 ## 7. Create a development branch with the CLI
 
-List your branches:
+Create a new branch from `main`:
 
 ```bash
-xata branch list
+xata branch create --name dev --parent-branch `xata branch get id`
 ```
 
-Grab the `main` branch ID from the list and create a new branch from `main`:
-
-```bash
- xata branch create --name dev --parent-branch [main branch id]
-```
+This command will automatically checkout the new branch for you.
 
 ## 8. Modify your schema from the terminal
 
@@ -97,12 +103,7 @@ sudo apt install postgresql-client-17
 **Windows:**
 Download from [PostgreSQL official site](https://www.postgresql.org/download/windows/).
 
-Get your branch connection string using the Xata CLI. First, checkout your new `dev` branch:
-
-```bash
-xata checkout dev
-```
-Then use the connection string to connect with `psql`
+Connect to `psql` with your dev branch connection string
 
 ```bash
 psql `xata branch url`
@@ -159,6 +160,7 @@ Now that your environment is clean, you're ready to dive deeper:
 
 - **[Set up staging replica](/tutorials/create-staging-replica):** Learn how to use Xata for staging environments, feature branches, and collaborative development.
 - **[Migrate to Xata](/tutorials/migrate-to-xata):** Get set up for production by migrating your existing PostgreSQL database to Xata.
+- **[Schema changes](/tutorials/schema-change):** Learn how to safely apply and roll back schema changes with zero downtime.
 
 ---
 
