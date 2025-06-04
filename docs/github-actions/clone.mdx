@@ -27,7 +27,7 @@ jobs:
       - name: Check Xata status
         run: |
           xata status
-          xata branch view
+          xata branch describe
 
       - name: Checkout Xata dev branch
         run: |
@@ -36,7 +36,7 @@ jobs:
       - name: Check Xata status
         run: |
           xata status
-          xata branch view
+          xata branch describe
 
       - name: Xata clone
         run: |
@@ -84,14 +84,14 @@ This step installs the Xata CLI using the official installer script and adds it 
 - name: Check Xata status
   run: |
     xata status
-    xata branch view
+    xata branch describe
 ```
 
 This step verifies that your Xata CLI is properly configured and can connect to your database.
 
 For more details, see:
-- [status command documentation](../cli/status.mdx)
-- [branch view command documentation](../cli/branch.mdx#view)
+- [status command documentation](../cli/status)
+- [branch describe command documentation](../cli/branch#describe)
 
 ### 4. Checkout clone branch
 
@@ -116,7 +116,7 @@ This step:
 
 This step initiates the cloning process from your source PostgreSQL database.
 
-For more details, see the [clone start command documentation](../cli/clone.mdx#start).
+For more details, see the [clone start command documentation](../cli/clone#start).
 
 ## Triggering the workflow
 
@@ -174,5 +174,5 @@ Use this workflow when you want to:
 
 ## Related workflows
 
-- [Check workflow](./check.mdx) - For validating main branch status
-- [PR workflow](./pr.mdx) - For managing pull request environments 
+- [Check workflow](./check) - For validating main branch status
+- [PR workflow](./pr) - For managing pull request environments 
