@@ -159,6 +159,19 @@
           "file": "docs/github-actions/clone.mdx"
         }
       ]
+    },
+    {
+      "title": "Automations",
+      "href": "/automations",
+      "file": "docs/automations/automations.mdx",
+      "items": [
+        {
+          "title": "Kubernetes CronTask: Xata clone",
+          "href": "/automations/kubernetes-clone",
+          "file": "docs/automations/kubernetes-clone.mdx"
+        },
+      ]
     }
+
   ]
 }
