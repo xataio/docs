@@ -14,13 +14,23 @@ jobs:
           PREVIEW_URL="https://xata.io/next/preview-path?path=/docs-preview/${PR_OWNER}:${BRANCH}/"
           echo "preview_url=${PREVIEW_URL}" >> $GITHUB_OUTPUT
 
+      - name: Find docs preview comment
+        id: find-comment
+        uses: peter-evans/find-comment@v1
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: "github-actions[bot]"
+          body-includes: "Docs Preview"
+
       - name: Create or update docs preview comment
         uses: peter-evans/create-or-update-comment@v4
         with:
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          edit-mode: replace
           issue-number: ${{ github.event.pull_request.number }}
           body: |
             📖 **Docs Preview**
-            
+
             Preview URL: ${{ steps.generate_url.outputs.preview_url }}
 
 
