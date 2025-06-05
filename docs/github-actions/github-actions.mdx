@@ -7,11 +7,11 @@ Xata provides several GitHub Actions workflows to help you automate database ope
 
 ## Available workflows
 
-### [Ensure main is ready for merge](./github-actions/check)
+### [Check merge readiness](./github-actions/check)
 
 This workflow validates that the main branch is in a ready state for merging pull requests. It checks the migration status and ensures no pending migrations are running that could affect the merge process.
 
-Key features:
+Key points:
 - Validates main branch status
 - Checks migration state
 - Prevents merging during active migrations
@@ -21,7 +21,7 @@ Key features:
 
 This workflow creates a dedicated Xata branch for each pull request, allowing you to test database changes in isolation. It also manages PR comments to provide branch information and status updates.
 
-Key features:
+Key points:
 - Creates isolated database environments for PRs
 - Manages branch lifecycle
 - Handles migrations automatically
@@ -31,7 +31,7 @@ Key features:
 
 This workflow helps you clone your database on a schedule or manually trigger it. It's useful for creating regular backups or setting up test environments.
 
-Key features:
+Key points:
 - Scheduled database cloning
 - Manual trigger support
 - Backup management
@@ -71,30 +71,8 @@ concurrency:
   cancel-in-progress: true
 ```
 
-## Best Practices
-
-1. **Security**
-   - Store sensitive information in GitHub secrets
-   - Use environment variables for configuration
-   - Follow the principle of least privilege
-
-2. **Performance**
-   - Set appropriate timeouts
-   - Use concurrency control
-   - Optimize workflow triggers
-
-3. **Maintenance**
-   - Keep workflows up to date
-   - Monitor workflow runs
-   - Review and update dependencies
-
-4. **Documentation**
-   - Document workflow changes
-   - Keep README files updated
-   - Include clear error messages
-
 ## Related Documentation
 
-- [CLI Reference](../cli.mdx) - For details about the Xata CLI commands used in workflows
-- [Branch Management](../cli/branch.mdx) - For information about database branches
-- [Migrations](../cli/roll.mdx) - For details about database migrations 
+- [CLI Reference](../cli) - For details about the Xata CLI commands used in workflows
+- [Branch Management](../cli/branch) - For information about database branches
+- [Migrations](../cli/roll) - For details about database migrations 

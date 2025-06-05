@@ -1,17 +1,9 @@
 ---
 title: Tutorials
-description: Step-by-step guides for common Xata workflows and use cases
+description: Step-by-step guides for common Xata workflows
 ---
 
 Learn how to use Xata with step-by-step tutorials for common workflows and use cases.
-
-## Developer workflow
-
-[Developer workflow](/tutorials/developer-workflow) guides you through:
-- Setting up development environments
-- Creating and managing branches
-- Testing schema changes
-- Using GitHub Actions for automation
 
 ## Migration guide
 
@@ -22,36 +14,23 @@ Learn how to use Xata with step-by-step tutorials for common workflows and use c
 - Updating your application
 - Validating the migration
 
-## Best practices
+## Staging environments
 
-### Development workflow
-- Use branches for feature development
-- Test schema changes in isolation
-- Keep staging data anonymized
-- Automate your workflow with GitHub Actions
+[Set up staging replica](/tutorials/create-staging-replica) demonstrates:
+- Creating a realistic staging environment
+- Cloning your production database
+- Anonymizing sensitive data
+- Managing development branches
 
-### Production deployment
-- Use BYOC for production workloads
-- Implement proper monitoring
-- Set up automated backups
-- Follow security best practices
+## Schema changes
 
-## Common use cases
-
-### Web applications
-- Building a searchable blog
-- Implementing user authentication
-- Managing file uploads
-- Real-time data updates
-
-### AI/ML projects
-- Storing and querying embeddings
-- Managing training data
-- Implementing vector search
-- Data anonymization for ML
+[Zero-downtime schema changes](/tutorials/schema-change) shows you how to:
+- Safely apply schema changes with zero downtime
+- Roll back changes if needed
+- Use migrations to track schema history
+- Integrate schema changes with CI/CD
 
 ## Getting help
 
 - Join our [Discord community](https://discord.gg/xata)
-- Check the [Troubleshooting & FAQ](/resources/troubleshooting)
 - Contact [support](mailto:info@xata.io) 
