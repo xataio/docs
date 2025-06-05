@@ -49,12 +49,27 @@ jobs:
 The workflow requires several environment variables to be set:
 
 - `XATA_API_REFRESH_TOKEN`: Your Xata API refresh token (set as a GitHub secret)
-- `XATA_API_ENVIRONMENT`: The Xata environment to use (e.g., staging)
 - `XATA_ORGANIZATIONID`: Your Xata organization ID
 - `XATA_PROJECTID`: Your Xata project ID
 - `XATA_BRANCHID`: The ID of the main branch
 - `XATA_BRANCHNAME`: The name of the main branch
 - `XATA_DATABASENAME`: Your database name
+
+If you have the Xata CLI configured with your project locally, you can obtain these values with the following commands:
+
+```sh
+# XATA_API_REFRESH_TOKEN
+xata auth refresh-token
+
+# XATA_ORGANIZATIONID
+xata organization get id
+
+# XATA_PROJECTID
+xata project get id
+
+# XATA_BRANCHID
+xata branch get id
+```
 
 ## Workflow steps
 
@@ -98,19 +113,11 @@ This ensures that:
 - New runs cancel any in-progress runs
 - Prevents race conditions during status checks
 
-## When to use
-
-Use this workflow when you want to:
-- Ensure main branch is ready for merging
-- Prevent merging during active migrations
-- Validate branch and migration status
-- Maintain database consistency
-
 ## Best practices
 
 1. **Set appropriate timeout**
    - The workflow has a 10-minute timeout
-   - Adjust based on your typical migration duration
+   - Adjust based on your maximum migration duration
 
 2. **Use environment variables**
    - Store sensitive information in GitHub secrets

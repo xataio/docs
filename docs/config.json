@@ -139,24 +139,29 @@
       ]
     },
     {
-      "title": "GitHub Actions",
-      "href": "/github-actions",
-      "file": "docs/github-actions/github-actions.mdx",
+      "title": "Automations",
+      "href": "/automations",
+      "file": "docs/automations/automations.mdx",
       "items": [
         {
-          "title": "Check merge readiness",
-          "href": "/github-actions/check",
-          "file": "docs/github-actions/check.mdx"
+          "title": "GitHub Actions: Check merge readiness",
+          "href": "/automations/ga-check",
+          "file": "docs/automations/ga-check.mdx"
         },
         {
-          "title": "Create Xata dev branch",
-          "href": "/github-actions/pr",
-          "file": "docs/github-actions/pr.mdx"
+          "title": "GitHub Actions: Create Xata dev branch",
+          "href": "/automations/ga-pr",
+          "file": "docs/automations/ga-pr.mdx"
         },
         {
-          "title": "Xata clone (daily, on-demand)",
-          "href": "/github-actions/clone",
-          "file": "docs/github-actions/clone.mdx"
+          "title": "GitHub Actions: Xata clone",
+          "href": "/automations/ga-clone",
+          "file": "docs/automations/ga-clone.mdx"
+        },
+        {
+          "title": "Kubernetes Cron Task: Xata clone",
+          "href": "/automations/kubernetes-clone",
+          "file": "docs/automations/kubernetes-clone.mdx"
         }
       ]
     }

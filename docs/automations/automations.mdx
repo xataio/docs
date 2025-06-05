@@ -1,0 +1,32 @@
+---
+title: Automation
+description: Sample GitHub Actions workflows and Kubernetes files for Xata
+---
+
+Xata provides several sample GitHub Actions workflows and Kubernetes configurations to help you automate database operations in your CI/CD pipeline. These workflows help you manage database branches, migrations, and deployments in a safe and automated way.
+
+## Sample GitHub Actions workflows
+
+### [Check merge readiness](./automations/ga-check)
+
+This workflow validates that the main branch is in a ready state for merging pull requests. It checks the migration status and ensures no pending migrations are running that could affect the merge process.
+
+### [Create Xata dev branch](./automations/ga-pr)
+
+This workflow creates a dedicated Xata branch for each pull request, allowing you to test database changes in isolation. It also manages PR comments to provide branch information and status updates.
+
+### [Xata clone workflow](./automations/ga-clone)
+
+This workflow helps you clone your database on a schedule or when you manually trigger it. It's useful for setting up a "staging replica", optionally with anonymization, on the Xata platform.
+
+## Sample Kubernetes specifications
+
+### [Xata clone CronTask](./automations/kubernetes-clone)
+
+This defines a CronTask that clones your database on a schedule or when you manually trigger it. It's useful for setting up a "staging replica", optionally with anonymization, on the Xata platform.
+
+## Related Documentation
+
+- [CLI Reference](../cli) - For details about the Xata CLI commands used in workflows
+- [Branch Management](../cli/branch) - For information about database branches
+- [Migrations](../cli/roll) - For details about database migrations 
