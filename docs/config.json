@@ -166,7 +166,7 @@
       "file": "docs/automations/automations.mdx",
       "items": [
         {
-          "title": "Kubernetes CronTask: Xata clone",
+          "title": "Kubernetes Cron Task Xata clone (nightly)",
           "href": "/automations/kubernetes-clone",
           "file": "docs/automations/kubernetes-clone.mdx"
         }
