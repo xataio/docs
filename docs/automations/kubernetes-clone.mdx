@@ -112,7 +112,7 @@ kubectl create secret generic xata-secrets \
   --from-literal=XATA_ORGANIZATIONID="$(xata organization get id)" \
   --from-literal=XATA_PROJECTID="$(xata project get id)" \
   --from-literal=XATA_BRANCHNAME="main" \
-  --from-literal=XATA_DATABASENAME="postgres" \
+  --from-literal=XATA_DATABASENAME="postgres"
 ```
 
 The above assumes branch name is `main` and the database name is `postgres`, but you should adjust to your case.
@@ -136,7 +136,7 @@ kubectl create job -n xata-clone --from=cronjob/xata-clone xata-clone-manual
 And watch the logs:
 
 ```sh
-kubectl logs -l job-name=xata-clone-manual -f
+kubectl logs -l job-name=xata-clone-manual -f -n xata-clone
 ```
 
 If there are any errors, you can delete the whole task (`kubectl delete -f xata-clone-crontask.yaml`), fix the issue, and repeat Step 2.
