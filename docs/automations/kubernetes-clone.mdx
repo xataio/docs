@@ -112,7 +112,8 @@ kubectl create secret generic xata-secrets \
   --from-literal=XATA_ORGANIZATIONID="$(xata organization get id)" \
   --from-literal=XATA_PROJECTID="$(xata project get id)" \
   --from-literal=XATA_BRANCHNAME="main" \
-  --from-literal=XATA_DATABASENAME="postgres"
+  --from-literal=XATA_DATABASENAME="postgres" \
+  --from-literal=XATA_CLI_SOURCE_POSTGRES_URL="<CHANGE-Please-Enter-Your-Source-Postgres-URL>"
 ```
 
 The above assumes branch name is `main` and the database name is `postgres`, but you should adjust to your case.
