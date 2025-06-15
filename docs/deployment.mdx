@@ -37,8 +37,9 @@ In this deployment model, you run both production and any staging or development
 branch is typically configured for high availability (with one or multiple read replicas). Development branches generally use a single 
 instance and are configured with lower CPU and memory resources to save costs.
 
-If you'd like to set up anonymization between your production and development branches, you can accomplish this by starting a staging branch
-and configure `xata clone` to copy and anonymize the data between prod and staging.
+If you'd like to set up anonymization between your production and development branches, as well as have stricter controls on who can access production, you can use two Xata organizations. In the production organization you run only the production branch. You can configure `xata clone` to copy and anonymize the data between prod and staging.
+
+![Production and staging/dev branches on the Xata platform](assets/images/xata-prod-branches-diagram.png)
 
 ## Bring Your Own Cloud (BYOC)
 
