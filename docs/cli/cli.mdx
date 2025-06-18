@@ -5,12 +5,21 @@ description: Complete reference for the Xata CLI
 
 The Xata CLI is a powerful tool for managing your Xata databases, projects, and organizations from the command line. It provides commands for authentication, project management, database operations, and more.
 
-## Installation
+## Installation (macOS/Linux)
 
 ```bash
 # Install using npm
 curl -fsSL https://xata.io/install.sh | bash
 ```
+
+## Installation (windows)
+
+```bash
+# Install using npm
+powershell -c "irm xata.io/install.ps1 | iex"
+```
+
+Limitations: `xata clone` command is expected to fail on windows at the moment. Track progress [here](https://github.com/xataio/pgstream/issues/409).
 
 ## Basic Usage
 
@@ -21,6 +30,7 @@ xata [command] [subcommand] [options]
 ## Available Commands
 
 ### Authentication
+
 - [auth login](/cli/auth#login) - Log in to your Xata account
 - [auth logout](/cli/auth#logout) - Log out of the current account
 - [auth status](/cli/auth#status) - Display active account and authentication state
@@ -29,6 +39,7 @@ xata [command] [subcommand] [options]
 - [auth refresh-token](/cli/auth#refresh-token) - Print the current refresh token
 
 ### Project Management
+
 - [init](/cli/init#init) - Link a project to the current folder
 - [project list](/cli/project#list) - List all projects
 - [project describe](/cli/project#describe) - Describe a project
@@ -38,6 +49,7 @@ xata [command] [subcommand] [options]
 - [project get](/cli/project#get) - Get a field from a project description
 
 ### Organization Management
+
 - [organization list](/cli/organization#list) - List all organizations
 - [organization describe](/cli/organization#describe) - Describe an organization
 - [organization create](/cli/organization#create) - Create a new organization
@@ -45,6 +57,7 @@ xata [command] [subcommand] [options]
 - [organization get](/cli/organization#get) - Get a field from an organization description
 
 ### Branch Management
+
 - [branch list](/cli/branch#list) - List all branches
 - [branch describe](/cli/branch#describe) - Describe a branch
 - [branch create](/cli/branch#create) - Create a new branch
@@ -56,6 +69,7 @@ xata [command] [subcommand] [options]
 - [branch wait-ready](/cli/branch#wait-ready) - Wait for a branch to be ready
 
 ### Schema Migrations
+
 - [roll complete](/cli/roll#complete) - Complete an ongoing migration
 - [roll init](/cli/roll#init) - Initialize pgroll in the target database
 - [roll latest](/cli/roll#latest) - Print the name of the latest schema version
@@ -67,10 +81,12 @@ xata [command] [subcommand] [options]
 - [roll convert](/cli/roll#convert) - Convert SQL statements to a pgroll migration
 
 ### Database Synchronization
+
 - [clone start](/cli/clone#start) - Clone a PostgreSQL database with anonymization
 - [clone config](/cli/clone#config) - Configure transforms for the clone command
 
 ### Utility Commands
+
 - [status](/cli/status#status) - Get the status of the Xata CLI
 - [version](/cli/version#version) - Get the version of the Xata CLI and pgroll
 - [upgrade](/cli/upgrade#upgrade) - Upgrade the Xata CLI
