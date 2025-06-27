@@ -7,6 +7,20 @@ The `roll` commands help you manage database migrations using pgroll.
 
 ## Subcommands
 
+### baseline
+Create a baseline migration for an existing database schema.
+
+```bash
+xata roll baseline [--lock-timeout <ms>] [--pgroll-schema <schema>] [--postgres-url <url>] [--role <role>] [--schema <schema>] [--verbose] [-h|--help]
+```
+- `--lock-timeout`: Postgres lock timeout in milliseconds for pgroll DDL operations
+- `--pgroll-schema`: Postgres schema to use for pgroll internal state
+- `--postgres-url`: Postgres URL
+- `--role`: Optional postgres role to set when executing migrations
+- `--schema`: Postgres schema to use for the migration
+- `--verbose`: Enable verbose logging
+- `-h, --help`: Print help information and exit
+
 ### complete
 Complete an ongoing migration with the operations present in the given file.
 
@@ -66,6 +80,21 @@ xata roll migrate [--lock-timeout <ms>] [--pgroll-schema <schema>] [--postgres-u
 - `--backfill-batch-delay`: Duration of delay between batch backfills (eg. 1s, 1000ms)
 - `--backfill-batch-size`: Number of rows backfilled in each batch
 - `--complete`: Complete the final migration rather than leaving it active
+- `-h, --help`: Print help information and exit
+- `<folder>`: The directory that contains the migrations (default: `.xata/migrations`)
+
+### update
+Update outdated migrations in a directory.
+
+```bash
+xata roll update [--lock-timeout <ms>] [--pgroll-schema <schema>] [--postgres-url <url>] [--role <role>] [--schema <schema>] [--verbose] [-h|--help] [<folder>]
+```
+- `--lock-timeout`: Postgres lock timeout in milliseconds for pgroll DDL operations
+- `--pgroll-schema`: Postgres schema to use for pgroll internal state
+- `--postgres-url`: Postgres URL
+- `--role`: Optional postgres role to set when executing migrations
+- `--schema`: Postgres schema to use for the migration
+- `--verbose`: Enable verbose logging
 - `-h, --help`: Print help information and exit
 - `<folder>`: The directory that contains the migrations (default: `.xata/migrations`)
 
