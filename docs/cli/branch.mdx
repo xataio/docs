@@ -117,6 +117,19 @@ xata branch get [--organization <id>] [--project <id>] [--branch <id>] [-h|--hel
 - `-h, --help`: Print help information and exit
 - `field`: The field to get (default: `.catalog`)
 
+### set
+Set a field value for a branch.
+
+```bash
+xata branch set [--organization <id>] [--project <id>] [--branch <id>] [-h|--help] <field> <value>
+```
+- `--organization`: Organization ID (default: "")
+- `--project`: Project ID (default: "")
+- `--branch`: Branch ID (default: "")
+- `-h, --help`: Print help information and exit
+- `field`: The field to set
+- `value`: The value to set
+
 ### wait-ready
 Wait for a branch to be ready.
 

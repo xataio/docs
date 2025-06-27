@@ -1,0 +1,155 @@
+---
+title: API Keys API
+description: Manage API keys for authentication
+---
+
+The API Keys API allows you to manage API keys for users and organizations, including creating, listing, and deleting API keys.
+
+## List API keys
+
+Retrieves a list of API keys for a user or organization.
+
+### List user API keys
+
+```bash
+GET /organizations/{organizationID}/users/{userID}/keys
+```
+
+### List organization API keys
+
+```bash
+GET /organizations/{organizationID}/keys
+```
+
+### Path parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| organizationID | string | Unique identifier for the organization |
+| userID | string | Unique identifier for the user (for user keys) |
+
+### Response
+
+```json
+{
+  "keys": [
+    {
+      "id": "key_123",
+      "name": "Production API Key",
+      "preview": "xata_...",
+      "created_at": "2024-01-01T00:00:00Z",
+      "expiry": "2025-01-01T00:00:00Z",
+      "last_used": "2024-01-15T10:30:00Z"
+    }
+  ]
+}
+```
+
+## Create API key
+
+Creates a new API key for a user or organization.
+
+### Create user API key
+
+```bash
+POST /organizations/{organizationID}/users/{userID}/keys
+```
+
+### Create organization API key
+
+```bash
+POST /organizations/{organizationID}/keys
+```
+
+### Path parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| organizationID | string | Unique identifier for the organization |
+| userID | string | Unique identifier for the user (for user keys) |
+
+### Request body
+
+```json
+{
+  "name": "New API Key",
+  "expiry": "2025-01-01T00:00:00Z"
+}
+```
+
+### Response
+
+```json
+{
+  "id": "key_123",
+  "name": "New API Key",
+  "key": "xata_live_abc123...",
+  "created_at": "2024-01-01T00:00:00Z",
+  "expiry": "2025-01-01T00:00:00Z"
+}
+```
+
+## Get API key
+
+Retrieves details about a specific API key.
+
+### Get user API key
+
+```bash
+GET /organizations/{organizationID}/users/{userID}/keys/{keyID}
+```
+
+### Get organization API key
+
+```bash
+GET /organizations/{organizationID}/keys/{keyID}
+```
+
+### Path parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| organizationID | string | Unique identifier for the organization |
+| userID | string | Unique identifier for the user (for user keys) |
+| keyID | string | Unique identifier for the API key |
+
+### Response
+
+```json
+{
+  "id": "key_123",
+  "name": "Production API Key",
+  "preview": "xata_...",
+  "created_at": "2024-01-01T00:00:00Z",
+  "expiry": "2025-01-01T00:00:00Z",
+  "last_used": "2024-01-15T10:30:00Z"
+}
+```
+
+## Delete API key
+
+Permanently deletes an API key.
+
+### Delete user API key
+
+```bash
+DELETE /organizations/{organizationID}/users/{userID}/keys/{keyID}
+```
+
+### Delete organization API key
+
+```bash
+DELETE /organizations/{organizationID}/keys/{keyID}
+```
+
+### Path parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| organizationID | string | Unique identifier for the organization |
+| userID | string | Unique identifier for the user (for user keys) |
+| keyID | string | Unique identifier for the API key |
+
+### Response
+
+Returns a 204 status code with no content on success. 

@@ -1,0 +1,118 @@
+---
+title: Users API
+description: Manage user accounts and profiles
+---
+
+The Users API allows you to manage user accounts within your Xata organization, including listing, retrieving, updating, and deleting user accounts.
+
+## List users
+
+Retrieves a list of all users in an organization.
+
+```bash
+GET /organizations/{organizationID}/users
+```
+
+### Path parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| organizationID | string | Unique identifier for the organization |
+
+### Response
+
+```json
+{
+  "users": [
+    {
+      "id": "user_123",
+      "email": "user@example.com",
+      "name": "John Doe",
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+## Get user
+
+Retrieves detailed information about a specific user.
+
+```bash
+GET /organizations/{organizationID}/users/{userID}
+```
+
+### Path parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| organizationID | string | Unique identifier for the organization |
+| userID | string | Unique identifier for the user |
+
+### Response
+
+```json
+{
+  "id": "user_123",
+  "email": "user@example.com",
+  "name": "John Doe",
+  "createdAt": "2024-01-01T00:00:00Z",
+  "updatedAt": "2024-01-01T00:00:00Z"
+}
+```
+
+## Update user
+
+Updates user information within an organization.
+
+```bash
+PATCH /organizations/{organizationID}/users/{userID}
+```
+
+### Path parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| organizationID | string | Unique identifier for the organization |
+| userID | string | Unique identifier for the user |
+
+### Request body
+
+```json
+{
+  "name": "Updated User Name",
+  "email": "updated@example.com"
+}
+```
+
+### Response
+
+```json
+{
+  "id": "user_123",
+  "email": "updated@example.com",
+  "name": "Updated User Name",
+  "createdAt": "2024-01-01T00:00:00Z",
+  "updatedAt": "2024-01-01T00:00:00Z"
+}
+```
+
+## Delete user
+
+Removes a user from an organization.
+
+```bash
+DELETE /organizations/{organizationID}/users/{userID}
+```
+
+### Path parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| organizationID | string | Unique identifier for the organization |
+| userID | string | Unique identifier for the user |
+
+### Response
+
+Returns a 204 status code with no content on success. 

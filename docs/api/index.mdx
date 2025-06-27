@@ -7,25 +7,42 @@ The Xata REST API allows you to programmatically manage your databases, branches
 
 ## Authentication
 
-All API requests require authentication using an API key. You can create API keys in the [Xata dashboard](https://app.xata.io). Include your API key in the `Authorization` header:
+The API supports OpenID Connect authentication. You can authenticate using:
 
-```bash
-curl -H "Authorization: Bearer YOUR_API_KEY" https://api.xata.tech/...
-```
+1. **API Keys** - Include your API key in the `Authorization` header:
+   ```bash
+   curl -H "Authorization: Bearer YOUR_API_KEY" https://api.xata.tech/...
+   ```
+
+2. **OpenID Connect** - For OAuth2/OIDC flows, use the appropriate authentication headers.
 
 ## Available Endpoints
 
 The API is organized into the following sections:
 
-### Organizations
+### Authentication API
 
+#### Organizations
 - [List organizations](/api/organizations#list-organizations)
 - [Get organization details](/api/organizations#get-organization)
 - [Update organization](/api/organizations#update-organization)
 - [Delete organization](/api/organizations#delete-organization)
 
-### Projects
+#### Users
+- [List users](/api/users#list-users)
+- [Get user details](/api/users#get-user)
+- [Update user](/api/users#update-user)
+- [Delete user](/api/users#delete-user)
 
+#### API Keys
+- [List API keys](/api/api-keys#list-api-keys)
+- [Create API key](/api/api-keys#create-api-key)
+- [Get API key details](/api/api-keys#get-api-key)
+- [Delete API key](/api/api-keys#delete-api-key)
+
+### Projects API
+
+#### Projects
 - [List projects](/api/projects#list-projects)
 - [Create project](/api/projects#create-project)
 - [Get project details](/api/projects#get-project)
@@ -33,13 +50,16 @@ The API is organized into the following sections:
 - [Delete project](/api/projects#delete-project)
 - [Get available regions](/api/projects#get-regions)
 
-### Branches
-
+#### Branches
 - [List branches](/api/branches#list-branches)
 - [Create branch](/api/branches#create-branch)
 - [Get branch details](/api/branches#get-branch)
 - [Update branch](/api/branches#update-branch)
 - [Delete branch](/api/branches#delete-branch)
+- [Get branch metrics](/api/branches#get-branch-metrics)
+
+#### Metrics
+- [Get branch metrics](/api/metrics#get-branch-metrics)
 
 ## Error Handling
 
@@ -47,16 +67,18 @@ The API uses standard HTTP status codes to indicate the success or failure of re
 
 - `200 OK`: The request was successful
 - `201 Created`: A new resource was successfully created
+- `204 No Content`: The request was successful but no content is returned
 - `400 Bad Request`: The request was malformed or contained invalid parameters
 - `401 Unauthorized`: Authentication failed or is missing
 - `404 Not Found`: The requested resource does not exist
 - `5XX`: Server error
 
-Error responses include a JSON object with a `message` field describing the error:
+Error responses include a JSON object with error details:
 
 ```json
 {
-  "message": "Error description"
+  "id": "error_identifier",
+  "message": "Human-readable error message explaining the issue"
 }
 ```
 
