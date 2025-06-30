@@ -69,6 +69,12 @@ xata roll init
 
 ![Branch details/schema view](assets/images/getting-started/branch-details.png)
 
+Since your database already contains the schema loaded from step 4, you'll need to baseline the branch to create a starting point for schema history:
+
+```bash
+xata roll baseline
+```
+
 ## 7. Create a development branch with the CLI
 
 Create a new branch from `main`:
@@ -125,7 +131,13 @@ After making changes in a branch, use the **Schema Diff** feature in the `dev` b
 
 ## 10. Merge your changes back to main
 
-Now that you've made changes in your dev branch, merge them back to main:
+Now that you've made changes in your dev branch, you'll need to pull them into your local migrations folder:
+
+```bash
+xata roll pull
+```
+
+Then merge them back to main:
 
 ```bash
 xata checkout main
@@ -133,6 +145,18 @@ xata roll migrate
 ```
 
 This will apply your dev branch's schema changes to main.
+
+To view the status of the migration:
+
+```bash
+xata roll status
+```
+
+Once you're happy with the shcema change, you can complete the migration:
+
+```bash
+xata roll complete
+```
 
 ## 11. Start from a clean slate
 
