@@ -1,0 +1,35 @@
+---
+title: Checkout Command
+description: Checkout a branch
+---
+
+The `checkout` command allows you to switch to a different branch.
+
+## Usage
+
+```bash
+xata checkout [branch name]
+```
+
+## Arguments
+
+- `[branch name]` - The branch to switch to
+
+## Flags
+
+- `--organization` - Organization ID
+- `--project` - Project ID
+- `--branch` - Branch ID
+- `--database` - Database name
+- `--json` - Output in JSON format (default: false)
+- `-h, --help` - Print help information and exit
+
+## Examples
+
+```bash
+# Checkout a specific branch
+xata checkout main
+
+# Checkout with specific organization and project
+xata checkout feature-branch --organization org-123 --project proj-456
+``` 

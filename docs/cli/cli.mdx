@@ -5,12 +5,14 @@ description: Complete reference for the Xata CLI
 
 The Xata CLI is a powerful tool for managing your Xata databases, projects, and organizations from the command line. It provides commands for authentication, project management, database operations, and more.
 
-## Installation (macOS/Linux)
+## Installation
 
 ```bash
-# Install using npm
+# Install using the official install script
 curl -fsSL https://xata.io/install.sh | bash
 ```
+
+Note: The CLI binary will be installed to `~/.config/xata/bin/`. Make sure this directory is in your PATH.
 
 ## Installation (Windows)
 
@@ -38,6 +40,14 @@ xata [command] [subcommand] [options]
 - [auth access-token](/cli/auth#access-token) - Print the current access token
 - [auth refresh-token](/cli/auth#refresh-token) - Print the current refresh token
 
+### Organization Management
+
+- [organization list](/cli/organization#list) - List all organizations
+- [organization describe](/cli/organization#describe) - Describe an organization
+- [organization create](/cli/organization#create) - Create a new organization
+- [organization delete](/cli/organization#delete) - Delete an organization
+- [organization get](/cli/organization#get) - Get a field from an organization description
+
 ### Project Management
 
 - [init](/cli/init#init) - Link a project to the current folder
@@ -47,14 +57,6 @@ xata [command] [subcommand] [options]
 - [project delete](/cli/project#delete) - Delete a project
 - [project init](/cli/project#init) - Link a project to the folder
 - [project get](/cli/project#get) - Get a field from a project description
-
-### Organization Management
-
-- [organization list](/cli/organization#list) - List all organizations
-- [organization describe](/cli/organization#describe) - Describe an organization
-- [organization create](/cli/organization#create) - Create a new organization
-- [organization delete](/cli/organization#delete) - Delete an organization
-- [organization get](/cli/organization#get) - Get a field from an organization description
 
 ### Branch Management
 
@@ -66,15 +68,27 @@ xata [command] [subcommand] [options]
 - [branch checkout](/cli/branch#checkout) - Checkout a branch
 - [branch tree](/cli/branch#tree) - List all branches as a tree
 - [branch get](/cli/branch#get) - Get a field from a branch description
+- [branch set](/cli/branch#set) - Set a field value for a branch
 - [branch wait-ready](/cli/branch#wait-ready) - Wait for a branch to be ready
+
+### API Key Management
+
+- [keys user list](/cli/keys#list) - List API keys for the current user
+- [keys user create](/cli/keys#create) - Create an API key for the current user
+- [keys user delete](/cli/keys#delete) - Delete an API key for the current user
+- [keys organization list](/cli/keys#list) - List API keys for an organization
+- [keys organization create](/cli/keys#create) - Create an API key for an organization
+- [keys organization delete](/cli/keys#delete) - Delete an API key for an organization
 
 ### Schema Migrations
 
+- [roll baseline](/cli/roll#baseline) - Create a baseline migration for an existing database schema
 - [roll complete](/cli/roll#complete) - Complete an ongoing migration
 - [roll init](/cli/roll#init) - Initialize pgroll in the target database
-- [roll latest](/cli/roll#latest) - Print the name of the latest schema version
-- [roll migrate](/cli/roll#migrate) - Apply outstanding migrations
-- [roll pull](/cli/roll#pull) - Pull migration history from the target database
+- [roll latest](/cli/roll#latest) - Print the name of the latest schema version or migration
+- [roll migrate](/cli/roll#migrate) - Apply outstanding migrations from a directory to a database
+- [roll update](/cli/roll#update) - Update outdated migrations in a directory
+- [roll pull](/cli/roll#pull) - Pull migration history from the target database and write it to disk
 - [roll rollback](/cli/roll#rollback) - Roll back an ongoing migration
 - [roll start](/cli/roll#start) - Start a migration
 - [roll status](/cli/roll#status) - Show pgroll status
@@ -89,6 +103,7 @@ xata [command] [subcommand] [options]
 
 - [status](/cli/status#status) - Get the status of the Xata CLI
 - [version](/cli/version#version) - Get the version of the Xata CLI and pgroll
+- [checkout](/cli/checkout#checkout) - Checkout a branch
 - [upgrade](/cli/upgrade#upgrade) - Upgrade the Xata CLI
 - [completions install](/cli/completions#install) - Install shell completions
 - [completions uninstall](/cli/completions#uninstall) - Uninstall shell completions

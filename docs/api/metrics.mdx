@@ -1,0 +1,107 @@
+---
+title: Metrics API
+description: Retrieve metrics and monitoring data for branches
+---
+
+The Metrics API allows you to retrieve performance and monitoring metrics for your database branches, including CPU, memory, and disk usage.
+
+## Get branch metrics
+
+Retrieves metrics for a specific branch over a time period.
+
+```bash
+POST /organizations/{organizationID}/projects/{projectID}/branches/{branchID}/metrics
+```
+
+### Path parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| organizationID | string | Unique identifier for the organization |
+| projectID | string | Unique identifier for the project |
+| branchID | string | Unique identifier for the branch |
+
+### Request body
+
+```json
+{
+  "start": "2024-01-01T00:00:00Z",
+  "end": "2024-01-01T23:59:59Z",
+  "metric": "cpu",
+  "instances": ["inst_123", "inst_456"],
+  "aggregations": ["avg", "max", "min"]
+}
+```
+
+### Request body parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| start | string (date-time) | Start time for the metrics query |
+| end | string (date-time) | End time for the metrics query |
+| metric | string | Metric name to query. Options: `cpu`, `memory`, `disk` |
+| instances | array | List of instance IDs to query |
+| aggregations | array | List of aggregations to apply. Options: `avg`, `max`, `min` |
+
+### Response
+
+```json
+{
+  "start": "2024-01-01T00:00:00Z",
+  "end": "2024-01-01T23:59:59Z",
+  "metric": "cpu",
+  "unit": "percentage",
+  "series": [
+    {
+      "instance": "inst_123",
+      "aggregation": "avg",
+      "data": [
+        {
+          "timestamp": "2024-01-01T00:00:00Z",
+          "value": 25.5
+        },
+        {
+          "timestamp": "2024-01-01T01:00:00Z",
+          "value": 30.2
+        }
+      ]
+    },
+    {
+      "instance": "inst_123",
+      "aggregation": "max",
+      "data": [
+        {
+          "timestamp": "2024-01-01T00:00:00Z",
+          "value": 45.0
+        },
+        {
+          "timestamp": "2024-01-01T01:00:00Z",
+          "value": 52.1
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Response fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| start | string (date-time) | Start time of the metrics period |
+| end | string (date-time) | End time of the metrics period |
+| metric | string | The metric type that was queried |
+| unit | string | The unit of measurement (percentage, bytes, ms, etc.) |
+| series | array | Array of metric series, one per instance and aggregation |
+
+### Metric types
+
+- **cpu**: CPU usage percentage
+- **memory**: Memory usage in bytes
+- **disk**: Disk usage in bytes
+
+### Aggregation types
+
+- **avg**: Average value over the time interval
+- **max**: Maximum value over the time interval
+- **min**: Minimum value over the time interval 

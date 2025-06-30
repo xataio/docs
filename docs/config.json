@@ -70,6 +70,11 @@
           "file": "docs/cli/branch.mdx"
         },
         {
+          "title": "checkout",
+          "href": "/cli/checkout",
+          "file": "docs/cli/checkout.mdx"
+        },
+        {
           "title": "clone",
           "href": "/cli/clone",
           "file": "docs/cli/clone.mdx"
@@ -83,6 +88,11 @@
           "title": "init",
           "href": "/cli/init",
           "file": "docs/cli/init.mdx"
+        },
+        {
+          "title": "keys",
+          "href": "/cli/keys",
+          "file": "docs/cli/keys.mdx"
         },
         {
           "title": "organization",
@@ -127,6 +137,16 @@
           "file": "docs/api/organizations.mdx"
         },
         {
+          "title": "Users",
+          "href": "/api/users",
+          "file": "docs/api/users.mdx"
+        },
+        {
+          "title": "API Keys",
+          "href": "/api/api-keys",
+          "file": "docs/api/api-keys.mdx"
+        },
+        {
           "title": "Projects",
           "href": "/api/projects",
           "file": "docs/api/projects.mdx"
@@ -135,6 +155,11 @@
           "title": "Branches",
           "href": "/api/branches",
           "file": "docs/api/branches.mdx"
+        },
+        {
+          "title": "Metrics",
+          "href": "/api/metrics",
+          "file": "docs/api/metrics.mdx"
         }
       ]
     },

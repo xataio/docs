@@ -56,6 +56,12 @@ POST /organizations/{organizationID}/projects
 }
 ```
 
+### Request body parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| name | string | Human-readable name for the new project |
+
 ### Response
 
 ```json
@@ -116,6 +122,12 @@ PATCH /organizations/{organizationID}/projects/{projectID}
 }
 ```
 
+### Request body parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| name | string | New name for the project |
+
 ### Response
 
 ```json
@@ -168,7 +180,19 @@ GET /organizations/{organizationID}/regions
     {
       "id": "us-east-1",
       "publicAccess": true
+    },
+    {
+      "id": "eu-west-1",
+      "publicAccess": false
     }
   ]
 }
-``` 
+```
+
+### Response fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| regions | array | Array of available regions with their properties |
+| id | string | Unique identifier for the region |
+| publicAccess | boolean | Whether data plane is public-facing to the internet in this region | 
