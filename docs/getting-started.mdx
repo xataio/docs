@@ -25,41 +25,11 @@ Within your project, create your first branch (e.g., `main`). A branch is a Post
 
 ![Create branch page](assets/images/getting-started/create-branch.png)
 
-## 4. Add sample xata (data)
+## 4. Enable schema history
 
-Navigate to the **Queries** section in your project and run the following SQL to create sample tables and data:
+Go to the **Branches** section and select your branch (e.g., `main`). Here you can view your schema and enable schema history for zero-downtime schema changes.
 
-```sql
-CREATE TABLE products(id SERIAL PRIMARY KEY,name TEXT,price NUMERIC(7,2));
-CREATE TABLE orders(id SERIAL PRIMARY KEY,created_at TIMESTAMPTZ DEFAULT now());
-CREATE TABLE order_items(order_id INT REFERENCES orders(id),product_id INT REFERENCES products(id),qty INT,PRIMARY KEY(order_id,product_id));
-INSERT INTO products(name,price) SELECT LEFT(md5(i::text),8),(random()*90+10)::numeric(7,2) FROM generate_series(1,10)i;
-WITH o AS (INSERT INTO orders DEFAULT VALUES RETURNING id) INSERT INTO order_items(order_id,product_id,qty) SELECT o.id,pid,(1+floor(random()*3))::int FROM o,(SELECT id pid FROM products ORDER BY random() LIMIT 5)p;
-```
-
-![Queries/SQL editor page](assets/images/getting-started/queries.png)
-
-## 5. Install the CLI
-
-To use advanced features like schema history, migrations, cloning and database management you need to install the Xata CLI:
-
-```bash
-curl -fsSL https://xata.io/install.sh | bash
-```
-
-Authenticate the CLI by running:
-```bash
-xata auth login
-```
-
-Initialize the project by running:
-```bash
-xata init
-```
-
-## 6. Enable schema history
-
-Go to the **Branches** section and select your branch (e.g., `main`). Here you can view your schema and enable schema history for zero-downtime migrations.
+![Branch details/schema view](assets/images/getting-started/branch-details.png)
 
 To enable schema history, run:
 
@@ -67,29 +37,83 @@ To enable schema history, run:
 xata roll init
 ```
 
-![Branch details/schema view](assets/images/getting-started/branch-details.png)
+## 5. Create initial tables
 
-Since your database already contains the schema loaded from step 4, you'll need to baseline the branch to create a starting point for schema history:
+Using `xata roll`, we can now safely create a migration file for our initial schema:
 
-```bash
-xata roll baseline
+```sh
+cat > .xata/migrations/001_initial_schema.yaml << 'EOL'
+operations:
+  - create_table:
+      name: products
+      columns:
+        - name: id
+          type: serial
+        - name: name
+          type: text
+        - name: price
+          type: numeric(7,2)
+      constraints:
+        - name: products_pk
+          type: primary_key
+          columns:
+            - id
+  - create_table:
+      name: orders
+      columns:
+        - name: id
+          type: serial
+        - name: created_at
+          type: timestamptz
+          default: now()
+      constraints:
+        - name: orders_pk
+          type: primary_key
+          columns:
+            - id
+  - create_table:
+      name: order_items
+      columns:
+        - name: order_id
+          type: int
+        - name: product_id
+          type: int
+        - name: qty
+          type: int
+      constraints:
+        - name: order_items_pk
+          type: primary_key
+          columns:
+            - order_id
+            - product_id
+        - name: order_items_order_id_fk
+          type: foreign_key
+          columns:
+            - order_id
+          references:
+            table: orders
+            columns:
+              - id
+        - name: order_items_product_id_fk
+          type: foreign_key
+          columns:
+            - product_id
+          references:
+            table: products
+            columns:
+              - id
+EOL
 ```
 
-## 7. Create a development branch with the CLI
+Apply the migration:
 
-Create a new branch from `main`:
-
-```bash
-xata branch create --name dev --parent-branch `xata branch get id`
+```sh
+xata roll migrate --complete true
 ```
 
-This command will automatically checkout the new branch for you.
+## 6. Insert sample data
 
-## 8. Modify your schema from the terminal
-
-You can make schema changes directly in the Xata query view, but here we'll show how to do it from your terminal using `psql` for a more hands-on workflow.
-
-If you don't have `psql` installed:
+Let's insert some sample data using `psql`. If you don't have `psql` installed:
 
 **macOS:**
 
@@ -111,17 +135,49 @@ Download from [PostgreSQL official site](https://www.postgresql.org/download/win
 
 Connect to `psql` with your dev branch connection string
 
-```bash
+```sh
 psql `xata branch url`
 ```
 
-Add a new column to your `products` table:
+Then run the following SQL to insert sample data:
 
 ```sql
-ALTER TABLE products ADD COLUMN rating INT;
+INSERT INTO products(name,price) SELECT LEFT(md5(i::text),8),(random()*90+10)::numeric(7,2) FROM generate_series(1,10)i;
+WITH o AS (INSERT INTO orders DEFAULT VALUES RETURNING id) INSERT INTO order_items(order_id,product_id,qty) SELECT o.id,pid,(1+floor(random()*3))::int FROM o,(SELECT id pid FROM products ORDER BY random() LIMIT 5)p;
 ```
 
-You can now use SQL to update or query the new column.
+## 7. Create a development branch with the CLI
+
+Create a new branch from `main`:
+
+```bash
+xata branch create --name dev --parent-branch `xata branch get id`
+```
+
+This command will automatically checkout the new branch for you.
+
+## 8. Add a column
+
+Let's add a rating column to the products table using pgroll. Create a new migration file:
+
+```sh
+cat > .xata/migrations/002_add_rating_column.yaml << 'EOL'
+operations:
+  - alter_table:
+      name: products
+      columns:
+        - name: rating
+          type: int
+EOL
+```
+
+Apply the migration to your dev branch:
+
+```sh
+xata roll migrate
+```
+
+This will add the `rating` column to the products table.
 
 ## 9. Check the schema diff in the branch details page
 
@@ -131,13 +187,7 @@ After making changes in a branch, use the **Schema Diff** feature in the `dev` b
 
 ## 10. Merge your changes back to main
 
-Now that you've made changes in your dev branch, you'll need to pull them into your local migrations folder:
-
-```bash
-xata roll pull
-```
-
-Then merge them back to main:
+Now that you've made changes in your dev branch, you'll need to checkout `main` branch and apply the local migrations from your `dev` branch:
 
 ```bash
 xata checkout main
@@ -168,12 +218,24 @@ Delete the `dev` branch:
 xata branch delete dev
 ```
 
-Finally, connect to your main branch using `psql` and run the following SQL to remove the sample tables and data:
+Finally, let's clean up the sample tables using a `xata roll` migration. Create a migration to drop all the tables:
 
-```sql
-DROP TABLE IF EXISTS order_items;
-DROP TABLE IF EXISTS orders;
-DROP TABLE IF EXISTS products;
+```sh
+cat > .xata/migrations/003_cleanup_tables.yaml << 'EOL'
+operations:
+  - drop_table:
+      name: order_items
+  - drop_table:
+      name: orders
+  - drop_table:
+      name: products
+EOL
+```
+
+Apply the cleanup migration:
+
+```sh
+xata roll migrate --complete true
 ```
 
 This will leave your main branch clean for your next project or migration.
