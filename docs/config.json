@@ -6,6 +6,108 @@
       "file": "docs/getting-started.mdx"
     },
     {
+      "title": "Quickstarts",
+      "href": "/quickstarts",
+      "file": "docs/quickstarts/quickstarts.mdx",
+      "items": [
+        {
+          "title": "Drizzle",
+          "href": "/quickstarts/drizzle",
+          "file": "docs/quickstarts/drizzle.mdx"
+        },
+        {
+          "title": "Next.js",
+          "href": "/quickstarts/nextjs",
+          "file": "docs/quickstarts/nextjs.mdx"
+        },
+        {
+          "title": "Nuxt",
+          "href": "/quickstarts/nuxt",
+          "file": "docs/quickstarts/nuxt.mdx"
+        },
+        {
+          "title": "Astro",
+          "href": "/quickstarts/astro",
+          "file": "docs/quickstarts/astro.mdx"
+        },
+        {
+          "title": "SvelteKit",
+          "href": "/quickstarts/svelte",
+          "file": "docs/quickstarts/svelte.mdx"
+        },
+        {
+          "title": "Remix",
+          "href": "/quickstarts/remix",
+          "file": "docs/quickstarts/remix.mdx"
+        },
+        {
+          "title": "Node.js",
+          "href": "/quickstarts/nodejs",
+          "file": "docs/quickstarts/nodejs.mdx"
+        },
+        {
+          "title": "Django",
+          "href": "/quickstarts/django",
+          "file": "docs/quickstarts/django.mdx"
+        },
+        {
+          "title": "Rails",
+          "href": "/quickstarts/rails",
+          "file": "docs/quickstarts/rails.mdx"
+        },
+        {
+          "title": "Go",
+          "href": "/quickstarts/go",
+          "file": "docs/quickstarts/go.mdx"
+        },
+        {
+          "title": "Rust",
+          "href": "/quickstarts/rust",
+          "file": "docs/quickstarts/rust.mdx"
+        },
+        {
+          "title": "Laravel",
+          "href": "/quickstarts/laravel",
+          "file": "docs/quickstarts/laravel.mdx"
+        },
+        {
+          "title": "Java",
+          "href": "/quickstarts/java",
+          "file": "docs/quickstarts/java.mdx"
+        },
+        {
+          "title": "Python",
+          "href": "/quickstarts/python",
+          "file": "docs/quickstarts/python.mdx"
+        },
+        {
+          "title": "SQLAlchemy",
+          "href": "/quickstarts/sqlalchemy",
+          "file": "docs/quickstarts/sqlalchemy.mdx"
+        },
+        {
+          "title": "Prisma",
+          "href": "/quickstarts/prisma",
+          "file": "docs/quickstarts/prisma.mdx"
+        },
+        {
+          "title": "TypeORM",
+          "href": "/quickstarts/typeorm",
+          "file": "docs/quickstarts/typeorm.mdx"
+        },
+        {
+          "title": "GORM",
+          "href": "/quickstarts/gorm",
+          "file": "docs/quickstarts/gorm.mdx"
+        },
+        {
+          "title": "JPA",
+          "href": "/quickstarts/jpa",
+          "file": "docs/quickstarts/jpa.mdx"
+        }
+      ]
+    },
+    {
       "title": "Deployment models",
       "href": "/deployment",
       "file": "docs/deployment.mdx"
