@@ -1,0 +1,247 @@
+---
+title: "Migrate from Supabase to Xata"
+description: "Learn how to migrate your Supabase PostgreSQL database to Xata using xata clone. Step-by-step instructions for handling Supabase-specific schemas and features."
+---
+
+## Prerequisites
+
+- Supabase project
+- Access to Supabase Dashboard
+- Xata account and project setup
+- Network access to your Supabase database
+
+## About Supabase and Xata
+
+Supabase and Xata both provide PostgreSQL, but with different approaches:
+
+- **Supabase**: PostgreSQL with built-in Auth, Storage, and Realtime features
+- **Xata**: Vanilla PostgreSQL with advanced branching and data operations
+
+### What Gets Migrated
+
+When you clone a Supabase database to Xata:
+
+✅ **What's Included**:
+- All your custom tables and data
+- Database schema and relationships
+- Stored procedures and functions
+- Custom extensions you've installed
+
+⚠️ **What's Not Included**:
+- Supabase Auth (users, sessions, policies)
+- Supabase Storage (file storage)
+- Supabase Realtime (websocket subscriptions)
+- Supabase Edge Functions
+- Supabase-specific extensions (auth, storage, etc.)
+
+
+## Create Snapshot User
+
+Connect to your Supabase database and create a dedicated user for migration:
+
+```sql
+-- Create snapshot user
+CREATE USER xata_snapshot WITH LOGIN PASSWORD 'your_secure_password';
+
+-- Grant necessary privileges
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO xata_snapshot;
+GRANT USAGE ON SCHEMA public TO xata_snapshot;
+
+-- Grant privileges on future tables
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO xata_snapshot;
+```
+
+## Get Connection String
+
+### Find Your Connection Details
+
+1. Go to Supabase Dashboard → Your Project
+2. Navigate to "Settings" → "Database"
+3. Copy the connection string from "Connection string" section
+
+### Connection String Format
+
+Supabase connection strings typically look like this:
+
+```
+postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres
+```
+
+### Using the Snapshot User
+
+Replace the default `postgres` user with your snapshot user:
+
+```
+postgresql://xata_snapshot:your_password@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres
+```
+
+## Handle Supabase Schemas
+
+### Option 1: Clone Everything (Including Supabase Schemas)
+
+This will clone all data including Supabase's internal schemas:
+
+```bash
+# Clone everything
+export XATA_CLI_SOURCE_POSTGRES_URL="postgresql://xata_snapshot:password@db.project-ref.supabase.co:5432/postgres"
+xata clone start --source-url $XATA_CLI_SOURCE_POSTGRES_URL
+```
+
+### Option 2: Exclude Supabase Schemas (Recommended)
+
+Clone only your application data, excluding Supabase-specific schemas:
+
+```bash
+# Configure clone to exclude Supabase schemas
+xata clone config --source-url $XATA_CLI_SOURCE_POSTGRES_URL --mode prompt
+
+# During configuration, exclude these schemas:
+# - auth (Supabase authentication)
+# - storage (Supabase file storage)
+# - graphql_public (Supabase GraphQL)
+# - realtime (Supabase realtime)
+# - vault (Supabase secrets)
+```
+
+## Initialize Xata Project
+
+Set up your Xata project configuration:
+
+```bash
+xata init
+```
+
+## Configure the Migration
+
+Set up your clone configuration with schema filtering:
+
+```bash
+# Set your source URL
+export XATA_CLI_SOURCE_POSTGRES_URL="postgresql://xata_snapshot:your_password@db.project-ref.supabase.co:5432/postgres"
+
+# Configure with schema filtering
+xata clone config --source-url $XATA_CLI_SOURCE_POSTGRES_URL --mode prompt
+```
+
+## Start the Migration
+
+Begin the data transfer:
+
+```bash
+# Start the migration
+xata clone start --source-url $XATA_CLI_SOURCE_POSTGRES_URL
+```
+
+## Monitor Progress
+
+Check the migration status:
+
+```bash
+xata clone status
+```
+
+## Verification
+
+After migration, verify your data:
+
+1. **Connect to Xata Branch**:
+   ```bash
+   xata branch url
+   ```
+
+2. **Check Data Integrity**:
+   ```sql
+   -- Compare row counts
+   SELECT COUNT(*) FROM your_table;
+   
+   -- Check sample data
+   SELECT * FROM your_table LIMIT 10;
+   ```
+
+3. **Test Relationships**: Verify foreign key relationships work correctly
+
+## Post-Migration Setup
+
+### 1. Set Up Authentication
+
+Since Supabase Auth won't be available, you'll need to implement authentication:
+
+- **Option A**: Use a third-party auth provider (Auth0, Clerk, etc.)
+- **Option B**: Implement custom authentication
+- **Option C**: Use Xata's built-in authentication features (if available)
+
+### 2. Handle File Storage
+
+Replace Supabase Storage with an alternative:
+
+- **Option A**: Use cloud storage (AWS S3, Google Cloud Storage)
+- **Option B**: Use a CDN service
+- **Option C**: Implement your own file storage solution
+
+### 3. Replace Realtime Features
+
+If you were using Supabase Realtime:
+
+- **Option A**: Use WebSockets with your backend
+- **Option B**: Use a realtime service (Pusher, Ably)
+- **Option C**: Implement polling for simple use cases
+
+## Migration Strategies
+
+### Strategy 1: Gradual Migration
+
+1. **Clone data** to Xata
+2. **Migrate authentication** first
+3. **Update file storage** implementation
+4. **Replace realtime features**
+5. **Switch application** to Xata
+
+### Strategy 2: Parallel Systems
+
+1. **Keep Supabase** for Auth/Storage/Realtime
+2. **Use Xata** for database operations
+3. **Gradually migrate** features to Xata
+4. **Eventually consolidate** to Xata
+
+### Strategy 3: Clean Slate
+
+1. **Clone only application data** (exclude Supabase schemas)
+2. **Implement new auth/storage/realtime** solutions
+3. **Build new features** on Xata
+4. **Migrate existing features** gradually
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Permission Denied**:
+   - Verify the snapshot user has correct privileges
+   - Check that the user has sufficient permissions
+
+2. **Schema Conflicts**:
+   - Exclude Supabase schemas during configuration
+   - Use schema filtering in clone config
+
+3. **Connection Issues**:
+   - Verify the connection string format
+   - Check that SSL is enabled
+   - Ensure the database is accessible
+
+4. **Large Dataset**:
+   - Consider breaking the migration into smaller chunks
+   - Use continuous sync for ongoing updates
+
+### SSL Configuration
+
+Supabase requires SSL. Include SSL parameters:
+
+```
+postgresql://user:password@host/database?sslmode=require
+```
+
+## Next Steps
+
+- Explore [Xata branching](/core-concepts/branching) for development workflows
+- Learn about [schema changes](/core-concepts/schema-changes) with zero downtime
+- Set up [continuous sync](/tutorials/create-staging-replica) for ongoing replication
+- Consider [deployment options](/deployment) for your Xata instance 

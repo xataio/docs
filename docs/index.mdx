@@ -1,7 +1,8 @@
 ---
 title: Xata Documentation
-description: Xata is a modern PostgreSQL platform designed for developers who want to build faster and ship with confidence. Our platform is built to support your production use cases as well as staging environments and developer workflows with  features like instant branching, zero-downtime schema changes, and built-in data anonymization.
 ---
+
+Xata is a modern PostgreSQL platform designed for developers who want to build faster and ship with confidence. Our platform is built to support your production use cases as well as staging environments and developer workflows with  features like instant branching, zero-downtime schema changes, and built-in data anonymization.
 
 Here's a quick introductary video to learn more:
 
@@ -15,6 +16,8 @@ Here's a quick introductary video to learn more:
 | **⚡ Zero-Downtime Schema Changes** | Modify your database schema without service interruption | Deploy schema changes with confidence | [Schema Changes →](/core-concepts/schema-changes) |
 | **🔒 Built-in Data Anonymization** | Automatically anonymize sensitive data for development | Use real data safely in non-production environments | [Anonymization →](/core-concepts/anonymization) |
 | **🏗️ Deployment Flexibility** | Choose between SaaS or bring-your-own-cloud (BYOC) | Deploy where you need - managed service or your infrastructure | [Deployment →](/deployment) |
+
+Interested in how we compare against other Postgres solutions out there? Check out this [comparison blog series](https://xata.io/blog/neon-vs-supabase-vs-xata-postgres-branching-part-1) for more details.
 
 ## Get Started
 
@@ -36,11 +39,25 @@ Get up and running with Xata in minutes:
 
 ## Tutorials & Guides
 
-| Tutorial | Description | Time |
-|----------|-------------|------|
-| **[Set up staging replica](/tutorials/create-staging-replica)** | Create a staging environment with production data | 10 min |
-| **[Migrate to Xata](/tutorials/migrate-to-xata)** | Move your existing database to Xata | 15 min |
-| **[Schema changes workflow](/tutorials/schema-change)** | Learn best practices for schema evolution | 20 min |
+| Tutorial | Description |
+|----------|-------------|
+| **[Set up staging replica](/tutorials/create-staging-replica)** | Create a staging environment with production data |
+| **[Migrate to Xata](/tutorials/migrate-to-xata)** | Move your existing database to Xata |
+| **[Schema changes workflow](/tutorials/schema-change)** | Learn best practices for schema evolution |
+
+## Migration Guides
+
+Migrate your existing PostgreSQL databases to Xata using `xata clone`:
+
+| Provider | Migration Guide | Description |
+|----------|----------------|-------------|
+| **AWS RDS & Aurora** | [Migrate →](/migrations/aws-rds) | Amazon's managed PostgreSQL services |
+| **GCP Cloud SQL** | [Migrate →](/migrations/gcp-cloudsql) | Google Cloud's managed PostgreSQL |
+| **Azure Database** | [Migrate →](/migrations/azure) | Microsoft's managed PostgreSQL service |
+| **Neon** | [Migrate →](/migrations/neon) | Serverless PostgreSQL with branching |
+| **Supabase** | [Migrate →](/migrations/supabase) | Open source Firebase alternative |
+
+[View all migration guides →](/migrations)
 
 ## Tools & Integrations
 

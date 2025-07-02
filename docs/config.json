@@ -140,6 +140,63 @@
       ]
     },
     {
+      "title": "Migration Guides",
+      "href": "/migrations",
+      "file": "docs/migrations/migrations.mdx",
+      "items": [
+        {
+          "title": "AWS RDS & Aurora",
+          "href": "/migrations/aws-rds",
+          "file": "docs/migrations/aws-rds.mdx"
+        },
+        {
+          "title": "GCP Cloud SQL",
+          "href": "/migrations/gcp-cloudsql",
+          "file": "docs/migrations/gcp-cloudsql.mdx"
+        },
+        {
+          "title": "Google AlloyDB",
+          "href": "/migrations/alloydb",
+          "file": "docs/migrations/alloydb.mdx"
+        },
+        {
+          "title": "Azure Database",
+          "href": "/migrations/azure",
+          "file": "docs/migrations/azure.mdx"
+        },
+        {
+          "title": "Neon",
+          "href": "/migrations/neon",
+          "file": "docs/migrations/neon.mdx"
+        },
+        {
+          "title": "Supabase",
+          "href": "/migrations/supabase",
+          "file": "docs/migrations/supabase.mdx"
+        },
+        {
+          "title": "Self-Hosted PostgreSQL",
+          "href": "/migrations/self-hosted",
+          "file": "docs/migrations/self-hosted.mdx"
+        },
+        {
+          "title": "Heroku Postgres",
+          "href": "/migrations/heroku",
+          "file": "docs/migrations/heroku.mdx"
+        },
+        {
+          "title": "DigitalOcean Managed Databases",
+          "href": "/migrations/digitalocean",
+          "file": "docs/migrations/digitalocean.mdx"
+        },
+        {
+          "title": "MySQL",
+          "href": "/migrations/mysql",
+          "file": "docs/migrations/mysql.mdx"
+        }
+      ]
+    },
+    {
       "title": "Core concepts",
       "href": "/core-concepts",
       "file": "docs/core-concepts/core-concepts.mdx",
