@@ -1,0 +1,254 @@
+---
+title: "Connect Node.js to Xata"
+description: "Learn how to connect your Node.js application to Xata's PostgreSQL platform. Get started with Node.js and PostgreSQL for scalable backend services."
+---
+
+## Prerequisites
+
+- Xata account and project setup
+- Node.js 18+ installed
+- Basic knowledge of Node.js and Express
+
+## Setup Xata Database
+
+First, set up your Xata database with the common e-commerce dataset:
+
+1. Create a project and branch in the [Xata console](https://console.xata.io)
+2. Navigate to the **Queries** tab in your branch
+3. Run the following SQL commands to create the initial schema:
+
+```sql
+CREATE TABLE products (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  price NUMERIC(7,2) NOT NULL,
+  rating INTEGER
+);
+
+CREATE TABLE orders (
+  id SERIAL PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE order_items (
+  order_id INTEGER REFERENCES orders(id),
+  product_id INTEGER REFERENCES products(id),
+  qty INTEGER NOT NULL,
+  PRIMARY KEY (order_id, product_id)
+);
+```
+
+## Create Node.js Project
+
+Create a new Node.js project:
+
+```bash
+mkdir my-xata-app
+cd my-xata-app
+npm init -y
+```
+
+## Initialize Xata Project
+
+Initialize your Xata project configuration:
+
+```bash
+xata init
+```
+
+This will create a `.xata` directory with your project configuration.
+
+## Store Your Credentials
+
+Create a `.env` file in your project root to store your Xata connection string:
+
+```bash
+# .env
+DATABASE_URL="postgresql://username:password@host:port/database"
+```
+
+Get your connection string from the Xata console or CLI:
+
+```bash
+xata branch url
+```
+
+**Important:** Never commit your `.env` file to version control. Add it to your `.gitignore` file.
+
+## Install Dependencies
+
+Install Express and the PostgreSQL client:
+
+```bash
+npm install express postgres cors dotenv
+npm install -D @types/pg @types/express @types/cors nodemon
+```
+
+## Configure Database Connection
+
+Create a database configuration file:
+
+```typescript
+// db.ts
+import postgres from 'postgres';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error('DATABASE_URL environment variable is required');
+}
+
+export const sql = postgres(connectionString);
+```
+
+## Create Express Server
+
+Create your main server file:
+
+```typescript
+// server.ts
+import express from 'express';
+import cors from 'cors';
+import { sql } from './db';
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.use(cors());
+app.use(express.json());
+
+// Get all products
+app.get('/api/products', async (req, res) => {
+  try {
+    const products = await sql`SELECT * FROM products`;
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch products' });
+  }
+});
+
+// Get product by ID
+app.get('/api/products/:id', async (req, res) => {
+  try {
+    const [product] = await sql`SELECT * FROM products WHERE id = ${req.params.id}`;
+    
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    
+    res.json(product);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch product' });
+  }
+});
+
+// Create new product
+app.post('/api/products', async (req, res) => {
+  try {
+    const { name, price, rating } = req.body;
+    const [newProduct] = await sql`
+      INSERT INTO products (name, price, rating)
+      VALUES (${name}, ${price}, ${rating})
+      RETURNING *
+    `;
+    res.status(201).json(newProduct);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create product' });
+  }
+});
+
+// Get orders with products
+app.get('/api/orders', async (req, res) => {
+  try {
+    const orders = await sql`
+      SELECT 
+        o.id as order_id,
+        o.created_at,
+        p.name as product_name,
+        oi.qty,
+        p.price * oi.qty as total
+      FROM orders o
+      JOIN order_items oi ON o.id = oi.order_id
+      JOIN products p ON oi.product_id = p.id
+    `;
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch orders' });
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
+```
+
+## Add Scripts
+
+Update your `package.json` to include development scripts:
+
+```json
+{
+  "scripts": {
+    "dev": "nodemon server.ts",
+    "start": "node server.ts",
+    "build": "tsc"
+  }
+}
+```
+
+## Create TypeScript Config
+
+Create a `tsconfig.json` file:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "outDir": "./dist",
+    "rootDir": "./",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules"]
+}
+```
+
+## Run the Application
+
+Start your development server:
+
+```bash
+npm run dev
+```
+
+Your API will be available at `http://localhost:3000/api/products`.
+
+## Test Your API
+
+You can test the endpoints using curl or a tool like Postman:
+
+```bash
+# Get all products
+curl http://localhost:3000/api/products
+
+# Create a new product
+curl -X POST http://localhost:3000/api/products \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Wireless Headphones","price":99.99,"rating":5}'
+
+# Get orders with products
+curl http://localhost:3000/api/orders
+```
+
+## Next Steps
+
+- Explore [Xata branching](/core-concepts/branching) for development workflows
+- Learn about [schema changes](/core-concepts/schema-changes) with zero downtime
+- Join our [Discord community](https://discord.gg/xata) for help and support 

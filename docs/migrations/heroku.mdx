@@ -1,0 +1,276 @@
+---
+title: "Migrate from Heroku Postgres to Xata"
+description: "Learn how to migrate your Heroku Postgres database to Xata using xata clone. Step-by-step instructions for enabling logical replication and configuring the migration."
+---
+
+## Prerequisites
+
+- Heroku Postgres add-on
+- Heroku CLI installed
+- Xata account and project setup
+- Network access to your Heroku database
+
+## About Heroku Postgres
+
+Heroku Postgres offers different tiers with varying capabilities:
+
+- **Hobby/Basic**: Limited logical replication support
+- **Standard/Premium**: Full logical replication support
+- **Private**: Enhanced security and performance
+
+## Enable Logical Replication
+
+### 1. Check Your Plan
+
+First, verify your Heroku Postgres plan supports logical replication:
+
+```bash
+# Check your database plan
+heroku pg:info --app your-app-name
+```
+
+### 2. Upgrade if Necessary
+
+If you're on a Hobby plan, upgrade to Standard or higher:
+
+```bash
+# Upgrade to Standard plan
+heroku addons:upgrade heroku-postgresql:standard-0 --app your-app-name
+```
+
+### 3. Enable Logical Replication
+
+For Standard plans and above, logical replication is typically enabled by default. Verify:
+
+```bash
+# Connect to your Heroku database
+heroku pg:psql --app your-app-name
+
+# Check if logical replication is enabled
+SHOW wal_level;
+```
+
+If logical replication is not enabled, you can enable it:
+
+```sql
+-- Enable logical replication (requires Standard plan or higher)
+ALTER SYSTEM SET wal_level = logical;
+SELECT pg_reload_conf();
+```
+
+### 4. Verify Configuration
+
+```sql
+-- Check replication slots
+SELECT * FROM pg_replication_slots;
+
+-- Check WAL senders
+SHOW max_wal_senders;
+```
+
+## Create Snapshot User
+
+Connect to your Heroku database and create a dedicated user for migration:
+
+```sql
+-- Create snapshot user (no REPLICATION privilege needed)
+CREATE USER xata_snapshot WITH LOGIN PASSWORD 'your_secure_password';
+
+-- Grant necessary privileges
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO xata_snapshot;
+GRANT USAGE ON SCHEMA public TO xata_snapshot;
+
+-- Grant privileges on future tables
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO xata_snapshot;
+```
+
+## Get Connection String
+
+### Find Your Connection Details
+
+1. **Using Heroku CLI**:
+   ```bash
+   heroku config:get DATABASE_URL --app your-app-name
+   ```
+
+2. **Using Heroku Dashboard**:
+   - Go to [Heroku Dashboard](https://dashboard.heroku.com)
+   - Select your app
+   - Go to "Resources" → "Heroku Postgres"
+   - Click "Settings" → "View Credentials"
+
+### Connection String Format
+
+Heroku connection strings typically look like this:
+
+```
+postgresql://xata_snapshot:your_password@your-heroku-host:5432/your_database?sslmode=require
+```
+
+### Using the Snapshot User
+
+Replace the default user with your snapshot user:
+
+```
+postgresql://xata_snapshot:your_password@your-heroku-host:5432/your_database?sslmode=require
+```
+
+## Network Configuration
+
+### Public Access
+
+Heroku Postgres databases are typically accessible from the internet:
+
+1. **No additional configuration** needed for public access
+2. **SSL is required** by default
+3. **Connection limits** may apply based on your plan
+
+### Private Access (Premium Plans)
+
+If you're on a Premium plan with private access:
+
+1. **Use Heroku Private Spaces**
+2. **Configure VPC peering** if needed
+3. **Run migration from within Heroku** environment
+
+## Initialize Xata Project
+
+Set up your Xata project configuration:
+
+```bash
+xata init
+```
+
+## Configure the Migration
+
+Set up your clone configuration with optional anonymization:
+
+```bash
+# Set your source URL
+export XATA_CLI_SOURCE_POSTGRES_URL="postgresql://xata_snapshot:your_password@your-heroku-host:5432/your_database?sslmode=require"
+
+# Configure anonymization rules
+xata clone config --source-url $XATA_CLI_SOURCE_POSTGRES_URL --mode prompt
+```
+
+## Start the Migration
+
+Begin the data transfer:
+
+```bash
+# Start the migration
+xata clone start --source-url $XATA_CLI_SOURCE_POSTGRES_URL
+```
+
+## Monitor Progress
+
+Check the migration status:
+
+```bash
+xata clone status
+```
+
+## Verification
+
+After migration, verify your data:
+
+1. **Connect to Xata Branch**:
+   ```bash
+   xata branch url
+   ```
+
+2. **Check Data Integrity**:
+   ```sql
+   -- Compare row counts
+   SELECT COUNT(*) FROM your_table;
+   
+   -- Check sample data
+   SELECT * FROM your_table LIMIT 10;
+   ```
+
+3. **Test Relationships**: Verify foreign key relationships work correctly
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Logical Replication Not Supported**:
+   - Upgrade to Standard plan or higher
+   - Check plan limitations in Heroku documentation
+
+2. **Connection Limits**:
+   - Heroku has connection limits based on plan
+   - Consider running migration during low-traffic periods
+   - Monitor connection usage
+
+3. **SSL Issues**:
+   - Heroku requires SSL (`sslmode=require`)
+   - Verify SSL parameters in connection string
+
+4. **Permission Denied**:
+   - Verify the snapshot user has correct privileges
+   - Check that the user has sufficient permissions
+
+### Using pg_dump as Alternative
+
+If `xata clone` cannot be used (e.g., Hobby plan), use `pg_dump`:
+
+```bash
+# Create a dump
+heroku pg:backups:capture --app your-app-name
+
+# Download the backup
+heroku pg:backups:download --app your-app-name
+
+# Get Xata connection string
+xata branch url
+
+# Restore to Xata
+pg_restore --dbname "your-xata-connection-string" backup.dump
+```
+
+## Migration Strategies
+
+### Strategy 1: Direct Migration
+
+1. **Upgrade to Standard plan** if on Hobby
+2. **Enable logical replication**
+3. **Clone data** to Xata
+4. **Update application** to use Xata
+5. **Remove Heroku Postgres** add-on
+
+### Strategy 2: Backup and Restore
+
+1. **Create Heroku backup**
+2. **Restore to Xata**
+3. **Update application**
+4. **Remove Heroku Postgres**
+
+### Strategy 3: Gradual Migration
+
+1. **Keep Heroku Postgres** during transition
+2. **Clone data** to Xata
+3. **Gradually migrate** features to Xata
+4. **Eventually consolidate** to Xata
+
+## Performance Considerations
+
+### Plan Limitations
+
+- **Hobby**: 10,000 rows, 20 connections
+- **Basic**: 10M rows, 120 connections
+- **Standard**: 64M rows, 400 connections
+- **Premium**: 2B rows, 500 connections
+
+### Migration Timing
+
+- **Run during low-traffic** periods
+- **Monitor connection usage**
+- **Consider database size** vs. plan limits
+
+## Next Steps
+
+- Explore [Xata branching](/core-concepts/branching) for development workflows
+- Learn about [schema changes](/core-concepts/schema-changes) with zero downtime
+- Set up [continuous sync](/tutorials/create-staging-replica) for ongoing replication
+- Consider [deployment options](/deployment) for your Xata instance 

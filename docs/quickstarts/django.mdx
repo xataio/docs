@@ -1,0 +1,351 @@
+---
+title: "Connect Django to Xata"
+description: "Learn how to connect your Django application to Xata's PostgreSQL platform. Get started with Django and PostgreSQL for robust web applications."
+---
+
+## Prerequisites
+
+- Xata account and project setup
+- Python 3.8+ installed
+- Basic knowledge of Python and Django
+
+## Setup Xata Database
+
+First, set up your Xata database with the common e-commerce dataset:
+
+1. Create a project and branch in the [Xata console](https://console.xata.io)
+2. Navigate to the **Queries** tab in your branch
+3. Run the following SQL commands to create the initial schema:
+
+```sql
+CREATE TABLE products (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  price NUMERIC(7,2) NOT NULL,
+  rating INTEGER
+);
+
+CREATE TABLE orders (
+  id SERIAL PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE order_items (
+  order_id INTEGER REFERENCES orders(id),
+  product_id INTEGER REFERENCES products(id),
+  qty INTEGER NOT NULL,
+  PRIMARY KEY (order_id, product_id)
+);
+```
+
+## Create Django Project
+
+Create a new Django project:
+
+```bash
+pip install django psycopg2-binary
+django-admin startproject my_xata_app
+cd my_xata_app
+python manage.py startapp store
+```
+
+## Initialize Xata Project
+
+Initialize your Xata project configuration:
+
+```bash
+xata init
+```
+
+This will create a `.xata` directory with your project configuration.
+
+## Store Your Credentials
+
+Create a `.env` file in your project root to store your Xata connection string:
+
+```bash
+# .env
+DATABASE_URL="postgresql://username:password@host:port/database"
+```
+
+Get your connection string from the Xata console or CLI:
+
+```bash
+xata branch url
+```
+
+**Important:** Never commit your `.env` file to version control. Add it to your `.gitignore` file.
+
+## Install Dependencies
+
+Install additional dependencies:
+
+```bash
+pip install python-decouple
+```
+
+## Configure Database Connection
+
+Update your `settings.py` to use the Xata PostgreSQL database:
+
+```python
+# my_xata_app/settings.py
+import os
+from decouple import config
+
+# ... existing settings ...
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('DB_NAME', default='postgres'),
+        'USER': config('DB_USER', default='postgres'),
+        'PASSWORD': config('DB_PASSWORD', default=''),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default='5432'),
+    }
+}
+
+# Add 'store' to INSTALLED_APPS
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'store',  # Add this line
+]
+```
+
+Create a `.env` file with the database components:
+
+```bash
+# .env
+DB_NAME=your_database_name
+DB_USER=your_username
+DB_PASSWORD=your_password
+DB_HOST=your_host
+DB_PORT=5432
+```
+
+## Create Models
+
+Create your Django models in `store/models.py`:
+
+```python
+# store/models.py
+from django.db import models
+
+class Product(models.Model):
+    name = models.CharField(max_length=255)
+    price = models.DecimalField(max_digits=7, decimal_places=2)
+    rating = models.IntegerField(null=True, blank=True)
+    
+    def __str__(self):
+        return self.name
+
+class Order(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Order {self.id} - {self.created_at}"
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    qty = models.IntegerField()
+    
+    class Meta:
+        unique_together = ['order', 'product']
+    
+    def __str__(self):
+        return f"{self.qty}x {self.product.name} in Order {self.order.id}"
+```
+
+## Create Views
+
+Create views in `store/views.py`:
+
+```python
+# store/views.py
+from django.shortcuts import render
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+import json
+from .models import Product, Order, OrderItem
+
+def product_list(request):
+    products = Product.objects.all()
+    data = [{
+        'id': product.id,
+        'name': product.name,
+        'price': float(product.price),
+        'rating': product.rating
+    } for product in products]
+    return JsonResponse(data, safe=False)
+
+def product_detail(request, product_id):
+    try:
+        product = Product.objects.get(id=product_id)
+        data = {
+            'id': product.id,
+            'name': product.name,
+            'price': float(product.price),
+            'rating': product.rating
+        }
+        return JsonResponse(data)
+    except Product.DoesNotExist:
+        return JsonResponse({'error': 'Product not found'}, status=404)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def create_product(request):
+    try:
+        data = json.loads(request.body)
+        product = Product.objects.create(
+            name=data['name'],
+            price=data['price'],
+            rating=data.get('rating')
+        )
+        return JsonResponse({
+            'id': product.id,
+            'name': product.name,
+            'price': float(product.price),
+            'rating': product.rating
+        }, status=201)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+def order_list(request):
+    orders = Order.objects.prefetch_related('orderitem_set__product').all()
+    data = []
+    for order in orders:
+        for item in order.orderitem_set.all():
+            data.append({
+                'order_id': order.id,
+                'created_at': order.created_at.isoformat(),
+                'product_name': item.product.name,
+                'qty': item.qty,
+                'total': float(item.product.price * item.qty)
+            })
+    return JsonResponse(data, safe=False)
+```
+
+## Configure URLs
+
+Update your main `urls.py`:
+
+```python
+# my_xata_app/urls.py
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('api/', include('store.urls')),
+]
+```
+
+Create `store/urls.py`:
+
+```python
+# store/urls.py
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('products/', views.product_list, name='product_list'),
+    path('products/<int:product_id>/', views.product_detail, name='product_detail'),
+    path('products/create/', views.create_product, name='create_product'),
+    path('orders/', views.order_list, name='order_list'),
+]
+```
+
+## Run Migrations
+
+Since you're using an existing database schema, you can create a migration that matches your existing tables:
+
+```bash
+python manage.py makemigrations --empty store
+```
+
+Then edit the generated migration file to use `RunSQL`:
+
+```python
+# store/migrations/0001_initial.py
+from django.db import migrations
+
+class Migration(migrations.Migration):
+    initial = True
+
+    dependencies = []
+
+    operations = [
+        migrations.RunSQL("""
+            CREATE TABLE IF NOT EXISTS store_product (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                price NUMERIC(7,2) NOT NULL,
+                rating INTEGER NULL
+            );
+        """),
+        migrations.RunSQL("""
+            CREATE TABLE IF NOT EXISTS store_order (
+                id SERIAL PRIMARY KEY,
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            );
+        """),
+        migrations.RunSQL("""
+            CREATE TABLE IF NOT EXISTS store_orderitem (
+                id SERIAL PRIMARY KEY,
+                order_id INTEGER REFERENCES store_order(id),
+                product_id INTEGER REFERENCES store_product(id),
+                qty INTEGER NOT NULL,
+                UNIQUE(order_id, product_id)
+            );
+        """),
+    ]
+```
+
+Run the migration:
+
+```bash
+python manage.py migrate
+```
+
+## Run the Application
+
+Start your development server:
+
+```bash
+python manage.py runserver
+```
+
+Your API will be available at:
+- `http://localhost:8000/api/products/`
+- `http://localhost:8000/api/orders/`
+
+## Test Your API
+
+You can test the endpoints using curl:
+
+```bash
+# Get all products
+curl http://localhost:8000/api/products/
+
+# Create a new product
+curl -X POST http://localhost:8000/api/products/create/ \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Wireless Headphones","price":99.99,"rating":5}'
+
+# Get orders with products
+curl http://localhost:8000/api/orders/
+```
+
+## Next Steps
+
+- Explore [Xata branching](/core-concepts/branching) for development workflows
+- Learn about [schema changes](/core-concepts/schema-changes) with zero downtime
+- Join our [Discord community](https://discord.gg/xata) for help and support 

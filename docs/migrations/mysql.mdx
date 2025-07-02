@@ -1,0 +1,335 @@
+---
+title: "Migrate from MySQL to Xata"
+description: "Learn how to migrate your MySQL database to Xata using mysqldump and schema conversion. Step-by-step instructions for migrating from MySQL to PostgreSQL."
+---
+
+## Prerequisites
+
+- MySQL database (5.7 or 8.0)
+- Access to MySQL server with sufficient privileges
+- Xata account and project setup
+- Network access to your MySQL server
+
+## Important Note
+
+Xata is built on PostgreSQL, so migrating from MySQL requires:
+- **Schema conversion** from MySQL to PostgreSQL
+- **Data export/import** using mysqldump
+- **Manual verification** of data types and constraints
+
+## Create Migration User
+
+Connect to your MySQL database and create a dedicated user for migration:
+
+```sql
+-- Create migration user
+CREATE USER 'xata_migration'@'%' IDENTIFIED BY 'your_secure_password';
+
+-- Grant necessary privileges
+GRANT SELECT, LOCK TABLES, SHOW VIEW ON *.* TO 'xata_migration'@'%';
+
+-- For specific database
+GRANT SELECT, LOCK TABLES, SHOW VIEW ON your_database.* TO 'xata_migration'@'%';
+
+-- Flush privileges
+FLUSH PRIVILEGES;
+```
+
+## Export MySQL Schema
+
+First, export your MySQL schema to understand the structure:
+
+```bash
+# Export schema only
+mysqldump --no-data --routines --triggers \
+  -h your-mysql-host \
+  -u xata_migration \
+  -p your_database > schema.sql
+
+# Export with data
+mysqldump --routines --triggers \
+  -h your-mysql-host \
+  -u xata_migration \
+  -p your_database > full_backup.sql
+```
+
+## Schema Conversion
+
+### Common MySQL to PostgreSQL Conversions
+
+You'll need to convert your MySQL schema to PostgreSQL format:
+
+#### Data Types
+```sql
+-- MySQL -> PostgreSQL
+INT -> INTEGER
+BIGINT -> BIGINT
+VARCHAR(255) -> VARCHAR(255)
+TEXT -> TEXT
+DATETIME -> TIMESTAMP
+TIMESTAMP -> TIMESTAMP
+BOOLEAN -> BOOLEAN
+JSON -> JSONB
+```
+
+#### Auto Increment
+```sql
+-- MySQL
+id INT AUTO_INCREMENT PRIMARY KEY
+
+-- PostgreSQL
+id SERIAL PRIMARY KEY
+-- or
+id BIGSERIAL PRIMARY KEY
+```
+
+#### Indexes
+```sql
+-- MySQL
+CREATE INDEX idx_name ON table_name(column_name);
+
+-- PostgreSQL (same syntax)
+CREATE INDEX idx_name ON table_name(column_name);
+```
+
+#### Foreign Keys
+```sql
+-- MySQL
+FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+
+-- PostgreSQL (same syntax)
+FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+```
+
+## Export Data
+
+Export your MySQL data in a PostgreSQL-compatible format:
+
+```bash
+# Export data in INSERT format
+mysqldump --no-create-info --complete-insert \
+  -h your-mysql-host \
+  -u xata_migration \
+  -p your_database > data.sql
+
+# Export specific tables
+mysqldump --no-create-info --complete-insert \
+  -h your-mysql-host \
+  -u xata_migration \
+  -p your_database table1 table2 > specific_tables.sql
+```
+
+## Initialize Xata Project
+
+Set up your Xata project configuration:
+
+```bash
+xata init
+```
+
+## Create PostgreSQL Schema
+
+Create the converted schema in Xata:
+
+```bash
+# Get your Xata connection string
+xata branch url
+
+# Connect to Xata and create tables
+psql "your-xata-connection-string" -f converted_schema.sql
+```
+
+## Import Data
+
+Import your converted data into Xata:
+
+```bash
+# Import data
+psql "your-xata-connection-string" -f converted_data.sql
+
+# Or import specific tables
+psql "your-xata-connection-string" -f specific_tables_data.sql
+```
+
+## Alternative: Using pgloader
+
+For more automated conversion, you can use `pgloader`:
+
+```bash
+# Install pgloader
+# Ubuntu/Debian
+sudo apt-get install pgloader
+
+# macOS
+brew install pgloader
+
+# Create a conversion file (convert.load)
+LOAD DATABASE
+  FROM mysql://xata_migration:password@your-mysql-host/your_database
+  INTO postgresql://your-xata-connection-string
+
+WITH include drop, create tables, create indexes, reset sequences,
+     workers = 8, concurrency = 1,
+     multiple readers per thread, rows per range = 50000
+
+SET MySQL PARAMETERS
+  net_read_timeout = '600',
+  net_write_timeout = '600'
+
+SET PostgreSQL PARAMETERS
+  maintenance_work_mem to '128 MB',
+  work_mem to '12 MB',
+  search_path to 'public'
+
+CAST
+  type int with extra auto_increment to serial,
+  type int with extra auto_increment to bigserial when (> precision 10),
+  -- Add more type conversions as needed
+  default value null for drop typemod keep default keep not null;
+
+# Run the conversion
+pgloader convert.load
+```
+
+## Verification
+
+After migration, verify your data:
+
+1. **Connect to Xata Branch**:
+   ```bash
+   xata branch url
+   ```
+
+2. **Check Data Integrity**:
+   ```sql
+   -- Compare row counts
+   SELECT COUNT(*) FROM your_table;
+   
+   -- Check sample data
+   SELECT * FROM your_table LIMIT 10;
+   
+   -- Check foreign key relationships
+   SELECT COUNT(*) FROM table1 t1 
+   JOIN table2 t2 ON t1.id = t2.table1_id;
+   ```
+
+3. **Test Application**: Verify your application works with the new PostgreSQL schema
+
+## Common Conversion Issues
+
+### 1. Date/Time Handling
+
+MySQL and PostgreSQL handle dates differently:
+
+```sql
+-- MySQL
+SELECT NOW();
+
+-- PostgreSQL
+SELECT NOW();
+-- or
+SELECT CURRENT_TIMESTAMP;
+```
+
+### 2. String Functions
+
+Some string functions differ:
+
+```sql
+-- MySQL
+CONCAT(str1, str2)
+SUBSTRING(str, pos, len)
+
+-- PostgreSQL
+str1 || str2
+SUBSTRING(str FROM pos FOR len)
+```
+
+### 3. JSON Handling
+
+```sql
+-- MySQL
+JSON_EXTRACT(column, '$.key')
+
+-- PostgreSQL
+column->>'key'
+```
+
+### 4. Auto Increment Sequences
+
+After importing, reset sequences:
+
+```sql
+-- For each table with auto increment
+SELECT setval('table_name_id_seq', (SELECT MAX(id) FROM table_name));
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Connection Issues**:
+   - Verify MySQL server is accessible
+   - Check user privileges
+   - Ensure network connectivity
+
+2. **Schema Conversion Errors**:
+   - Review MySQL-specific features
+   - Convert data types manually
+   - Handle MySQL-specific functions
+
+3. **Data Import Errors**:
+   - Check for encoding issues
+   - Verify data type compatibility
+   - Handle NULL values appropriately
+
+4. **Performance Issues**:
+   - Import data in batches
+   - Disable indexes during import
+   - Rebuild indexes after import
+
+### Using mysqldump with Options
+
+```bash
+# Export with specific options
+mysqldump \
+  --single-transaction \
+  --routines \
+  --triggers \
+  --set-gtid-purged=OFF \
+  --default-character-set=utf8mb4 \
+  -h your-mysql-host \
+  -u xata_migration \
+  -p your_database > backup.sql
+```
+
+## Migration Strategies
+
+### Strategy 1: Full Migration
+
+1. **Export MySQL schema and data**
+2. **Convert schema to PostgreSQL**
+3. **Import into Xata**
+4. **Update application** to use Xata
+5. **Decommission MySQL**
+
+### Strategy 2: Gradual Migration
+
+1. **Migrate read-only data** first
+2. **Keep MySQL for writes** during transition
+3. **Gradually migrate** write operations
+4. **Eventually consolidate** to Xata
+
+### Strategy 3: Parallel Systems
+
+1. **Keep MySQL** for existing features
+2. **Use Xata** for new features
+3. **Sync data** between systems
+4. **Gradually migrate** features
+
+## Next Steps
+
+- Explore [Xata branching](/core-concepts/branching) for development workflows
+- Learn about [schema changes](/core-concepts/schema-changes) with zero downtime
+- Set up [continuous sync](/tutorials/create-staging-replica) for ongoing replication
+- Consider [deployment options](/deployment) for your Xata instance 

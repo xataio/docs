@@ -1,0 +1,180 @@
+---
+title: "Connect SvelteKit to Xata"
+description: "Learn how to connect your SvelteKit application to Xata's PostgreSQL platform. Get started with SvelteKit and PostgreSQL for fast, modern web apps."
+---
+
+## Prerequisites
+
+- Xata account and project setup
+- Node.js 18+ installed
+- Basic knowledge of Svelte and SvelteKit
+
+## Setup Xata Database
+
+First, set up your Xata database with the common e-commerce dataset:
+
+1. Create a project and branch in the [Xata console](https://console.xata.io)
+2. Navigate to the **Queries** tab in your branch
+3. Run the following SQL commands to create the initial schema:
+
+```sql
+CREATE TABLE products (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  price NUMERIC(7,2) NOT NULL,
+  rating INTEGER
+);
+
+CREATE TABLE orders (
+  id SERIAL PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE order_items (
+  order_id INTEGER REFERENCES orders(id),
+  product_id INTEGER REFERENCES products(id),
+  qty INTEGER NOT NULL,
+  PRIMARY KEY (order_id, product_id)
+);
+```
+
+## Create SvelteKit Project
+
+Create a new SvelteKit project:
+
+```bash
+npm create svelte@latest my-xata-app
+cd my-xata-app
+npm install
+```
+
+## Initialize Xata Project
+
+Initialize your Xata project configuration:
+
+```bash
+xata init
+```
+
+This will create a `.xata` directory with your project configuration.
+
+## Store Your Credentials
+
+Create a `.env` file in your project root to store your Xata connection string:
+
+```bash
+# .env
+DATABASE_URL="postgresql://username:password@host:port/database"
+```
+
+Get your connection string from the Xata console or CLI:
+
+```bash
+xata branch url
+```
+
+**Important:** Never commit your `.env` file to version control. Add it to your `.gitignore` file.
+
+## Install Dependencies
+
+Install the PostgreSQL client:
+
+```bash
+npm install postgres
+npm install -D @types/pg
+```
+
+## Configure Database Connection
+
+Create a database configuration file:
+
+```typescript
+// src/lib/server/db.ts
+import postgres from 'postgres';
+
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error('DATABASE_URL environment variable is required');
+}
+
+export const sql = postgres(connectionString);
+```
+
+## Create API Endpoint
+
+Create an API endpoint to fetch products:
+
+```typescript
+// src/routes/api/products/+server.ts
+import { sql } from '$lib/server/db';
+import { json } from '@sveltejs/kit';
+
+export async function GET() {
+  try {
+    const products = await sql`SELECT * FROM products`;
+    return json(products);
+  } catch (error) {
+    return json({ error: 'Failed to fetch products' }, { status: 500 });
+  }
+}
+```
+
+## Create Products Page
+
+Create a page to display products:
+
+```svelte
+<!-- src/routes/+page.svelte -->
+<script lang="ts">
+  import { onMount } from 'svelte';
+  let products = [];
+  let loading = true;
+
+  onMount(async () => {
+    const res = await fetch('/api/products');
+    products = await res.json();
+    loading = false;
+  });
+</script>
+
+<main class="container mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold mb-8">Xata E-commerce Store</h1>
+  {#if loading}
+    <div>Loading products...</div>
+  {:else}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {#each products as product}
+        <div class="border rounded-lg p-4">
+          <h3 class="text-lg font-semibold">{product.name}</h3>
+          <p class="text-gray-600">${product.price}</p>
+          {#if product.rating}
+            <div class="flex items-center mt-2">
+              <span class="text-yellow-500">★</span>
+              <span class="ml-1">{product.rating}/5</span>
+            </div>
+          {/if}
+        </div>
+      {/each}
+    </div>
+  {/if}
+</main>
+```
+
+
+
+## Run the Application
+
+Start your development server:
+
+```bash
+npm run dev
+```
+
+Visit `http://localhost:5173` to see your application.
+
+## Next Steps
+
+- Explore [Xata branching](/core-concepts/branching) for development workflows
+- Learn about [schema changes](/core-concepts/schema-changes) with zero downtime
+- Join our [Discord community](https://discord.gg/xata) for help and support 

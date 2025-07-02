@@ -1,0 +1,402 @@
+---
+title: "Connect Laravel to Xata"
+description: "Learn how to connect your Laravel application to Xata's PostgreSQL platform. Get started with Laravel and PostgreSQL for robust web applications."
+---
+
+## Prerequisites
+
+- Xata account and project setup
+- PHP 8.1+ installed
+- Composer installed
+- Basic knowledge of PHP and Laravel
+
+## Setup Xata Database
+
+First, set up your Xata database with the common e-commerce dataset:
+
+1. Create a project and branch in the [Xata console](https://console.xata.io)
+2. Navigate to the **Queries** tab in your branch
+3. Run the following SQL commands to create the initial schema:
+
+```sql
+CREATE TABLE products (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  price NUMERIC(7,2) NOT NULL,
+  rating INTEGER
+);
+
+CREATE TABLE orders (
+  id SERIAL PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE order_items (
+  order_id INTEGER REFERENCES orders(id),
+  product_id INTEGER REFERENCES products(id),
+  qty INTEGER NOT NULL,
+  PRIMARY KEY (order_id, product_id)
+);
+```
+
+## Create Laravel Project
+
+Create a new Laravel project:
+
+```bash
+composer create-project laravel/laravel my-xata-app
+cd my-xata-app
+```
+
+## Initialize Xata Project
+
+Initialize your Xata project configuration:
+
+```bash
+xata init
+```
+
+This will create a `.xata` directory with your project configuration.
+
+## Store Your Credentials
+
+Create a `.env` file in your project root to store your Xata connection string:
+
+```bash
+# .env
+DB_CONNECTION=pgsql
+DB_HOST=your_host
+DB_PORT=5432
+DB_DATABASE=your_database_name
+DB_USERNAME=your_username
+DB_PASSWORD=your_password
+```
+
+Get your connection details from the Xata console or CLI:
+
+```bash
+xata branch url
+```
+
+**Important:** Never commit your `.env` file to version control. Add it to your `.gitignore` file.
+
+## Install Dependencies
+
+Install the PostgreSQL driver for PHP:
+
+```bash
+composer require pgsql
+```
+
+## Configure Database Connection
+
+Update your `config/database.php` to use PostgreSQL:
+
+```php
+// config/database.php
+'default' => env('DB_CONNECTION', 'pgsql'),
+
+'connections' => [
+    'pgsql' => [
+        'driver' => 'pgsql',
+        'host' => env('DB_HOST', '127.0.0.1'),
+        'port' => env('DB_PORT', '5432'),
+        'database' => env('DB_DATABASE', 'forge'),
+        'username' => env('DB_USERNAME', 'forge'),
+        'password' => env('DB_PASSWORD', ''),
+        'charset' => 'utf8',
+        'prefix' => '',
+        'prefix_indexes' => true,
+        'schema' => 'public',
+        'sslmode' => 'prefer',
+    ],
+],
+```
+
+## Create Models
+
+Generate your Eloquent models:
+
+```bash
+php artisan make:model Product
+php artisan make:model Order
+php artisan make:model OrderItem
+```
+
+Update the models with proper relationships:
+
+```php
+// app/Models/Product.php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class Product extends Model
+{
+    protected $fillable = ['name', 'price', 'rating'];
+
+    protected $casts = [
+        'price' => 'decimal:2',
+        'rating' => 'integer',
+    ];
+
+    public function orderItems(): HasMany
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
+    public function orders()
+    {
+        return $this->belongsToMany(Order::class, 'order_items')
+                    ->withPivot('qty')
+                    ->withTimestamps();
+    }
+}
+```
+
+```php
+// app/Models/Order.php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class Order extends Model
+{
+    protected $fillable = ['created_at'];
+
+    protected $casts = [
+        'created_at' => 'datetime',
+    ];
+
+    public function orderItems(): HasMany
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
+    public function products()
+    {
+        return $this->belongsToMany(Product::class, 'order_items')
+                    ->withPivot('qty')
+                    ->withTimestamps();
+    }
+}
+```
+
+```php
+// app/Models/OrderItem.php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class OrderItem extends Model
+{
+    protected $fillable = ['order_id', 'product_id', 'qty'];
+
+    protected $casts = [
+        'qty' => 'integer',
+    ];
+
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class);
+    }
+
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
+    }
+}
+```
+
+## Create Controllers
+
+Generate API controllers:
+
+```bash
+php artisan make:controller Api/ProductController --api
+php artisan make:controller Api/OrderController --api
+```
+
+Update the controllers:
+
+```php
+// app/Http/Controllers/Api/ProductController.php
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\Product;
+use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+
+class ProductController extends Controller
+{
+    public function index(): JsonResponse
+    {
+        $products = Product::all();
+        return response()->json($products);
+    }
+
+    public function show(Product $product): JsonResponse
+    {
+        return response()->json($product);
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'price' => 'required|numeric|min:0',
+            'rating' => 'nullable|integer|min:1|max:5',
+        ]);
+
+        $product = Product::create($validated);
+        return response()->json($product, 201);
+    }
+
+    public function update(Request $request, Product $product): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'price' => 'sometimes|numeric|min:0',
+            'rating' => 'nullable|integer|min:1|max:5',
+        ]);
+
+        $product->update($validated);
+        return response()->json($product);
+    }
+
+    public function destroy(Product $product): JsonResponse
+    {
+        $product->delete();
+        return response()->json(null, 204);
+    }
+}
+```
+
+```php
+// app/Http/Controllers/Api/OrderController.php
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\Order;
+use Illuminate\Http\JsonResponse;
+
+class OrderController extends Controller
+{
+    public function index(): JsonResponse
+    {
+        $orders = Order::with(['products' => function ($query) {
+            $query->select('products.id', 'name', 'price')
+                  ->withPivot('qty');
+        }])->get();
+
+        return response()->json($orders);
+    }
+
+    public function show(Order $order): JsonResponse
+    {
+        $order->load(['products' => function ($query) {
+            $query->select('products.id', 'name', 'price')
+                  ->withPivot('qty');
+        }]);
+
+        return response()->json($order);
+    }
+}
+```
+
+## Define Routes
+
+Add API routes in `routes/api.php`:
+
+```php
+// routes/api.php
+<?php
+
+use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\OrderController;
+use Illuminate\Support\Facades\Route;
+
+Route::apiResource('products', ProductController::class);
+Route::apiResource('orders', OrderController::class)->only(['index', 'show']);
+```
+
+## Create Seeders
+
+Generate seeders for sample data:
+
+```bash
+php artisan make:seeder ProductSeeder
+php artisan make:seeder OrderSeeder
+```
+
+```php
+// database/seeders/ProductSeeder.php
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\Product;
+use Illuminate\Database\Seeder;
+
+class ProductSeeder extends Seeder
+{
+    public function run(): void
+    {
+        $products = [
+            ['name' => 'Wireless Headphones', 'price' => 99.99, 'rating' => 5],
+            ['name' => 'Smartphone', 'price' => 699.99, 'rating' => 4],
+            ['name' => 'Laptop', 'price' => 1299.99, 'rating' => 5],
+            ['name' => 'Coffee Maker', 'price' => 89.99, 'rating' => 4],
+        ];
+
+        foreach ($products as $product) {
+            Product::create($product);
+        }
+    }
+}
+```
+
+## Run the Application
+
+Start your development server:
+
+```bash
+php artisan serve
+```
+
+Visit `http://localhost:8000` to see your application.
+
+Test the API endpoints:
+
+```bash
+# Get all products
+curl http://localhost:8000/api/products
+
+# Create a product
+curl -X POST http://localhost:8000/api/products \
+  -H "Content-Type: application/json" \
+  -d '{"name":"New Product","price":49.99,"rating":4}'
+
+# Get all orders
+curl http://localhost:8000/api/orders
+```
+
+## Next Steps
+
+- Explore [Xata branching](/core-concepts/branching) for development workflows
+- Learn about [schema changes](/core-concepts/schema-changes) with zero downtime
+- Join our [Discord community](https://discord.gg/xata) for help and support 
