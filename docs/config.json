@@ -2,7 +2,7 @@
   "routes": [
     {
       "title": "Overview",
-      "href": "/",
+      "href": "/overview",
       "file": "docs/index.mdx"
     },
     {
