@@ -1,150 +1,42 @@
 ---
 title: "Xata Documentation"
-description: "Xata is a modern PostgreSQL platform with instant branching, zero-downtime schema changes, and built-in data anonymization. Build faster with our serverless database."
+description: "Xata is a modern PostgreSQL platform with instant branching, zero-downtime schema changes, and built-in data anonymization."
 ---
 
 # Xata Documentation
 
-```
-        ++++                                                                         +++++         
-       +++++++++                                                                   ++++++++++       
-     +++++++++++++                                                               +++++++++++++      
-    +++++++++++++++=                                                            +++++++++++++++     
-   +++++++++++++++===                                                         +=++++++++++++++++    
-   +++++++++++++=======                                                     =====++++++++++++++++   
-  +++++++++++++==========                                                 ==========+++++++++++++   
- +++++++++++++=============                                             =============+++++++++++++  
- +++++++++++=================                                         ================+++++++++++++ 
-++++++++++=====================                                      ==================++++++++++++ 
-++++++++++======================                                   ======================++++++++++ 
-++++++++==========================                               ========================+=++++++++ 
-++++++++============================                           ============================+++++++++
-++++++================================                       ==============================+=+++++++
-++++++==================================                    =================================+++++++
-++++++===================================                 ===================================++++++ 
-+++++=====================================               =====================================+++++ 
-++++=======================================             =======================================++++ 
- +++========================================           ========================================++++ 
- +++=========================================         =========================================+++  
-  +===========================================       ===========================================+   
-  =+===========================================      ===========================================+   
-   ============================================     ============================================    
-    ============================================    ===========================================     
-     ===========================================   ===========================================      
-      ==========================================   =========================================+       
-        ========================================   ========================================         
-          ======================================   =======================================          
-           =====================================   =====================================            
-       ===   ===================================   ===================================   ====       
-     =======   =================================   =================================    ======      
-    =========    ===============================   ===============================    =========     
-   ============    ============================     ============================    ============    
-   ==============    ==========================     ===========================   ==============    
-  =================    =======================       ========================   =================   
-  ===================   ======================       ======================   ===================   
-  =====================   ===================         ===================    =====================  
- ========================   ================           ================    =======================  
- +========================    =============             =============    =========================  
-  ==========================    ==========               ==========    ==========================   
-  ++==========================    ======                   =======   ===========================+   
-  ++++==========================    ===                      ===   ==========================++++   
-   +++++==========================                                ==========================++++    
-   +++++++========================                               ==========================+++++    
-    +++++++======================                                 ======================+++++++     
-    +++++++++===================                                    ===================++++++++     
-     ++++++++++===============                                        ===============+++++++++      
-      ++++++++++============                                           ============++++++++++       
-       +++++++++++========                                               =========++++++++++        
-        ++++++++++++====                                                   ====++++++++++++         
-         +++++++++++++                                                       +++++++++++++          
-           +++++++++                                                           +++++++++            
-            ++++++                                                               +++++             
-```
+Xata is a modern PostgreSQL platform designed for developers who want to build faster and ship with confidence. Our platform is built to support your production use cases as well as staging environments and developer workflows with  features like instant branching, zero-downtime schema changes, and built-in data anonymization.
 
-**Xata** is a modern PostgreSQL platform designed for developers who want to build faster and ship with confidence. We combine the power of PostgreSQL with developer-friendly features like **instant branching**, **zero-downtime schema changes**, and **built-in data anonymization**.
+Here's a quick introductary video to learn more:
+
+[![Introduction to Xata](assets/images/intro_xata.png)](https://youtu.be/7P5kyzEfAdc?si=WvSdBDBp95vJM91U)
 
 ## Why Xata?
 
-| Feature | Description | Benefit |
-|---------|-------------|---------|
-| **🚀 Instant Branching** | Create database branches in seconds, not minutes | Develop and test with production-like data safely |
-| **⚡ Zero-Downtime Schema Changes** | Modify your database schema without service interruption | Deploy schema changes with confidence |
-| **🔒 Built-in Data Anonymization** | Automatically anonymize sensitive data for development | Use real data safely in non-production environments |
-| **🌐 Global PostgreSQL** | Fully managed PostgreSQL with global distribution | Focus on your application, not database management |
-| **🔧 Developer-First** | CLI tools, branching workflows, and modern integrations | Work the way you want with familiar tools |
+| Feature | Description | Benefit | Learn More |
+|---------|-------------|---------|------------|
+| **🚀 Instant Branching** | Create database branches in seconds, not minutes | Develop and test with production-like data safely | [Branching Guide →](/core-concepts/branching) |
+| **⚡ Zero-Downtime Schema Changes** | Modify your database schema without service interruption | Deploy schema changes with confidence | [Schema Changes →](/core-concepts/schema-changes) |
+| **🔒 Built-in Data Anonymization** | Automatically anonymize sensitive data for development | Use real data safely in non-production environments | [Anonymization →](/core-concepts/anonymization) |
+| **🏗️ Deployment Flexibility** | Choose between SaaS or bring-your-own-cloud (BYOC) | Deploy where you need - managed service or your infrastructure | [Deployment →](/deployment) |
 
-## What We Excel At
-
-### 🏗️ **Modern Development Workflows**
-- **Database branching** for feature development and testing
-- **Schema evolution** without downtime or data loss
-- **CI/CD integration** with GitHub Actions and automation
-- **Multi-environment management** (dev, staging, production)
-
-### 🔒 **Data Privacy & Compliance**
-- **Automatic data anonymization** for development environments
-- **GDPR compliance** with built-in data protection features
-- **Audit trails** and data lineage tracking
-- **Secure data handling** with encryption at rest and in transit
-
-### ⚡ **Performance & Scalability**
-- **Serverless PostgreSQL** that scales automatically
-- **Global distribution** for low-latency access
-- **Connection pooling** and query optimization
-- **Built-in caching** and performance monitoring
-
-### 🛠️ **Developer Experience**
-- **Native PostgreSQL** compatibility
-- **Comprehensive CLI** for database management
-- **Framework integrations** for popular languages and ORMs
-- **Real-time collaboration** features
-
-## Quick Start
+## Get Started
 
 Get up and running with Xata in minutes:
 
 1. **[Create your first project](/getting-started)** - Set up a Xata account and create your first database
 2. **[Choose your framework](/quickstarts)** - Connect your favorite language or framework
-3. **[Explore branching](/core-concepts/branching)** - Learn how database branching accelerates development
-4. **[Deploy to production](/deployment)** - Understand our deployment models and best practices
 
-## Popular Integrations
+### Popular Quickstarts
 
-### Frontend Frameworks
-| Framework | Quickstart | Description |
-|-----------|------------|-------------|
+| Framework/ORM | Quickstart | Description |
+|---------------|------------|-------------|
 | **Next.js** | [Get Started →](/quickstarts/nextjs) | Full-stack React applications |
-| **Nuxt** | [Get Started →](/quickstarts/nuxt) | Vue.js applications |
-| **Astro** | [Get Started →](/quickstarts/astro) | Content-focused websites |
-| **SvelteKit** | [Get Started →](/quickstarts/svelte) | Svelte applications |
-| **Remix** | [Get Started →](/quickstarts/remix) | Full-stack web applications |
-
-### Backend Frameworks
-| Framework | Quickstart | Description |
-|-----------|------------|-------------|
-| **Node.js** | [Get Started →](/quickstarts/nodejs) | JavaScript/TypeScript backend |
+| **Drizzle** | [Get Started →](/quickstarts/drizzle) | TypeScript ORM with type safety |
+| **SQLAlchemy** | [Get Started →](/quickstarts/sqlalchemy) | Python SQL toolkit and ORM |
 | **Django** | [Get Started →](/quickstarts/django) | Python web framework |
-| **Rails** | [Get Started →](/quickstarts/rails) | Ruby web framework |
-| **Go** | [Get Started →](/quickstarts/go) | Go applications |
-| **Rust** | [Get Started →](/quickstarts/rust) | Rust applications |
 
-### ORMs & Database Tools
-| ORM | Quickstart | Description |
-|-----|------------|-------------|
-| **Drizzle** | [Get Started →](/quickstarts/drizzle) | TypeScript ORM |
-| **Prisma** | [Get Started →](/quickstarts/prisma) | TypeScript ORM |
-| **SQLAlchemy** | [Get Started →](/quickstarts/sqlalchemy) | Python ORM |
-| **GORM** | [Get Started →](/quickstarts/gorm) | Go ORM |
-| **JPA** | [Get Started →](/quickstarts/jpa) | Java ORM |
-
-## Core Concepts
-
-| Concept | Description | Learn More |
-|---------|-------------|------------|
-| **Database Branching** | Create instant copies of your database for development and testing | [Branching Guide →](/core-concepts/branching) |
-| **Schema Changes** | Modify your database structure without downtime | [Schema Changes →](/core-concepts/schema-changes) |
-| **Data Anonymization** | Automatically protect sensitive data in development | [Anonymization →](/core-concepts/anonymization) |
-| **Deployment Models** | Choose the right deployment strategy for your needs | [Deployment →](/deployment) |
+[View all quickstarts →](/quickstarts)
 
 ## Tutorials & Guides
 
@@ -177,9 +69,10 @@ xata branch checkout main
 ### Automation & CI/CD
 Integrate Xata into your development workflow:
 
-- **[GitHub Actions](/automations)** - Automate database operations
+- **[GitHub Actions](/automations/ga-pr)** - Create database branches for pull requests
 - **[Kubernetes](/automations/kubernetes-clone)** - Deploy with container orchestration
-- **[Branch management](/automations/ga-pr)** - Automatic branch creation for PRs
+
+[View all automation workflows →](/automations)
 
 ### REST API
 Programmatically manage your Xata resources:
