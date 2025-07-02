@@ -1,6 +1,11 @@
 {
   "routes": [
     {
+      "title": "Overview",
+      "href": "/",
+      "file": "docs/index.mdx"
+    },
+    {
       "title": "Getting started",
       "href": "/getting-started",
       "file": "docs/getting-started.mdx"
