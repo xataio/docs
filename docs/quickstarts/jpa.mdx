@@ -158,7 +158,6 @@ xata branch url
 Create the JPA configuration file:
 
 ```xml
-<!-- src/main/resources/META-INF/persistence.xml -->
 <?xml version="1.0" encoding="UTF-8"?>
 <persistence xmlns="http://xmlns.jcp.org/xml/ns/persistence"
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -615,7 +614,6 @@ Create the main application class:
 package com.example;
 
 import com.example.entity.Product;
-import com.example.service.OrderService;
 import com.example.service.ProductService;
 import com.example.util.DatabaseUtil;
 import java.math.BigDecimal;
@@ -626,7 +624,6 @@ public class Main {
     public static void main(String[] args) {
         try {
             ProductService productService = new ProductService();
-            OrderService orderService = new OrderService();
 
             // Create sample products
             System.out.println("Creating sample products...");
@@ -644,7 +641,7 @@ public class Main {
             List<Product> allProducts = productService.getAllProducts();
             for (Product product : allProducts) {
                 String rating = product.getRating() != null ? product.getRating().toString() : "N/A";
-                System.out.printf("- %s: $%s (Rating: %s/5)%n", 
+                System.out.printf("- %s: $%s (Rating: %s/5)%n",
                     product.getName(), product.getPrice(), rating);
             }
 
@@ -655,35 +652,13 @@ public class Main {
                 System.out.printf("- %s: $%s%n", product.getName(), product.getPrice());
             }
 
-            // Create an order with items
-            System.out.println("\nCreating an order...");
-            var order = orderService.createOrder();
-            System.out.println("Created order #" + order.getId());
-
-            // Add items to order
-            if (!products.isEmpty()) {
-                orderService.addItemToOrder(order.getId(), products.get(0).getId(), 2); // 2 headphones
-                if (products.size() >= 3) {
-                    orderService.addItemToOrder(order.getId(), products.get(2).getId(), 1); // 1 laptop
-                }
-            }
-
-            // Get order details with products
-            System.out.println("\nOrder details:");
-            List<Map<String, Object>> orderDetails = orderService.getOrdersWithProductDetails();
-            for (Map<String, Object> detail : orderDetails) {
-                System.out.printf("Order #%s: %s x%s = $%s%n",
-                    detail.get("order_id"), detail.get("product_name"), 
-                    detail.get("qty"), detail.get("total"));
-            }
-
             // Update a product
             if (!products.isEmpty()) {
                 System.out.println("\nUpdating product...");
                 var updatedProduct = productService.updateProduct(
-                    products.get(0).getId(), 
-                    "Premium Wireless Headphones", 
-                    new BigDecimal("129.99"), 
+                    products.get(0).getId(),
+                    "Premium Wireless Headphones",
+                    new BigDecimal("129.99"),
                     null
                 );
                 if (updatedProduct.isPresent()) {
@@ -698,7 +673,7 @@ public class Main {
         } finally {
             DatabaseUtil.closeEntityManagerFactory();
         }
-    }
+     }
 }
 ```
 

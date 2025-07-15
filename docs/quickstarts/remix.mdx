@@ -108,6 +108,7 @@ Create a loader to fetch products:
 ```typescript
 // app/routes/_index.tsx
 import type { LoaderFunction } from '@remix-run/node';
+import { useLoaderData } from '@remix-run/react';
 import { json } from '@remix-run/node';
 import { sql } from '~/db';
 

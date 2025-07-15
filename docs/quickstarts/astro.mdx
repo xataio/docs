@@ -15,7 +15,7 @@ First, set up your Xata database with the common e-commerce dataset:
 
 1. Create a project and branch in the [Xata console](https://console.xata.io)
 2. Navigate to the **Queries** tab in your branch
-3. Run the following SQL commands to create the initial schema:
+3. Run the following SQL commands to create the initial schema and populate the tables:
 
 ```sql
 CREATE TABLE products (
@@ -36,6 +36,9 @@ CREATE TABLE order_items (
   qty INTEGER NOT NULL,
   PRIMARY KEY (order_id, product_id)
 );
+
+INSERT INTO products(name,price) SELECT LEFT(md5(i::text),8),(random()*90+10)::numeric(7,2) FROM generate_series(1,10)i;
+WITH o AS (INSERT INTO orders DEFAULT VALUES RETURNING id) INSERT INTO order_items(order_id,product_id,qty) SELECT o.id,pid,(1+floor(random()*3))::int FROM o,(SELECT id pid FROM products ORDER BY random() LIMIT 5)p;
 ```
 
 ## Create Astro Project
@@ -110,7 +113,7 @@ Create an API endpoint to fetch products:
 import type { APIRoute } from 'astro';
 import { sql } from '../../lib/db';
 
-export const get: APIRoute = async () => {
+export const GET: APIRoute = async () => {
   try {
     const products = await sql`SELECT * FROM products`;
     return new Response(JSON.stringify(products), {
@@ -174,7 +177,64 @@ useEffect(() => {
 </html>
 ```
 
+## Create Products List Component
 
+Create a products list component:
+
+```astro
+import React, { useEffect, useState } from 'react';
+
+export default function ProductList() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/products')
+      .then(res => res.json())
+      .then(data => {
+        setProducts(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div>Loading products...</div>;
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+      {products.map(product => (
+        <div key={product.id} style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '1rem' }}>
+          <h3>{product.name}</h3>
+          <p>${product.price}</p>
+          {product.rating && (
+            <div>
+              <span>★</span> <span>{product.rating}/5</span>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+## Modify index.astro
+
+```
+---
+import ProductList from '../components/ProductsList.jsx';
+---
+
+<html>
+  <head>
+    <title>Xata E-commerce Store</title>
+  </head>
+  <body>
+    <h1>Xata E-commerce Store</h1>
+    <ProductList client:load />
+  </body>
+</html>
+```
 
 ## Run the Application
 

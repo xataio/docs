@@ -156,19 +156,19 @@ import { OrderItem } from './OrderItem'
 @Entity('products')
 export class Product {
   @PrimaryGeneratedColumn()
-  id: number
+  id!: number
 
   @Column({ type: 'text', nullable: false })
-  name: string
+  name!: string
 
   @Column({ type: 'decimal', precision: 7, scale: 2, nullable: false })
-  price: number
+  price!: number
 
   @Column({ type: 'integer', nullable: true })
-  rating: number
+  rating!: number
 
   @OneToMany(() => OrderItem, orderItem => orderItem.product)
-  orderItems: OrderItem[]
+  orderItems!: OrderItem[]
 }
 ```
 
@@ -180,13 +180,13 @@ import { OrderItem } from './OrderItem'
 @Entity('orders')
 export class Order {
   @PrimaryGeneratedColumn()
-  id: number
+  id!: number
 
   @CreateDateColumn({ type: 'timestamp with time zone' })
-  created_at: Date
+  created_at!: Date
 
   @OneToMany(() => OrderItem, orderItem => orderItem.order)
-  orderItems: OrderItem[]
+  orderItems!: OrderItem[]
 }
 ```
 
@@ -199,21 +199,21 @@ import { Order } from './Order'
 @Entity('order_items')
 export class OrderItem {
   @PrimaryColumn({ type: 'integer' })
-  order_id: number
+  order_id!: number
 
   @PrimaryColumn({ type: 'integer' })
-  product_id: number
+  product_id!: number
 
   @Column({ type: 'integer', nullable: false })
-  qty: number
+  qty!: number
 
   @ManyToOne(() => Order, order => order.orderItems)
   @JoinColumn({ name: 'order_id' })
-  order: Order
+  order!: Order
 
   @ManyToOne(() => Product, product => product.orderItems)
   @JoinColumn({ name: 'product_id' })
-  product: Product
+  product!: Product
 }
 ```
 
@@ -355,6 +355,7 @@ import 'reflect-metadata'
 import { initializeDatabase } from './config/database'
 import { ProductService } from './services/ProductService'
 import { OrderService } from './services/OrderService'
+import { AppDataSource } from './data-source'; // Adjust the path if needed
 
 async function main() {
   try {
