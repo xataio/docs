@@ -1,0 +1,253 @@
+---
+title: "Connect Astro to Xata"
+description: "Learn how to connect your Astro application to Xata's PostgreSQL platform. Get started with Astro and PostgreSQL for fast, modern web apps."
+---
+
+## Prerequisites
+
+- Xata account and project setup
+- Node.js 18+ installed
+- Basic knowledge of Astro
+
+## Setup Xata Database
+
+First, set up your Xata database with the common e-commerce dataset:
+
+1. Create a project and branch in the [Xata console](https://console.xata.io)
+2. Navigate to the **Queries** tab in your branch
+3. Run the following SQL commands to create the initial schema and populate the tables:
+
+```sql
+CREATE TABLE products (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  price NUMERIC(7,2) NOT NULL,
+  rating INTEGER
+);
+
+CREATE TABLE orders (
+  id SERIAL PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE order_items (
+  order_id INTEGER REFERENCES orders(id),
+  product_id INTEGER REFERENCES products(id),
+  qty INTEGER NOT NULL,
+  PRIMARY KEY (order_id, product_id)
+);
+
+INSERT INTO products(name,price) SELECT LEFT(md5(i::text),8),(random()*90+10)::numeric(7,2) FROM generate_series(1,10)i;
+WITH o AS (INSERT INTO orders DEFAULT VALUES RETURNING id) INSERT INTO order_items(order_id,product_id,qty) SELECT o.id,pid,(1+floor(random()*3))::int FROM o,(SELECT id pid FROM products ORDER BY random() LIMIT 5)p;
+```
+
+## Create Astro Project
+
+Create a new Astro project:
+
+```bash
+npm create astro@latest
+cd my-xata-app
+npm install
+```
+
+## Initialize Xata Project
+
+Initialize your Xata project configuration:
+
+```bash
+xata init
+```
+
+This will create a `.xata` directory with your project configuration.
+
+## Store Your Credentials
+
+Create a `.env` file in your project root to store your Xata connection string:
+
+```bash
+# .env
+DATABASE_URL="postgresql://username:password@host:port/database"
+```
+
+Get your connection string from the Xata console or CLI:
+
+```bash
+xata branch url
+```
+
+**Important:** Never commit your `.env` file to version control. Add it to your `.gitignore` file.
+
+## Install Dependencies
+
+Install the PostgreSQL client:
+
+```bash
+npm install postgres
+npm install -D @types/pg
+```
+
+## Configure Database Connection
+
+Create a database configuration file:
+
+```typescript
+// src/lib/db.ts
+import postgres from 'postgres';
+
+const connectionString = import.meta.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error('DATABASE_URL environment variable is required');
+}
+
+export const sql = postgres(connectionString);
+```
+
+## Create API Endpoint
+
+Create an API endpoint to fetch products:
+
+```typescript
+// src/pages/api/products.ts
+import type { APIRoute } from 'astro';
+import { sql } from '../../lib/db';
+
+export const GET: APIRoute = async () => {
+  try {
+    const products = await sql`SELECT * FROM products`;
+    return new Response(JSON.stringify(products), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: 'Failed to fetch products' }), { status: 500 });
+  }
+};
+```
+
+## Create Products Page
+
+Create a page to display products:
+
+```astro
+---
+// src/pages/index.astro
+import { useEffect, useState } from 'react';
+
+const [products, setProducts] = useState([]);
+const [loading, setLoading] = useState(true);
+
+useEffect(() => {
+  fetch('/api/products')
+    .then(res => res.json())
+    .then(data => {
+      setProducts(data);
+      setLoading(false);
+    })
+    .catch(() => setLoading(false));
+}, []);
+---
+
+<html>
+  <head>
+    <title>Xata E-commerce Store</title>
+  </head>
+  <body>
+    <h1>Xata E-commerce Store</h1>
+    {loading ? (
+      <div>Loading products...</div>
+    ) : (
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        {products.map(product => (
+          <div style="border: 1px solid #ccc; border-radius: 8px; padding: 1rem;">
+            <h3>{product.name}</h3>
+            <p>${product.price}</p>
+            {product.rating && (
+              <div>
+                <span>★</span>
+                <span>{product.rating}/5</span>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    )}
+  </body>
+</html>
+```
+
+## Create Products List Component
+
+Create a products list component:
+
+```astro
+import React, { useEffect, useState } from 'react';
+
+export default function ProductList() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/products')
+      .then(res => res.json())
+      .then(data => {
+        setProducts(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div>Loading products...</div>;
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+      {products.map(product => (
+        <div key={product.id} style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '1rem' }}>
+          <h3>{product.name}</h3>
+          <p>${product.price}</p>
+          {product.rating && (
+            <div>
+              <span>★</span> <span>{product.rating}/5</span>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+## Modify index.astro
+
+```
+---
+import ProductList from '../components/ProductsList.jsx';
+---
+
+<html>
+  <head>
+    <title>Xata E-commerce Store</title>
+  </head>
+  <body>
+    <h1>Xata E-commerce Store</h1>
+    <ProductList client:load />
+  </body>
+</html>
+```
+
+## Run the Application
+
+Start your development server:
+
+```bash
+npm run dev
+```
+
+Visit `http://localhost:4321` to see your application.
+
+## Next Steps
+
+- Explore [Xata branching](/core-concepts/branching) for development workflows
+- Learn about [schema changes](/core-concepts/schema-changes) with zero downtime
+- Join our [Discord community](https://discord.gg/xata) for help and support 

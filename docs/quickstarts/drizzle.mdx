@@ -1,0 +1,216 @@
+---
+title: "Connect Drizzle to Xata"
+description: "Learn how to connect your Drizzle ORM application to Xata's PostgreSQL platform. Get started with Drizzle and PostgreSQL for type-safe database operations."
+---
+
+## Prerequisites
+
+- Xata account and project setup
+- Node.js 18+ installed
+- Basic knowledge of TypeScript and Drizzle ORM
+
+## Initialize Xata Project
+
+Initialize your Xata project configuration:
+
+```bash
+xata init
+```
+
+This will create a `.xata` directory with your project configuration.
+
+## Setup Xata Database
+
+First, set up your Xata database with the common e-commerce dataset:
+
+1. Create a project and branch in the [Xata console](https://console.xata.io)
+2. Navigate to the **Queries** tab in your branch
+3. Run the following SQL commands to create the initial schema:
+
+```sql
+CREATE TABLE products (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  price NUMERIC(7,2) NOT NULL,
+  rating INTEGER
+);
+
+CREATE TABLE orders (
+  id SERIAL PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE order_items (
+  order_id INTEGER REFERENCES orders(id),
+  product_id INTEGER REFERENCES products(id),
+  qty INTEGER NOT NULL,
+  PRIMARY KEY (order_id, product_id)
+);
+```
+
+## Store Your Credentials
+
+Create a `.env` file in your project root to store your Xata connection string:
+
+```bash
+# .env
+DATABASE_URL="postgresql://username:password@host:port/database"
+```
+
+Get your connection string from the Xata console or CLI:
+
+```bash
+xata branch url
+```
+
+**Important:** Never commit your `.env` file to version control. Add it to your `.gitignore` file.
+
+## Install Dependencies
+
+Create a new Node.js project and install Drizzle:
+
+```bash
+npm init -y
+npm install drizzle-orm postgres
+npm install -D drizzle-kit @types/pg
+```
+
+## Configure Database Connection
+
+Create a database configuration file:
+
+```typescript
+// db/config.ts
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
+import * as schema from './schema';
+
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error('DATABASE_URL environment variable is required');
+}
+
+const client = postgres(connectionString);
+export const db = drizzle(client, { schema });
+```
+
+## Define Schema
+
+Create your Drizzle schema that matches the Xata database:
+
+```typescript
+// db/schema.ts
+import { pgTable, serial, text, numeric, integer, timestamp } from 'drizzle-orm/pg-core';
+
+export const products = pgTable('products', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  price: numeric('price', { precision: 7, scale: 2 }).notNull(),
+  rating: integer('rating'),
+});
+
+export const orders = pgTable('orders', {
+  id: serial('id').primaryKey(),
+  created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
+});
+
+export const order_items = pgTable('order_items', {
+  order_id: integer('order_id').references(() => orders.id),
+  product_id: integer('product_id').references(() => products.id),
+  qty: integer('qty').notNull(),
+});
+
+export type Product = typeof products.$inferSelect;
+export type NewProduct = typeof products.$inferInsert;
+export type Order = typeof orders.$inferSelect;
+export type NewOrder = typeof orders.$inferInsert;
+export type OrderItem = typeof order_items.$inferSelect;
+export type NewOrderItem = typeof order_items.$inferInsert;
+```
+
+## Build the Application
+
+Create a simple application to demonstrate CRUD operations:
+
+```typescript
+// app.ts
+import { db } from './db/config';
+import { products, orders, order_items } from './db/schema';
+import { eq, desc } from 'drizzle-orm';
+
+async function main() {
+  // Insert a new product
+  const [newProduct] = await db.insert(products).values({
+    name: 'Wireless Headphones',
+    price: 99.99,
+    rating: 5,
+  }).returning();
+  
+  console.log('Created product:', newProduct);
+
+  // Query products with rating
+  const topProducts = await db
+    .select()
+    .from(products)
+    .where(eq(products.rating, 5))
+    .orderBy(desc(products.price));
+  
+  console.log('Top rated products:', topProducts);
+
+  // Create an order with items
+  const [newOrder] = await db.insert(orders).values({}).returning();
+  
+  await db.insert(order_items).values({
+    order_id: newOrder.id,
+    product_id: newProduct.id,
+    qty: 2,
+  });
+
+  // Query orders with product details
+  const ordersWithProducts = await db
+    .select({
+      order_id: orders.id,
+      created_at: orders.created_at,
+      product_name: products.name,
+      qty: order_items.qty,
+      total: db.$all(products.price).mul(order_items.qty),
+    })
+    .from(orders)
+    .innerJoin(order_items, eq(orders.id, order_items.order_id))
+    .innerJoin(products, eq(order_items.product_id, products.id));
+  
+  console.log('Orders with products:', ordersWithProducts);
+}
+
+main().catch(console.error);
+```
+
+## Environment Setup
+
+Create a `.env` file with your Xata connection string:
+
+```bash
+# .env
+DATABASE_URL="postgresql://username:password@host:port/database"
+```
+
+Get your connection string from the Xata console or CLI:
+
+```bash
+xata branch url
+```
+
+## Run the Application
+
+Execute your application:
+
+```bash
+npm run dev
+```
+
+## Next Steps
+
+- Explore [Xata branching](/core-concepts/branching) for development workflows
+- Learn about [schema changes](/core-concepts/schema-changes) with zero downtime
+- Join our [Discord community](https://discord.gg/xata) for help and support 

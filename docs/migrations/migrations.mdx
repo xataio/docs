@@ -1,0 +1,52 @@
+---
+title: Migration Guides
+description: Migrate your existing PostgreSQL databases to Xata using xata clone
+---
+
+Migrate your existing PostgreSQL databases to Xata's platform using `xata clone`. This tool efficiently copies data between PostgreSQL instances, supporting both one-time migrations and continuous replication.
+
+## What is xata clone?
+
+[`xata clone`](/cli/clone) is a powerful tool for copying data between PostgreSQL instances efficiently. You can use it to import your existing database (from RDS, Cloud SQL, Supabase, etc.) into Xata with optional data anonymization for staging & development environments.
+
+## Prerequisites
+
+Before starting any migration:
+
+1. **Source Database Access**: You need the connection string (host, port, database name, user, password) of the source database
+2. **User Privileges**: The user should have sufficient privileges to read data
+4. **Network Access**: Ensure your environment can reach the source database
+5. **Xata Project**: Create a Xata account and project with a target branch
+
+## Cloud Providers
+
+Migrate from major cloud PostgreSQL services:
+
+- **[AWS RDS & Aurora](/migrations/aws-rds)** - Amazon's managed PostgreSQL services
+- **[GCP Cloud SQL](/migrations/gcp-cloudsql)** - Google Cloud's managed PostgreSQL
+- **[Google AlloyDB](/migrations/alloydb)** - Google's PostgreSQL-compatible database
+- **[Azure Database](/migrations/azure)** - Microsoft's managed PostgreSQL service
+
+## Self-Hosted & Other Providers
+
+Migrate from other PostgreSQL deployments:
+
+- **[Self-Hosted PostgreSQL](/migrations/self-hosted)** - Your own PostgreSQL instances
+- **[Neon](/migrations/neon)** - Serverless PostgreSQL with branching
+- **[Supabase](/migrations/supabase)** - Open source Firebase alternative
+- **[Heroku Postgres](/migrations/heroku)** - Heroku's managed PostgreSQL
+- **[DigitalOcean Managed Databases](/migrations/digitalocean)** - DigitalOcean's PostgreSQL service
+
+## Other Databases
+
+Migrate from non-PostgreSQL databases:
+
+- **[MySQL](/migrations/mysql)** - MySQL to PostgreSQL migration with schema conversion
+
+## Getting Help
+
+Need assistance with your migration?
+
+- Join our [Discord community](https://discord.gg/xata) for real-time help
+- Explore [core concepts](/core-concepts) to understand Xata's features
+- Check out [tutorials](/tutorials) for advanced workflows 

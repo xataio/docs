@@ -1,0 +1,693 @@
+---
+title: "Connect JPA/Hibernate to Xata"
+description: "Learn how to connect your Java application using JPA/Hibernate to Xata's PostgreSQL platform. Get started with JPA and PostgreSQL for enterprise-grade database operations."
+---
+
+## Prerequisites
+
+- Xata account and project setup
+- Java 17+ installed
+- Maven or Gradle installed
+- Basic knowledge of Java and JPA/Hibernate
+
+## Setup Xata Database
+
+First, set up your Xata database with the common e-commerce dataset:
+
+1. Create a project and branch in the [Xata console](https://console.xata.io)
+2. Navigate to the **Queries** tab in your branch
+3. Run the following SQL commands to create the initial schema:
+
+```sql
+CREATE TABLE products (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  price NUMERIC(7,2) NOT NULL,
+  rating INTEGER
+);
+
+CREATE TABLE orders (
+  id SERIAL PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE order_items (
+  order_id INTEGER REFERENCES orders(id),
+  product_id INTEGER REFERENCES products(id),
+  qty INTEGER NOT NULL,
+  PRIMARY KEY (order_id, product_id)
+);
+```
+
+## Create Maven Project
+
+Create a new Maven project with the following structure:
+
+```bash
+mkdir my-xata-app
+cd my-xata-app
+```
+
+Create a `pom.xml` file:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.example</groupId>
+    <artifactId>my-xata-app</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>Xata JPA Application</name>
+    <description>JPA/Hibernate application with Xata PostgreSQL</description>
+
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <hibernate.version>6.2.13.Final</hibernate.version>
+    </properties>
+
+    <dependencies>
+        <!-- Hibernate Core -->
+        <dependency>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <version>${hibernate.version}</version>
+        </dependency>
+
+        <!-- PostgreSQL Driver -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.7.1</version>
+        </dependency>
+
+        <!-- Environment Variables -->
+        <dependency>
+            <groupId>io.github.cdimascio</groupId>
+            <artifactId>dotenv-java</artifactId>
+            <version>3.0.0</version>
+        </dependency>
+
+        <!-- JSON Processing -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.15.2</version>
+        </dependency>
+
+        <!-- Logging -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>2.0.9</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <source>17</source>
+                    <target>17</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+## Initialize Xata Project
+
+Initialize your Xata project configuration:
+
+```bash
+xata init
+```
+
+This will create a `.xata` directory with your project configuration.
+
+## Store Your Credentials
+
+Create a `.env` file in your project root to store your Xata connection string:
+
+```bash
+# .env
+DATABASE_URL=postgresql://username:password@host:port/database
+```
+
+Get your connection string from the Xata console or CLI:
+
+```bash
+xata branch url
+```
+
+**Important:** Never commit your `.env` file to version control. Add it to your `.gitignore` file.
+
+## Create JPA Configuration
+
+Create the JPA configuration file:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="http://xmlns.jcp.org/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence
+             http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd"
+             version="2.2">
+
+    <persistence-unit name="xataPU" transaction-type="RESOURCE_LOCAL">
+        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+        
+        <class>com.example.entity.Product</class>
+        <class>com.example.entity.Order</class>
+        <class>com.example.entity.OrderItem</class>
+        
+        <properties>
+            <!-- Database Connection -->
+            <property name="hibernate.connection.driver_class" value="org.postgresql.Driver"/>
+            <property name="hibernate.connection.url" value="${DATABASE_URL}"/>
+            <property name="hibernate.connection.username" value="${DB_USERNAME}"/>
+            <property name="hibernate.connection.password" value="${DB_PASSWORD}"/>
+            
+            <!-- Hibernate Properties -->
+            <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>
+            <property name="hibernate.show_sql" value="true"/>
+            <property name="hibernate.format_sql" value="true"/>
+            <property name="hibernate.hbm2ddl.auto" value="none"/>
+            
+            <!-- Connection Pool -->
+            <property name="hibernate.connection.pool_size" value="10"/>
+            <property name="hibernate.connection.autocommit" value="false"/>
+        </properties>
+    </persistence-unit>
+</persistence>
+```
+
+## Create Entity Classes
+
+Create your JPA entity classes:
+
+```java
+// src/main/java/com/example/entity/Product.java
+package com.example.entity;
+
+import jakarta.persistence.*;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "products")
+public class Product {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "name", nullable = false)
+    private String name;
+
+    @Column(name = "price", nullable = false, precision = 7, scale = 2)
+    private BigDecimal price;
+
+    @Column(name = "rating")
+    private Integer rating;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<OrderItem> orderItems = new ArrayList<>();
+
+    // Constructors
+    public Product() {}
+
+    public Product(String name, BigDecimal price, Integer rating) {
+        this.name = name;
+        this.price = price;
+        this.rating = rating;
+    }
+
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public BigDecimal getPrice() { return price; }
+    public void setPrice(BigDecimal price) { this.price = price; }
+
+    public Integer getRating() { return rating; }
+    public void setRating(Integer rating) { this.rating = rating; }
+
+    public List<OrderItem> getOrderItems() { return orderItems; }
+    public void setOrderItems(List<OrderItem> orderItems) { this.orderItems = orderItems; }
+
+    @Override
+    public String toString() {
+        return "Product{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", price=" + price +
+                ", rating=" + rating +
+                '}';
+    }
+}
+```
+
+```java
+// src/main/java/com/example/entity/Order.java
+package com.example.entity;
+
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "orders")
+public class Order {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<OrderItem> orderItems = new ArrayList<>();
+
+    // Constructors
+    public Order() {
+        this.createdAt = LocalDateTime.now();
+    }
+
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public List<OrderItem> getOrderItems() { return orderItems; }
+    public void setOrderItems(List<OrderItem> orderItems) { this.orderItems = orderItems; }
+
+    @Override
+    public String toString() {
+        return "Order{" +
+                "id=" + id +
+                ", createdAt=" + createdAt +
+                '}';
+    }
+}
+```
+
+```java
+// src/main/java/com/example/entity/OrderItem.java
+package com.example.entity;
+
+import jakarta.persistence.*;
+import java.io.Serializable;
+
+@Entity
+@Table(name = "order_items")
+@IdClass(OrderItem.OrderItemId.class)
+public class OrderItem {
+    @Id
+    @Column(name = "order_id")
+    private Long orderId;
+
+    @Id
+    @Column(name = "product_id")
+    private Long productId;
+
+    @Column(name = "qty", nullable = false)
+    private Integer qty;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id", insertable = false, updatable = false)
+    private Order order;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", insertable = false, updatable = false)
+    private Product product;
+
+    // Constructors
+    public OrderItem() {}
+
+    public OrderItem(Long orderId, Long productId, Integer qty) {
+        this.orderId = orderId;
+        this.productId = productId;
+        this.qty = qty;
+    }
+
+    // Getters and Setters
+    public Long getOrderId() { return orderId; }
+    public void setOrderId(Long orderId) { this.orderId = orderId; }
+
+    public Long getProductId() { return productId; }
+    public void setProductId(Long productId) { this.productId = productId; }
+
+    public Integer getQty() { return qty; }
+    public void setQty(Integer qty) { this.qty = qty; }
+
+    public Order getOrder() { return order; }
+    public void setOrder(Order order) { this.order = order; }
+
+    public Product getProduct() { return product; }
+    public void setProduct(Product product) { this.product = product; }
+
+    // Composite Key Class
+    public static class OrderItemId implements Serializable {
+        private Long orderId;
+        private Long productId;
+
+        public OrderItemId() {}
+
+        public OrderItemId(Long orderId, Long productId) {
+            this.orderId = orderId;
+            this.productId = productId;
+        }
+
+        public Long getOrderId() { return orderId; }
+        public void setOrderId(Long orderId) { this.orderId = orderId; }
+
+        public Long getProductId() { return productId; }
+        public void setProductId(Long productId) { this.productId = productId; }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            OrderItemId that = (OrderItemId) o;
+            return orderId.equals(that.orderId) && productId.equals(that.productId);
+        }
+
+        @Override
+        public int hashCode() {
+            return orderId.hashCode() * 31 + productId.hashCode();
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "OrderItem{" +
+                "orderId=" + orderId +
+                ", productId=" + productId +
+                ", qty=" + qty +
+                '}';
+    }
+}
+```
+
+## Create Database Utility
+
+Create a database utility class:
+
+```java
+// src/main/java/com/example/util/DatabaseUtil.java
+package com.example.util;
+
+import io.github.cdimascio.dotenv.Dotenv;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.Persistence;
+
+public class DatabaseUtil {
+    private static EntityManagerFactory emf;
+    private static final String PERSISTENCE_UNIT_NAME = "xataPU";
+
+    static {
+        // Load environment variables
+        Dotenv dotenv = Dotenv.load();
+        
+        // Set system properties for JPA configuration
+        String databaseUrl = dotenv.get("DATABASE_URL");
+        if (databaseUrl != null) {
+            // Parse the database URL to extract components
+            String[] parts = databaseUrl.replace("postgresql://", "").split("@");
+            String[] credentials = parts[0].split(":");
+            String[] hostAndPort = parts[1].split("/");
+            String[] hostPort = hostAndPort[0].split(":");
+            
+            String username = credentials[0];
+            String password = credentials[1];
+            String host = hostPort[0];
+            String port = hostPort.length > 1 ? hostPort[1] : "5432";
+            String database = hostAndPort[1];
+            
+            System.setProperty("DB_USERNAME", username);
+            System.setProperty("DB_PASSWORD", password);
+            System.setProperty("DATABASE_URL", "jdbc:postgresql://" + host + ":" + port + "/" + database);
+        }
+    }
+
+    public static EntityManagerFactory getEntityManagerFactory() {
+        if (emf == null || !emf.isOpen()) {
+            emf = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME);
+        }
+        return emf;
+    }
+
+    public static EntityManager getEntityManager() {
+        return getEntityManagerFactory().createEntityManager();
+    }
+
+    public static void closeEntityManagerFactory() {
+        if (emf != null && emf.isOpen()) {
+            emf.close();
+        }
+    }
+}
+```
+
+## Create Service Classes
+
+Create service classes for database operations:
+
+```java
+// src/main/java/com/example/service/ProductService.java
+package com.example.service;
+
+import com.example.entity.Product;
+import com.example.util.DatabaseUtil;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
+
+public class ProductService {
+
+    public List<Product> getAllProducts() {
+        EntityManager em = DatabaseUtil.getEntityManager();
+        try {
+            TypedQuery<Product> query = em.createQuery("SELECT p FROM Product p", Product.class);
+            return query.getResultList();
+        } finally {
+            em.close();
+        }
+    }
+
+    public Optional<Product> getProductById(Long id) {
+        EntityManager em = DatabaseUtil.getEntityManager();
+        try {
+            Product product = em.find(Product.class, id);
+            return Optional.ofNullable(product);
+        } finally {
+            em.close();
+        }
+    }
+
+    public Product createProduct(String name, BigDecimal price, Integer rating) {
+        EntityManager em = DatabaseUtil.getEntityManager();
+        try {
+            em.getTransaction().begin();
+            
+            Product product = new Product(name, price, rating);
+            em.persist(product);
+            
+            em.getTransaction().commit();
+            return product;
+        } catch (Exception e) {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
+            }
+            throw e;
+        } finally {
+            em.close();
+        }
+    }
+
+    public Optional<Product> updateProduct(Long id, String name, BigDecimal price, Integer rating) {
+        EntityManager em = DatabaseUtil.getEntityManager();
+        try {
+            em.getTransaction().begin();
+            
+            Product product = em.find(Product.class, id);
+            if (product == null) {
+                em.getTransaction().rollback();
+                return Optional.empty();
+            }
+            
+            if (name != null) product.setName(name);
+            if (price != null) product.setPrice(price);
+            if (rating != null) product.setRating(rating);
+            
+            em.getTransaction().commit();
+            return Optional.of(product);
+        } catch (Exception e) {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
+            }
+            throw e;
+        } finally {
+            em.close();
+        }
+    }
+
+    public boolean deleteProduct(Long id) {
+        EntityManager em = DatabaseUtil.getEntityManager();
+        try {
+            em.getTransaction().begin();
+            
+            Product product = em.find(Product.class, id);
+            if (product == null) {
+                em.getTransaction().rollback();
+                return false;
+            }
+            
+            em.remove(product);
+            em.getTransaction().commit();
+            return true;
+        } catch (Exception e) {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
+            }
+            throw e;
+        } finally {
+            em.close();
+        }
+    }
+
+    public List<Product> getProductsByRating(Integer rating) {
+        EntityManager em = DatabaseUtil.getEntityManager();
+        try {
+            TypedQuery<Product> query = em.createQuery(
+                "SELECT p FROM Product p WHERE p.rating = :rating", Product.class);
+            query.setParameter("rating", rating);
+            return query.getResultList();
+        } finally {
+            em.close();
+        }
+    }
+
+    public List<Product> getProductsByPriceRange(BigDecimal minPrice, BigDecimal maxPrice) {
+        EntityManager em = DatabaseUtil.getEntityManager();
+        try {
+            TypedQuery<Product> query = em.createQuery(
+                "SELECT p FROM Product p WHERE p.price >= :minPrice AND p.price <= :maxPrice", 
+                Product.class);
+            query.setParameter("minPrice", minPrice);
+            query.setParameter("maxPrice", maxPrice);
+            return query.getResultList();
+        } finally {
+            em.close();
+        }
+    }
+}
+```
+
+## Create Main Application
+
+Create the main application class:
+
+```java
+// src/main/java/com/example/Main.java
+package com.example;
+
+import com.example.entity.Product;
+import com.example.service.ProductService;
+import com.example.util.DatabaseUtil;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+
+public class Main {
+    public static void main(String[] args) {
+        try {
+            ProductService productService = new ProductService();
+
+            // Create sample products
+            System.out.println("Creating sample products...");
+            List<Product> products = List.of(
+                productService.createProduct("Wireless Headphones", new BigDecimal("99.99"), 5),
+                productService.createProduct("Smartphone", new BigDecimal("699.99"), 4),
+                productService.createProduct("Laptop", new BigDecimal("1299.99"), 5),
+                productService.createProduct("Coffee Maker", new BigDecimal("89.99"), 4)
+            );
+
+            System.out.println("Created " + products.size() + " products");
+
+            // Display all products
+            System.out.println("\nAll products:");
+            List<Product> allProducts = productService.getAllProducts();
+            for (Product product : allProducts) {
+                String rating = product.getRating() != null ? product.getRating().toString() : "N/A";
+                System.out.printf("- %s: $%s (Rating: %s/5)%n",
+                    product.getName(), product.getPrice(), rating);
+            }
+
+            // Get products by rating
+            System.out.println("\nTop-rated products (5 stars):");
+            List<Product> topProducts = productService.getProductsByRating(5);
+            for (Product product : topProducts) {
+                System.out.printf("- %s: $%s%n", product.getName(), product.getPrice());
+            }
+
+            // Update a product
+            if (!products.isEmpty()) {
+                System.out.println("\nUpdating product...");
+                var updatedProduct = productService.updateProduct(
+                    products.get(0).getId(),
+                    "Premium Wireless Headphones",
+                    new BigDecimal("129.99"),
+                    null
+                );
+                if (updatedProduct.isPresent()) {
+                    Product product = updatedProduct.get();
+                    System.out.printf("Updated: %s - $%s%n", product.getName(), product.getPrice());
+                }
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            DatabaseUtil.closeEntityManagerFactory();
+        }
+     }
+}
+```
+
+## Run the Application
+
+Compile and run the application:
+
+```bash
+mvn compile
+mvn exec:java -Dexec.mainClass="com.example.Main"
+```
+
+## Next Steps
+
+- Explore [Xata branching](/core-concepts/branching) for development workflows
+- Learn about [schema changes](/core-concepts/schema-changes) with zero downtime
+- Join our [Discord community](https://discord.gg/xata) for help and support 

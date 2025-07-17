@@ -1,6 +1,11 @@
 {
   "routes": [
     {
+      "title": "Overview",
+      "href": "/overview",
+      "file": "docs/index.mdx"
+    },
+    {
       "title": "Getting started",
       "href": "/getting-started",
       "file": "docs/getting-started.mdx"
@@ -9,6 +14,28 @@
       "title": "Deployment models",
       "href": "/deployment",
       "file": "docs/deployment.mdx"
+    },
+    {
+      "title": "Core concepts",
+      "href": "/core-concepts",
+      "file": "docs/core-concepts/core-concepts.mdx",
+      "items": [
+        {
+          "title": "Instant branching",
+          "href": "/core-concepts/branching",
+          "file": "docs/core-concepts/branching.mdx"
+        },
+        {
+          "title": "Data anonymization",
+          "href": "/core-concepts/anonymization",
+          "file": "docs/core-concepts/anonymization.mdx"
+        },
+        {
+          "title": "Schema changes",
+          "href": "/core-concepts/schema-changes",
+          "file": "docs/core-concepts/schema-changes.mdx"
+        }
+      ]
     },
     {
       "title": "Tutorials",
@@ -33,24 +60,166 @@
       ]
     },
     {
-      "title": "Core concepts",
-      "href": "/core-concepts",
-      "file": "docs/core-concepts/core-concepts.mdx",
+      "title": "Quickstarts",
+      "href": "/quickstarts",
+      "file": "docs/quickstarts/quickstarts.mdx",
       "items": [
         {
-          "title": "Instant branching",
-          "href": "/core-concepts/branching",
-          "file": "docs/core-concepts/branching.mdx"
+          "title": "Astro",
+          "href": "/quickstarts/astro",
+          "file": "docs/quickstarts/astro.mdx"
         },
         {
-          "title": "Data anonymization",
-          "href": "/core-concepts/anonymization",
-          "file": "docs/core-concepts/anonymization.mdx"
+          "title": "Django",
+          "href": "/quickstarts/django",
+          "file": "docs/quickstarts/django.mdx"
         },
         {
-          "title": "Schema changes",
-          "href": "/core-concepts/schema-changes",
-          "file": "docs/core-concepts/schema-changes.mdx"
+          "title": "Drizzle",
+          "href": "/quickstarts/drizzle",
+          "file": "docs/quickstarts/drizzle.mdx"
+        },
+        {
+          "title": "Go",
+          "href": "/quickstarts/go",
+          "file": "docs/quickstarts/go.mdx"
+        },
+        {
+          "title": "GORM",
+          "href": "/quickstarts/gorm",
+          "file": "docs/quickstarts/gorm.mdx"
+        },
+        {
+          "title": "Java",
+          "href": "/quickstarts/java",
+          "file": "docs/quickstarts/java.mdx"
+        },
+        {
+          "title": "JPA",
+          "href": "/quickstarts/jpa",
+          "file": "docs/quickstarts/jpa.mdx"
+        },
+        {
+          "title": "Laravel",
+          "href": "/quickstarts/laravel",
+          "file": "docs/quickstarts/laravel.mdx"
+        },
+        {
+          "title": "Next.js",
+          "href": "/quickstarts/nextjs",
+          "file": "docs/quickstarts/nextjs.mdx"
+        },
+        {
+          "title": "Node.js",
+          "href": "/quickstarts/nodejs",
+          "file": "docs/quickstarts/nodejs.mdx"
+        },
+        {
+          "title": "Nuxt",
+          "href": "/quickstarts/nuxt",
+          "file": "docs/quickstarts/nuxt.mdx"
+        },
+        {
+          "title": "Prisma",
+          "href": "/quickstarts/prisma",
+          "file": "docs/quickstarts/prisma.mdx"
+        },
+        {
+          "title": "Python",
+          "href": "/quickstarts/python",
+          "file": "docs/quickstarts/python.mdx"
+        },
+        {
+          "title": "Rails",
+          "href": "/quickstarts/rails",
+          "file": "docs/quickstarts/rails.mdx"
+        },
+        {
+          "title": "Remix",
+          "href": "/quickstarts/remix",
+          "file": "docs/quickstarts/remix.mdx"
+        },
+        {
+          "title": "Rust",
+          "href": "/quickstarts/rust",
+          "file": "docs/quickstarts/rust.mdx"
+        },
+        {
+          "title": "SQLAlchemy",
+          "href": "/quickstarts/sqlalchemy",
+          "file": "docs/quickstarts/sqlalchemy.mdx"
+        },
+        {
+          "title": "SvelteKit",
+          "href": "/quickstarts/svelte",
+          "file": "docs/quickstarts/svelte.mdx"
+        },
+        {
+          "title": "TypeORM",
+          "href": "/quickstarts/typeorm",
+          "file": "docs/quickstarts/typeorm.mdx"
+        }
+      ]
+    },
+    {
+      "title": "Migration Guides",
+      "href": "/migrations",
+      "file": "docs/migrations/migrations.mdx",
+      "items": [
+        {
+          "title": "AWS Aurora",
+          "href": "/migrations/aws-aurora",
+          "file": "docs/migrations/aws-aurora.mdx"
+        },
+        {
+          "title": "AWS RDS",
+          "href": "/migrations/aws-rds",
+          "file": "docs/migrations/aws-rds.mdx"
+        },
+        {
+          "title": "Azure Database",
+          "href": "/migrations/azure",
+          "file": "docs/migrations/azure.mdx"
+        },
+        {
+          "title": "DigitalOcean Managed Databases",
+          "href": "/migrations/digitalocean",
+          "file": "docs/migrations/digitalocean.mdx"
+        },
+        {
+          "title": "GCP Cloud SQL",
+          "href": "/migrations/gcp-cloudsql",
+          "file": "docs/migrations/gcp-cloudsql.mdx"
+        },
+        {
+          "title": "Google AlloyDB",
+          "href": "/migrations/alloydb",
+          "file": "docs/migrations/alloydb.mdx"
+        },
+        {
+          "title": "Heroku Postgres",
+          "href": "/migrations/heroku",
+          "file": "docs/migrations/heroku.mdx"
+        },
+        {
+          "title": "MySQL",
+          "href": "/migrations/mysql",
+          "file": "docs/migrations/mysql.mdx"
+        },
+        {
+          "title": "Neon",
+          "href": "/migrations/neon",
+          "file": "docs/migrations/neon.mdx"
+        },
+        {
+          "title": "Self-Hosted PostgreSQL",
+          "href": "/migrations/self-hosted",
+          "file": "docs/migrations/self-hosted.mdx"
+        },
+        {
+          "title": "Supabase",
+          "href": "/migrations/supabase",
+          "file": "docs/migrations/supabase.mdx"
         }
       ]
     },

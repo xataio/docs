@@ -1,0 +1,361 @@
+---
+title: "Connect Go to Xata"
+description: "Learn how to connect your Go application to Xata's PostgreSQL platform. Get started with Go and PostgreSQL for high-performance backend services."
+---
+
+## Prerequisites
+
+- Xata account and project setup
+- Go 1.19+ installed
+- Basic knowledge of Go
+
+## Setup Xata Database
+
+First, set up your Xata database with the common e-commerce dataset:
+
+1. Create a project and branch in the [Xata console](https://console.xata.io)
+2. Navigate to the **Queries** tab in your branch
+3. Run the following SQL commands to create the initial schema:
+
+```sql
+CREATE TABLE products (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  price NUMERIC(7,2) NOT NULL,
+  rating INTEGER
+);
+
+CREATE TABLE orders (
+  id SERIAL PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE order_items (
+  order_id INTEGER REFERENCES orders(id),
+  product_id INTEGER REFERENCES products(id),
+  qty INTEGER NOT NULL,
+  PRIMARY KEY (order_id, product_id)
+);
+```
+
+## Create Go Project
+
+Create a new Go project:
+
+```bash
+mkdir my-xata-app
+cd my-xata-app
+go mod init my-xata-app
+```
+
+## Initialize Xata Project
+
+Initialize your Xata project configuration:
+
+```bash
+xata init
+```
+
+This will create a `.xata` directory with your project configuration.
+
+## Store Your Credentials
+
+Create a `.env` file in your project root to store your Xata connection string:
+
+```bash
+# .env
+DATABASE_URL="postgresql://username:password@host:port/database"
+```
+
+Get your connection string from the Xata console or CLI:
+
+```bash
+xata branch url
+```
+
+**Important:** Never commit your `.env` file to version control. Add it to your `.gitignore` file.
+
+## Install Dependencies
+
+Install the required packages:
+
+```bash
+go get github.com/lib/pq
+go get github.com/gorilla/mux
+go get github.com/joho/godotenv
+```
+
+## Configure Database Connection
+
+Create a database configuration file:
+
+```go
+// db/db.go
+package db
+
+import (
+	"database/sql"
+	"fmt"
+	"log"
+	"os"
+
+	_ "github.com/lib/pq"
+)
+
+var DB *sql.DB
+
+func InitDB() {
+	connectionString := os.Getenv("DATABASE_URL")
+	if connectionString == "" {
+		log.Fatal("DATABASE_URL environment variable is required")
+	}
+
+	var err error
+	DB, err = sql.Open("postgres", connectionString)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = DB.Ping()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Successfully connected to database")
+}
+```
+
+## Create Models
+
+Create your data structures:
+
+```go
+// models/product.go
+package models
+
+import "time"
+
+type Product struct {
+	ID     int     `json:"id"`
+	Name   string  `json:"name"`
+	Price  float64 `json:"price"`
+	Rating *int    `json:"rating,omitempty"`
+}
+
+type Order struct {
+	ID        int       `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type OrderItem struct {
+	OrderID   int `json:"order_id"`
+	ProductID int `json:"product_id"`
+	Qty       int `json:"qty"`
+}
+
+type OrderWithProducts struct {
+	OrderID     int       `json:"order_id"`
+	CreatedAt   time.Time `json:"created_at"`
+	ProductName string    `json:"product_name"`
+	Qty         int       `json:"qty"`
+	Total       float64   `json:"total"`
+}
+```
+
+## Create Handlers
+
+Create HTTP handlers for your API:
+
+```go
+// handlers/products.go
+package handlers
+
+import (
+	"encoding/json"
+	"net/http"
+	"strconv"
+
+	"my-xata-app/db"
+	"my-xata-app/models"
+
+	"github.com/gorilla/mux"
+)
+
+func GetProducts(w http.ResponseWriter, r *http.Request) {
+	rows, err := db.DB.Query("SELECT id, name, price, rating FROM products")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var products []models.Product
+	for rows.Next() {
+		var p models.Product
+		err := rows.Scan(&p.ID, &p.Name, &p.Price, &p.Rating)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		products = append(products, p)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(products)
+}
+
+func GetProduct(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		http.Error(w, "Invalid product ID", http.StatusBadRequest)
+		return
+	}
+
+	var product models.Product
+	err = db.DB.QueryRow("SELECT id, name, price, rating FROM products WHERE id = $1", id).
+		Scan(&product.ID, &product.Name, &product.Price, &product.Rating)
+	if err != nil {
+		http.Error(w, "Product not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(product)
+}
+
+func CreateProduct(w http.ResponseWriter, r *http.Request) {
+	var product models.Product
+	err := json.NewDecoder(r.Body).Decode(&product)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = db.DB.QueryRow(
+		"INSERT INTO products (name, price, rating) VALUES ($1, $2, $3) RETURNING id",
+		product.Name, product.Price, product.Rating,
+	).Scan(&product.ID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(product)
+}
+
+func GetOrders(w http.ResponseWriter, r *http.Request) {
+	rows, err := db.DB.Query(`
+		SELECT 
+			o.id as order_id,
+			o.created_at,
+			p.name as product_name,
+			oi.qty,
+			p.price * oi.qty as total
+		FROM orders o
+		JOIN order_items oi ON o.id = oi.order_id
+		JOIN products p ON oi.product_id = p.id
+	`)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var orders []models.OrderWithProducts
+	for rows.Next() {
+		var order models.OrderWithProducts
+		err := rows.Scan(&order.OrderID, &order.CreatedAt, &order.ProductName, &order.Qty, &order.Total)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		orders = append(orders, order)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(orders)
+}
+```
+
+## Create Main Application
+
+Create your main server file:
+
+```go
+// main.go
+package main
+
+import (
+	"log"
+	"net/http"
+
+	"my-xata-app/db"
+	"my-xata-app/handlers"
+
+	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
+)
+
+func main() {
+	// Load environment variables
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	// Initialize database
+	db.InitDB()
+	defer db.DB.Close()
+
+	// Create router
+	r := mux.NewRouter()
+
+	// Define routes
+	r.HandleFunc("/api/products", handlers.GetProducts).Methods("GET")
+	r.HandleFunc("/api/products/{id}", handlers.GetProduct).Methods("GET")
+	r.HandleFunc("/api/products", handlers.CreateProduct).Methods("POST")
+	r.HandleFunc("/api/orders", handlers.GetOrders).Methods("GET")
+
+	// Start server
+	log.Println("Server starting on :3000")
+	log.Fatal(http.ListenAndServe(":3000", r))
+}
+```
+
+## Run the Application
+
+Start your development server:
+
+```bash
+go run main.go
+```
+
+Your API will be available at:
+- `http://localhost:3000/api/products`
+- `http://localhost:3000/api/orders`
+
+## Test Your API
+
+You can test the endpoints using curl:
+
+```bash
+# Get all products
+curl http://localhost:3000/api/products
+
+# Create a new product
+curl -X POST http://localhost:3000/api/products \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Wireless Headphones","price":99.99,"rating":5}'
+
+# Get orders with products
+curl http://localhost:3000/api/orders
+```
+
+## Next Steps
+
+- Explore [Xata branching](/core-concepts/branching) for development workflows
+- Learn about [schema changes](/core-concepts/schema-changes) with zero downtime
+- Join our [Discord community](https://discord.gg/xata) for help and support 

@@ -1,0 +1,528 @@
+---
+title: "Connect Prisma to Xata"
+description: "Learn how to connect your TypeScript/JavaScript application using Prisma to Xata's PostgreSQL platform. Get started with Prisma and PostgreSQL for type-safe database operations."
+---
+
+## Prerequisites
+
+- Xata account and project setup
+- Node.js 18+ installed
+- Basic knowledge of TypeScript and Prisma
+
+## Setup Xata Database
+
+First, set up your Xata database with the common e-commerce dataset:
+
+1. Create a project and branch in the [Xata console](https://console.xata.io)
+2. Navigate to the **Queries** tab in your branch
+3. Run the following SQL commands to create the initial schema:
+
+```sql
+CREATE TABLE products (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  price NUMERIC(7,2) NOT NULL,
+  rating INTEGER
+);
+
+CREATE TABLE orders (
+  id SERIAL PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE order_items (
+  order_id INTEGER REFERENCES orders(id),
+  product_id INTEGER REFERENCES products(id),
+  qty INTEGER NOT NULL,
+  PRIMARY KEY (order_id, product_id)
+);
+```
+
+## Create Project
+
+Create a new Node.js project:
+
+```bash
+mkdir my-xata-app
+cd my-xata-app
+npm init -y
+```
+
+## Initialize Xata Project
+
+Initialize your Xata project configuration:
+
+```bash
+xata init
+```
+
+This will create a `.xata` directory with your project configuration.
+
+## Store Your Credentials
+
+Create a `.env` file in your project root to store your Xata connection string:
+
+```bash
+# .env
+DATABASE_URL="postgresql://username:password@host:port/database"
+```
+
+Get your connection string from the Xata console or CLI:
+
+```bash
+xata branch url
+```
+
+**Important:** Never commit your `.env` file to version control. Add it to your `.gitignore` file.
+
+## Install Dependencies
+
+Install Prisma and PostgreSQL driver:
+
+```bash
+npm install prisma @prisma/client
+npm install -D typescript @types/node
+```
+
+## Initialize Prisma
+
+Initialize Prisma in your project:
+
+```bash
+npx prisma init
+```
+
+## Configure Prisma Schema
+
+Update your `prisma/schema.prisma` file:
+
+```prisma
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id        Int          @id @default(autoincrement())
+  name      String
+  price     Decimal      @db.Decimal(7, 2)
+  rating    Int?
+  orderItems OrderItem[]
+
+  @@map("products")
+}
+
+model Order {
+  id         Int          @id @default(autoincrement())
+  createdAt  DateTime     @default(now()) @map("created_at")
+  orderItems OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  orderId   Int
+  productId Int
+  qty       Int
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@id([orderId, productId])
+  @@map("order_items")
+}
+```
+
+## Generate Prisma Client
+
+Generate the Prisma client based on your schema:
+
+```bash
+npx prisma generate
+```
+
+## Create Database Service
+
+Create a database service file:
+
+```typescript
+// lib/prisma.ts
+import { PrismaClient } from '@prisma/client'
+
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined
+}
+
+export const prisma = globalForPrisma.prisma ?? new PrismaClient()
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+```
+
+## Create Service Layer
+
+Create services for database operations:
+
+```typescript
+// services/productService.ts
+import { prisma } from '../lib/prisma'
+import { Decimal } from '@prisma/client/runtime/library'
+
+export class ProductService {
+  async getAllProducts() {
+    return await prisma.product.findMany()
+  }
+
+  async getProductById(id: number) {
+    return await prisma.product.findUnique({
+      where: { id }
+    })
+  }
+
+  async createProduct(data: {
+    name: string
+    price: number
+    rating?: number
+  }) {
+    return await prisma.product.create({
+      data: {
+        name: data.name,
+        price: new Decimal(data.price),
+        rating: data.rating
+      }
+    })
+  }
+
+  async updateProduct(id: number, data: {
+    name?: string
+    price?: number
+    rating?: number
+  }) {
+    const updateData: any = {}
+    if (data.name) updateData.name = data.name
+    if (data.price) updateData.price = new Decimal(data.price)
+    if (data.rating !== undefined) updateData.rating = data.rating
+
+    return await prisma.product.update({
+      where: { id },
+      data: updateData
+    })
+  }
+
+  async deleteProduct(id: number) {
+    return await prisma.product.delete({
+      where: { id }
+    })
+  }
+
+  async getProductsByRating(rating: number) {
+    return await prisma.product.findMany({
+      where: { rating }
+    })
+  }
+
+  async getProductsByPriceRange(minPrice: number, maxPrice: number) {
+    return await prisma.product.findMany({
+      where: {
+        price: {
+          gte: new Decimal(minPrice),
+          lte: new Decimal(maxPrice)
+        }
+      }
+    })
+  }
+}
+```
+
+```typescript
+// services/orderService.ts
+import { prisma } from '../lib/prisma'
+
+export class OrderService {
+  async getAllOrders() {
+    return await prisma.order.findMany({
+      include: {
+        orderItems: {
+          include: {
+            product: true
+          }
+        }
+      }
+    })
+  }
+
+  async getOrderById(id: number) {
+    return await prisma.order.findUnique({
+      where: { id },
+      include: {
+        orderItems: {
+          include: {
+            product: true
+          }
+        }
+      }
+    })
+  }
+
+  async createOrder() {
+    return await prisma.order.create({})
+  }
+
+  async addItemToOrder(orderId: number, productId: number, qty: number) {
+    return await prisma.orderItem.create({
+      data: {
+        orderId,
+        productId,
+        qty
+      },
+      include: {
+        product: true
+      }
+    })
+  }
+
+  async getOrdersWithProductDetails() {
+    return await prisma.$queryRaw`
+      SELECT 
+        o.id as order_id,
+        o.created_at,
+        p.name as product_name,
+        p.price,
+        oi.qty,
+        (p.price * oi.qty) as total
+      FROM orders o
+      JOIN order_items oi ON o.id = oi.order_id
+      JOIN products p ON oi.product_id = p.id
+      ORDER BY o.created_at DESC
+    `
+  }
+}
+```
+
+## Create Sample Application
+
+Create a simple application to demonstrate the functionality:
+
+```typescript
+// app.ts
+import { ProductService } from './services/productService'
+import { OrderService } from './services/orderService'
+
+async function main() {
+  const productService = new ProductService()
+  const orderService = new OrderService()
+
+  try {
+    // Create sample products
+    console.log('Creating sample products...')
+    const products = await Promise.all([
+      productService.createProduct({
+        name: 'Wireless Headphones',
+        price: 99.99,
+        rating: 5
+      }),
+      productService.createProduct({
+        name: 'Smartphone',
+        price: 699.99,
+        rating: 4
+      }),
+      productService.createProduct({
+        name: 'Laptop',
+        price: 1299.99,
+        rating: 5
+      }),
+      productService.createProduct({
+        name: 'Coffee Maker',
+        price: 89.99,
+        rating: 4
+      })
+    ])
+
+    console.log(`Created ${products.length} products`)
+
+    // Display all products
+    console.log('\nAll products:')
+    const allProducts = await productService.getAllProducts()
+    for (const product of allProducts) {
+      console.log(`- ${product.name}: $${product.price} (Rating: ${product.rating}/5)`)
+    }
+
+    // Get products by rating
+    console.log('\nTop-rated products (5 stars):')
+    const topProducts = await productService.getProductsByRating(5)
+    for (const product of topProducts) {
+      console.log(`- ${product.name}: $${product.price}`)
+    }
+
+    // Create an order with items
+    console.log('\nCreating an order...')
+    const order = await orderService.createOrder()
+    console.log(`Created order #${order.id}`)
+
+    // Add items to order
+    await orderService.addItemToOrder(order.id, products[0].id, 2) // 2 headphones
+    await orderService.addItemToOrder(order.id, products[2].id, 1) // 1 laptop
+
+    // Get order details with products
+    console.log('\nOrder details:')
+    const orderDetails = await orderService.getOrdersWithProductDetails()
+    for (const detail of orderDetails as any[]) {
+      console.log(`Order #${detail.order_id}: ${detail.product_name} x${detail.qty} = $${detail.total}`)
+    }
+
+    // Update a product
+    console.log('\nUpdating product...')
+    const updatedProduct = await productService.updateProduct(products[0].id, {
+      name: 'Premium Wireless Headphones',
+      price: 129.99
+    })
+    console.log(`Updated: ${updatedProduct.name} - $${updatedProduct.price}`)
+
+  } catch (error) {
+    console.error('Error:', error)
+  } finally {
+    await prisma.$disconnect()
+  }
+}
+
+main()
+```
+
+## Create TypeScript Configuration
+
+Create a `tsconfig.json` file:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+    "outDir": "./dist",
+    "rootDir": "./",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}
+```
+
+## Create Package Scripts
+
+Update your `package.json` scripts:
+
+```json
+{
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/app.js",
+    "dev": "ts-node app.ts",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio"
+  }
+}
+```
+
+## Run the Application
+
+Install dependencies and run the application:
+
+```bash
+npm install ts-node
+npm run dev
+```
+
+## Create Express API (Optional)
+
+For a web API, you can integrate with Express:
+
+```typescript
+// api.ts
+import express from 'express'
+import { ProductService } from './services/productService'
+import { OrderService } from './services/orderService'
+
+const app = express()
+app.use(express.json())
+
+const productService = new ProductService()
+const orderService = new OrderService()
+
+// Product routes
+app.get('/api/products', async (req, res) => {
+  try {
+    const products = await productService.getAllProducts()
+    res.json(products)
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch products' })
+  }
+})
+
+app.get('/api/products/:id', async (req, res) => {
+  try {
+    const product = await productService.getProductById(parseInt(req.params.id))
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' })
+    }
+    res.json(product)
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch product' })
+  }
+})
+
+app.post('/api/products', async (req, res) => {
+  try {
+    const product = await productService.createProduct(req.body)
+    res.status(201).json(product)
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create product' })
+  }
+})
+
+app.get('/api/products/rating/:rating', async (req, res) => {
+  try {
+    const products = await productService.getProductsByRating(parseInt(req.params.rating))
+    res.json(products)
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch products' })
+  }
+})
+
+// Order routes
+app.get('/api/orders', async (req, res) => {
+  try {
+    const orders = await orderService.getAllOrders()
+    res.json(orders)
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch orders' })
+  }
+})
+
+const PORT = process.env.PORT || 3000
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`)
+})
+```
+
+To run the Express API:
+
+```bash
+npm install express
+npm install -D @types/express
+npx ts-node api.ts
+```
+
+## Next Steps
+
+- Explore [Xata branching](/core-concepts/branching) for development workflows
+- Learn about [schema changes](/core-concepts/schema-changes) with zero downtime
+- Join our [Discord community](https://discord.gg/xata) for help and support 

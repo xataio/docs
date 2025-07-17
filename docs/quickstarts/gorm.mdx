@@ -1,0 +1,678 @@
+---
+title: "Connect GORM to Xata"
+description: "Learn how to connect your Go application using GORM to Xata's PostgreSQL platform. Get started with GORM and PostgreSQL for robust database operations in Go."
+---
+
+## Prerequisites
+
+- Xata account and project setup
+- Go 1.19+ installed
+- Basic knowledge of Go and GORM
+
+## Setup Xata Database
+
+First, set up your Xata database with the common e-commerce dataset:
+
+1. Create a project and branch in the [Xata console](https://console.xata.io)
+2. Navigate to the **Queries** tab in your branch
+3. Run the following SQL commands to create the initial schema:
+
+```sql
+CREATE TABLE products (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  price NUMERIC(7,2) NOT NULL,
+  rating INTEGER
+);
+
+CREATE TABLE orders (
+  id SERIAL PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE order_items (
+  order_id INTEGER REFERENCES orders(id),
+  product_id INTEGER REFERENCES products(id),
+  qty INTEGER NOT NULL,
+  PRIMARY KEY (order_id, product_id)
+);
+```
+
+## Create Go Project
+
+Create a new Go project:
+
+```bash
+mkdir my-xata-app
+cd my-xata-app
+go mod init my-xata-app
+```
+
+## Initialize Xata Project
+
+Initialize your Xata project configuration:
+
+```bash
+xata init
+```
+
+This will create a `.xata` directory with your project configuration.
+
+## Store Your Credentials
+
+Create a `.env` file in your project root to store your Xata connection string:
+
+```bash
+# .env
+DATABASE_URL="postgresql://username:password@host:port/database"
+```
+
+Get your connection string from the Xata console or CLI:
+
+```bash
+xata branch url
+```
+
+**Important:** Never commit your `.env` file to version control. Add it to your `.gitignore` file.
+
+## Install Dependencies
+
+Install GORM and PostgreSQL driver:
+
+```bash
+go get -u gorm.io/gorm
+go get -u gorm.io/driver/postgres
+go get -u github.com/joho/godotenv
+```
+
+## Create Database Configuration
+
+Create a database configuration file:
+
+```go
+// config/database.go
+package config
+
+import (
+	"fmt"
+	"log"
+	"os"
+
+	"github.com/joho/godotenv"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
+)
+
+var DB *gorm.DB
+
+func InitDB() {
+	// Load environment variables
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		log.Fatal("DATABASE_URL environment variable is required")
+	}
+
+	var err error
+	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Info),
+	})
+
+	if err != nil {
+		log.Fatal("Failed to connect to database:", err)
+	}
+
+	fmt.Println("Database connection established")
+}
+```
+
+## Create Models
+
+Create your GORM models:
+
+```go
+// models/product.go
+package models
+
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
+
+type Product struct {
+	ID        uint           `gorm:"primaryKey" json:"id"`
+	Name      string         `gorm:"type:text;not null" json:"name"`
+	Price     float64        `gorm:"type:decimal(7,2);not null" json:"price"`
+	Rating    *int           `gorm:"type:integer" json:"rating"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+
+	OrderItems []OrderItem `gorm:"foreignKey:ProductID" json:"order_items,omitempty"`
+}
+
+func (Product) TableName() string {
+	return "products"
+}
+```
+
+```go
+// models/order.go
+package models
+
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
+
+type Order struct {
+	ID        uint           `gorm:"primaryKey" json:"id"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+
+	OrderItems []OrderItem `gorm:"foreignKey:OrderID" json:"order_items,omitempty"`
+}
+
+func (Order) TableName() string {
+	return "orders"
+}
+```
+
+```go
+// models/order_item.go
+package models
+
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
+
+type OrderItem struct {
+	OrderID   uint           `gorm:"primaryKey" json:"order_id"`
+	ProductID uint           `gorm:"primaryKey" json:"product_id"`
+	Qty       int            `gorm:"type:integer;not null" json:"qty"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+
+	Order   Order   `gorm:"foreignKey:OrderID" json:"order,omitempty"`
+	Product Product `gorm:"foreignKey:ProductID" json:"product,omitempty"`
+}
+
+func (OrderItem) TableName() string {
+	return "order_items"
+}
+```
+
+## Create Services
+
+Create service layer for database operations:
+
+```go
+// services/product_service.go
+package services
+
+import (
+	"my-xata-app/config"
+	"my-xata-app/models"
+)
+
+type ProductService struct{}
+
+func NewProductService() *ProductService {
+	return &ProductService{}
+}
+
+func (s *ProductService) GetAllProducts() ([]models.Product, error) {
+	var products []models.Product
+	result := config.DB.Find(&products)
+	return products, result.Error
+}
+
+func (s *ProductService) GetProductByID(id uint) (*models.Product, error) {
+	var product models.Product
+	result := config.DB.First(&product, id)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &product, nil
+}
+
+func (s *ProductService) CreateProduct(product *models.Product) error {
+	return config.DB.Create(product).Error
+}
+
+func (s *ProductService) UpdateProduct(id uint, updates map[string]interface{}) (*models.Product, error) {
+	var product models.Product
+	if err := config.DB.First(&product, id).Error; err != nil {
+		return nil, err
+	}
+
+	if err := config.DB.Model(&product).Updates(updates).Error; err != nil {
+		return nil, err
+	}
+
+	return &product, nil
+}
+
+func (s *ProductService) DeleteProduct(id uint) error {
+	return config.DB.Delete(&models.Product{}, id).Error
+}
+
+func (s *ProductService) GetProductsByRating(rating int) ([]models.Product, error) {
+	var products []models.Product
+	result := config.DB.Where("rating = ?", rating).Find(&products)
+	return products, result.Error
+}
+
+func (s *ProductService) GetProductsByPriceRange(minPrice, maxPrice float64) ([]models.Product, error) {
+	var products []models.Product
+	result := config.DB.Where("price >= ? AND price <= ?", minPrice, maxPrice).Find(&products)
+	return products, result.Error
+}
+```
+
+```go
+// services/order_service.go
+package services
+
+import (
+	"my-xata-app/config"
+	"my-xata-app/models"
+)
+
+type OrderService struct{}
+
+func NewOrderService() *OrderService {
+	return &OrderService{}
+}
+
+func (s *OrderService) GetAllOrders() ([]models.Order, error) {
+	var orders []models.Order
+	result := config.DB.Preload("OrderItems.Product").Find(&orders)
+	return orders, result.Error
+}
+
+func (s *OrderService) GetOrderByID(id uint) (*models.Order, error) {
+	var order models.Order
+	result := config.DB.Preload("OrderItems.Product").First(&order, id)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &order, nil
+}
+
+func (s *OrderService) CreateOrder() (*models.Order, error) {
+	order := &models.Order{}
+	result := config.DB.Create(order)
+	return order, result.Error
+}
+
+func (s *OrderService) AddItemToOrder(orderID, productID uint, qty int) (*models.OrderItem, error) {
+	orderItem := &models.OrderItem{
+		OrderID:   orderID,
+		ProductID: productID,
+		Qty:       qty,
+	}
+	result := config.DB.Create(orderItem)
+	return orderItem, result.Error
+}
+
+func (s *OrderService) GetOrdersWithProductDetails() ([]map[string]interface{}, error) {
+	var results []map[string]interface{}
+	
+	query := `
+		SELECT 
+			o.id as order_id,
+			o.created_at,
+			p.name as product_name,
+			p.price,
+			oi.qty,
+			(p.price * oi.qty) as total
+		FROM orders o
+		JOIN order_items oi ON o.id = oi.order_id
+		JOIN products p ON oi.product_id = p.id
+		ORDER BY o.created_at DESC
+	`
+	
+	result := config.DB.Raw(query).Scan(&results)
+	return results, result.Error
+}
+```
+
+## Create Sample Application
+
+Create a simple application to demonstrate the functionality:
+
+```go
+// main.go
+package main
+
+import (
+	"fmt"
+	"log"
+	"my-xata-app/config"
+	"my-xata-app/models"
+	"my-xata-app/services"
+)
+
+func main() {
+	// Initialize database
+	config.InitDB()
+
+	// Auto-migrate models (optional - since we created tables manually)
+	if err := config.DB.AutoMigrate(&models.Product{}, &models.Order{}, &models.OrderItem{}); err != nil {
+		log.Fatal("Failed to migrate database:", err)
+	}
+
+	// Initialize services
+	productService := services.NewProductService()
+	orderService := services.NewOrderService()
+
+	// Create sample products
+	fmt.Println("Creating sample products...")
+	products := []*models.Product{
+		{Name: "Wireless Headphones", Price: 99.99, Rating: intPtr(5)},
+		{Name: "Smartphone", Price: 699.99, Rating: intPtr(4)},
+		{Name: "Laptop", Price: 1299.99, Rating: intPtr(5)},
+		{Name: "Coffee Maker", Price: 89.99, Rating: intPtr(4)},
+	}
+
+	for _, product := range products {
+		if err := productService.CreateProduct(product); err != nil {
+			log.Printf("Failed to create product %s: %v", product.Name, err)
+		}
+	}
+
+	fmt.Printf("Created %d products\n", len(products))
+
+	// Display all products
+	fmt.Println("\nAll products:")
+	allProducts, err := productService.GetAllProducts()
+	if err != nil {
+		log.Printf("Failed to get products: %v", err)
+	} else {
+		for _, product := range allProducts {
+			rating := "N/A"
+			if product.Rating != nil {
+				rating = fmt.Sprintf("%d", *product.Rating)
+			}
+			fmt.Printf("- %s: $%.2f (Rating: %s/5)\n", product.Name, product.Price, rating)
+		}
+	}
+
+	// Get products by rating
+	fmt.Println("\nTop-rated products (5 stars):")
+	topProducts, err := productService.GetProductsByRating(5)
+	if err != nil {
+		log.Printf("Failed to get top products: %v", err)
+	} else {
+		for _, product := range topProducts {
+			fmt.Printf("- %s: $%.2f\n", product.Name, product.Price)
+		}
+	}
+
+	// Create an order with items
+	fmt.Println("\nCreating an order...")
+	order, err := orderService.CreateOrder()
+	if err != nil {
+		log.Printf("Failed to create order: %v", err)
+	} else {
+		fmt.Printf("Created order #%d\n", order.ID)
+
+		// Add items to order
+		if len(allProducts) >= 3 {
+			_, err = orderService.AddItemToOrder(order.ID, allProducts[0].ID, 2) // 2 headphones
+			if err != nil {
+				log.Printf("Failed to add item to order: %v", err)
+			}
+
+			_, err = orderService.AddItemToOrder(order.ID, allProducts[2].ID, 1) // 1 laptop
+			if err != nil {
+				log.Printf("Failed to add item to order: %v", err)
+			}
+		}
+	}
+
+	// Get order details with products
+	fmt.Println("\nOrder details:")
+	orderDetails, err := orderService.GetOrdersWithProductDetails()
+	if err != nil {
+		log.Printf("Failed to get order details: %v", err)
+	} else {
+		for _, detail := range orderDetails {
+			fmt.Printf("Order #%.0f: %s x%.0f = $%.2f\n",
+				detail["order_id"], detail["product_name"], detail["qty"], detail["total"])
+		}
+	}
+
+	// Update a product
+	if len(allProducts) > 0 {
+		fmt.Println("\nUpdating product...")
+		updates := map[string]interface{}{
+			"name":  "Premium Wireless Headphones",
+			"price": 129.99,
+		}
+		updatedProduct, err := productService.UpdateProduct(allProducts[0].ID, updates)
+		if err != nil {
+			log.Printf("Failed to update product: %v", err)
+		} else {
+			fmt.Printf("Updated: %s - $%.2f\n", updatedProduct.Name, updatedProduct.Price)
+		}
+	}
+}
+
+func intPtr(i int) *int {
+	return &i
+}
+```
+
+## Create Go Modules
+
+Create a `go.mod` file:
+
+```go
+// go.mod
+module my-xata-app
+
+go 1.19
+
+require (
+	github.com/joho/godotenv v1.5.1
+	gorm.io/driver/postgres v1.5.4
+	gorm.io/gorm v1.25.5
+)
+
+require (
+	github.com/jackc/pgpassfile v1.0.0 // indirect
+	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
+	github.com/jackc/pgx/v5 v5.4.3 // indirect
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
+	golang.org/x/crypto v0.14.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
+)
+```
+
+## Run the Application
+
+Run the application:
+
+```bash
+go run main.go
+```
+
+## Create HTTP API (Optional)
+
+For a web API, you can integrate with Gin:
+
+```go
+// api/main.go
+package main
+
+import (
+	"net/http"
+	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"my-xata-app/config"
+	"my-xata-app/models"
+	"my-xata-app/services"
+)
+
+func main() {
+	// Initialize database
+	config.InitDB()
+
+	// Auto-migrate models
+	if err := config.DB.AutoMigrate(&models.Product{}, &models.Order{}, &models.OrderItem{}); err != nil {
+		panic("Failed to migrate database")
+	}
+
+	// Initialize services
+	productService := services.NewProductService()
+	orderService := services.NewOrderService()
+
+	// Setup Gin router
+	r := gin.Default()
+
+	// Product routes
+	r.GET("/api/products", func(c *gin.Context) {
+		products, err := productService.GetAllProducts()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch products"})
+			return
+		}
+		c.JSON(http.StatusOK, products)
+	})
+
+	r.GET("/api/products/:id", func(c *gin.Context) {
+		id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+			return
+		}
+
+		product, err := productService.GetProductByID(uint(id))
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
+			return
+		}
+		c.JSON(http.StatusOK, product)
+	})
+
+	r.POST("/api/products", func(c *gin.Context) {
+		var product models.Product
+		if err := c.ShouldBindJSON(&product); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+			return
+		}
+
+		if err := productService.CreateProduct(&product); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create product"})
+			return
+		}
+		c.JSON(http.StatusCreated, product)
+	})
+
+	r.PUT("/api/products/:id", func(c *gin.Context) {
+		id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+			return
+		}
+
+		var updates map[string]interface{}
+		if err := c.ShouldBindJSON(&updates); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+			return
+		}
+
+		product, err := productService.UpdateProduct(uint(id), updates)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
+			return
+		}
+		c.JSON(http.StatusOK, product)
+	})
+
+	r.DELETE("/api/products/:id", func(c *gin.Context) {
+		id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+			return
+		}
+
+		if err := productService.DeleteProduct(uint(id)); err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
+			return
+		}
+		c.Status(http.StatusNoContent)
+	})
+
+	r.GET("/api/products/rating/:rating", func(c *gin.Context) {
+		rating, err := strconv.Atoi(c.Param("rating"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid rating"})
+			return
+		}
+
+		products, err := productService.GetProductsByRating(rating)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch products"})
+			return
+		}
+		c.JSON(http.StatusOK, products)
+	})
+
+	// Order routes
+	r.GET("/api/orders", func(c *gin.Context) {
+		orders, err := orderService.GetAllOrders()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch orders"})
+			return
+		}
+		c.JSON(http.StatusOK, orders)
+	})
+
+	r.GET("/api/orders/:id", func(c *gin.Context) {
+		id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+			return
+		}
+
+		order, err := orderService.GetOrderByID(uint(id))
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Order not found"})
+			return
+		}
+		c.JSON(http.StatusOK, order)
+	})
+
+	// Start server
+	r.Run(":8080")
+}
+```
+
+To run the HTTP API:
+
+```bash
+go get github.com/gin-gonic/gin
+go get my-xata-app/config
+go run api/main.go
+```
+
+## Next Steps
+
+- Explore [Xata branching](/core-concepts/branching) for development workflows
+- Learn about [schema changes](/core-concepts/schema-changes) with zero downtime
+- Join our [Discord community](https://discord.gg/xata) for help and support 

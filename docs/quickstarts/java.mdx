@@ -1,0 +1,491 @@
+---
+title: "Connect Java Spring Boot to Xata"
+description: "Learn how to connect your Java Spring Boot application to Xata's PostgreSQL platform. Get started with Spring Boot and PostgreSQL for enterprise applications."
+---
+
+## Prerequisites
+
+- Xata account and project setup
+- Java 17+ installed
+- Maven or Gradle installed
+- Basic knowledge of Java and Spring Boot
+
+## Setup Xata Database
+
+First, set up your Xata database with the common e-commerce dataset:
+
+1. Create a project and branch in the [Xata console](https://console.xata.io)
+2. Navigate to the **Queries** tab in your branch
+3. Run the following SQL commands to create the initial schema:
+
+```sql
+CREATE TABLE products (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  price NUMERIC(7,2) NOT NULL,
+  rating INTEGER
+);
+
+CREATE TABLE orders (
+  id SERIAL PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE order_items (
+  order_id INTEGER REFERENCES orders(id),
+  product_id INTEGER REFERENCES products(id),
+  qty INTEGER NOT NULL,
+  PRIMARY KEY (order_id, product_id)
+);
+```
+
+## Create Spring Boot Project
+
+Create a new Spring Boot project using Spring Initializr:
+
+```bash
+curl -X POST https://start.spring.io/starter.tgz \
+  -d type=maven-project \
+  -d language=java \
+  -d bootVersion=3.3.0 \
+  -d baseDir=my-xata-app \
+  -d groupId=com.example \
+  -d artifactId=my-xata-app \
+  -d name=my-xata-app \
+  -d description="Xata Spring Boot Application" \
+  -d packageName=com.example.myxataapp \
+  -d packaging=jar \
+  -d javaVersion=17 \
+  -d dependencies=web,data-jpa,postgresql,validation \
+  | tar -xzvf -
+cd my-xata-app
+```
+
+## Initialize Xata Project
+
+Initialize your Xata project configuration:
+
+```bash
+xata init
+```
+
+This will create a `.xata` directory with your project configuration.
+
+## Store Your Credentials
+
+Create an `application.properties` file to store your Xata connection details:
+
+```properties
+# src/main/resources/application.properties
+spring.datasource.url=jdbc:postgresql://your_host:5432/your_database_name
+spring.datasource.username=your_username
+spring.datasource.password=your_password
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+spring.jpa.hibernate.ddl-auto=none
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.properties.hibernate.format_sql=true
+
+server.port=8080
+```
+
+Get your connection details from the Xata console or CLI:
+
+```bash
+xata branch url
+```
+
+**Important:** Never commit your database credentials to version control. Use environment variables or external configuration for production.
+
+## Create Entity Models
+
+Create your JPA entities:
+
+```java
+// src/main/java/com/example/myxataapp/entity/Product.java
+package com.example.myxataapp.entity;
+
+import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import java.math.BigDecimal;
+import java.util.List;
+
+@Entity
+@Table(name = "products")
+public class Product {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @NotBlank
+    @Column(name = "name", nullable = false)
+    private String name;
+
+    @NotNull
+    @DecimalMin("0.0")
+    @Column(name = "price", nullable = false, precision = 7, scale = 2)
+    private BigDecimal price;
+
+    @Column(name = "rating")
+    private Integer rating;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+    private List<OrderItem> orderItems;
+
+    // Constructors
+    public Product() {}
+
+    public Product(String name, BigDecimal price, Integer rating) {
+        this.name = name;
+        this.price = price;
+        this.rating = rating;
+    }
+
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public BigDecimal getPrice() { return price; }
+    public void setPrice(BigDecimal price) { this.price = price; }
+
+    public Integer getRating() { return rating; }
+    public void setRating(Integer rating) { this.rating = rating; }
+
+    public List<OrderItem> getOrderItems() { return orderItems; }
+    public void setOrderItems(List<OrderItem> orderItems) { this.orderItems = orderItems; }
+}
+```
+
+```java
+// src/main/java/com/example/myxataapp/entity/Order.java
+package com.example.myxataapp.entity;
+
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Entity
+@Table(name = "orders")
+public class Order {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    private List<OrderItem> orderItems;
+
+    // Constructors
+    public Order() {
+        this.createdAt = LocalDateTime.now();
+    }
+
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public List<OrderItem> getOrderItems() { return orderItems; }
+    public void setOrderItems(List<OrderItem> orderItems) { this.orderItems = orderItems; }
+}
+```
+
+```java
+// src/main/java/com/example/myxataapp/entity/OrderItem.java
+package com.example.myxataapp.entity;
+
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+
+@Entity
+@Table(name = "order_items")
+@IdClass(OrderItemId.class)
+public class OrderItem {
+    @Id
+    @Column(name = "order_id")
+    private Long orderId;
+
+    @Id
+    @Column(name = "product_id")
+    private Long productId;
+
+    @NotNull
+    @Min(1)
+    @Column(name = "qty", nullable = false)
+    private Integer qty;
+
+    @ManyToOne
+    @JoinColumn(name = "order_id", insertable = false, updatable = false)
+    private Order order;
+
+    @ManyToOne
+    @JoinColumn(name = "product_id", insertable = false, updatable = false)
+    private Product product;
+
+    // Constructors
+    public OrderItem() {}
+
+    public OrderItem(Long orderId, Long productId, Integer qty) {
+        this.orderId = orderId;
+        this.productId = productId;
+        this.qty = qty;
+    }
+
+    // Getters and Setters
+    public Long getOrderId() { return orderId; }
+    public void setOrderId(Long orderId) { this.orderId = orderId; }
+
+    public Long getProductId() { return productId; }
+    public void setProductId(Long productId) { this.productId = productId; }
+
+    public Integer getQty() { return qty; }
+    public void setQty(Integer qty) { this.qty = qty; }
+
+    public Order getOrder() { return order; }
+    public void setOrder(Order order) { this.order = order; }
+
+    public Product getProduct() { return product; }
+    public void setProduct(Product product) { this.product = product; }
+}
+```
+
+```java
+// src/main/java/com/example/myxataapp/entity/OrderItemId.java
+package com.example.myxataapp.entity;
+
+import java.io.Serializable;
+import java.util.Objects;
+
+public class OrderItemId implements Serializable {
+    private Long orderId;
+    private Long productId;
+
+    public OrderItemId() {}
+
+    public OrderItemId(Long orderId, Long productId) {
+        this.orderId = orderId;
+        this.productId = productId;
+    }
+
+    public Long getOrderId() { return orderId; }
+    public void setOrderId(Long orderId) { this.orderId = orderId; }
+
+    public Long getProductId() { return productId; }
+    public void setProductId(Long productId) { this.productId = productId; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        OrderItemId that = (OrderItemId) o;
+        return Objects.equals(orderId, that.orderId) && Objects.equals(productId, that.productId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(orderId, productId);
+    }
+}
+```
+
+## Create Repositories
+
+Create Spring Data JPA repositories:
+
+```java
+// src/main/java/com/example/myxataapp/repository/ProductRepository.java
+package com.example.myxataapp.repository;
+
+import com.example.myxataapp.entity.Product;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+import java.util.List;
+
+@Repository
+public interface ProductRepository extends JpaRepository<Product, Long> {
+    List<Product> findByRating(Integer rating);
+    
+    @Query("SELECT p FROM Product p WHERE p.price >= ?1")
+    List<Product> findByPriceGreaterThanEqual(java.math.BigDecimal price);
+}
+```
+
+```java
+// src/main/java/com/example/myxataapp/repository/OrderRepository.java
+package com.example.myxataapp.repository;
+
+import com.example.myxataapp.entity.Order;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+import java.util.List;
+
+@Repository
+public interface OrderRepository extends JpaRepository<Order, Long> {
+    @Query("SELECT o FROM Order o JOIN FETCH o.orderItems oi JOIN FETCH oi.product")
+    List<Order> findAllWithProducts();
+}
+```
+
+## Create Services
+
+Create service layer for business logic:
+
+```java
+// src/main/java/com/example/myxataapp/service/ProductService.java
+package com.example.myxataapp.service;
+
+import com.example.myxataapp.entity.Product;
+import com.example.myxataapp.repository.ProductRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class ProductService {
+    @Autowired
+    private ProductRepository productRepository;
+
+    public List<Product> getAllProducts() {
+        return productRepository.findAll();
+    }
+
+    public Optional<Product> getProductById(Long id) {
+        return productRepository.findById(id);
+    }
+
+    public Product createProduct(Product product) {
+        return productRepository.save(product);
+    }
+
+    public Product updateProduct(Long id, Product productDetails) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+        
+        product.setName(productDetails.getName());
+        product.setPrice(productDetails.getPrice());
+        product.setRating(productDetails.getRating());
+        
+        return productRepository.save(product);
+    }
+
+    public void deleteProduct(Long id) {
+        productRepository.deleteById(id);
+    }
+
+    public List<Product> getProductsByRating(Integer rating) {
+        return productRepository.findByRating(rating);
+    }
+}
+```
+
+## Create Controllers
+
+Create REST controllers:
+
+```java
+// src/main/java/com/example/myxataapp/controller/ProductController.java
+package com.example.myxataapp.controller;
+
+import com.example.myxataapp.entity.Product;
+import com.example.myxataapp.service.ProductService;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/products")
+@CrossOrigin(origins = "*")
+public class ProductController {
+    @Autowired
+    private ProductService productService;
+
+    @GetMapping
+    public ResponseEntity<List<Product>> getAllProducts() {
+        List<Product> products = productService.getAllProducts();
+        return ResponseEntity.ok(products);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
+        return productService.getProductById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping
+    public ResponseEntity<Product> createProduct(@Valid @RequestBody Product product) {
+        Product createdProduct = productService.createProduct(product);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdProduct);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @Valid @RequestBody Product product) {
+        try {
+            Product updatedProduct = productService.updateProduct(id, product);
+            return ResponseEntity.ok(updatedProduct);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+        productService.deleteProduct(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/rating/{rating}")
+    public ResponseEntity<List<Product>> getProductsByRating(@PathVariable Integer rating) {
+        List<Product> products = productService.getProductsByRating(rating);
+        return ResponseEntity.ok(products);
+    }
+}
+```
+
+## Run the Application
+
+Start your Spring Boot application:
+
+```bash
+./mvnw spring-boot:run
+```
+
+Visit `http://localhost:8080` to see your application.
+
+Test the API endpoints:
+
+```bash
+# Get all products
+curl http://localhost:8080/api/products
+
+# Create a product
+curl -X POST http://localhost:8080/api/products \
+  -H "Content-Type: application/json" \
+  -d '{"name":"New Product","price":49.99,"rating":4}'
+
+# Get products by rating
+curl http://localhost:8080/api/products/rating/5
+```
+
+## Next Steps
+
+- Explore [Xata branching](/core-concepts/branching) for development workflows
+- Learn about [schema changes](/core-concepts/schema-changes) with zero downtime
+- Join our [Discord community](https://discord.gg/xata) for help and support 

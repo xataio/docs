@@ -1,0 +1,582 @@
+---
+title: "Connect TypeORM to Xata"
+description: "Learn how to connect your TypeScript/JavaScript application using TypeORM to Xata's PostgreSQL platform. Get started with TypeORM and PostgreSQL for enterprise-grade database operations."
+---
+
+## Prerequisites
+
+- Xata account and project setup
+- Node.js 18+ installed
+- Basic knowledge of TypeScript and TypeORM
+
+## Setup Xata Database
+
+First, set up your Xata database with the common e-commerce dataset:
+
+1. Create a project and branch in the [Xata console](https://console.xata.io)
+2. Navigate to the **Queries** tab in your branch
+3. Run the following SQL commands to create the initial schema:
+
+```sql
+CREATE TABLE products (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  price NUMERIC(7,2) NOT NULL,
+  rating INTEGER
+);
+
+CREATE TABLE orders (
+  id SERIAL PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE order_items (
+  order_id INTEGER REFERENCES orders(id),
+  product_id INTEGER REFERENCES products(id),
+  qty INTEGER NOT NULL,
+  PRIMARY KEY (order_id, product_id)
+);
+```
+
+## Create Project
+
+Create a new Node.js project:
+
+```bash
+mkdir my-xata-app
+cd my-xata-app
+npm init -y
+```
+
+## Initialize Xata Project
+
+Initialize your Xata project configuration:
+
+```bash
+xata init
+```
+
+This will create a `.xata` directory with your project configuration.
+
+## Store Your Credentials
+
+Create a `.env` file in your project root to store your Xata connection string:
+
+```bash
+# .env
+DATABASE_URL="postgresql://username:password@host:port/database"
+```
+
+Get your connection string from the Xata console or CLI:
+
+```bash
+xata branch url
+```
+
+**Important:** Never commit your `.env` file to version control. Add it to your `.gitignore` file.
+
+## Install Dependencies
+
+Install TypeORM and PostgreSQL driver:
+
+```bash
+npm install typeorm reflect-metadata pg
+npm install -D typescript @types/node @types/pg
+```
+
+## Configure TypeScript
+
+Create a `tsconfig.json` file:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+    "outDir": "./dist",
+    "rootDir": "./",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}
+```
+
+## Create Database Configuration
+
+Create a database configuration file:
+
+```typescript
+// config/database.ts
+import { DataSource } from 'typeorm'
+import { config } from 'dotenv'
+import { Product } from '../entities/Product'
+import { Order } from '../entities/Order'
+import { OrderItem } from '../entities/OrderItem'
+
+config()
+
+export const AppDataSource = new DataSource({
+  type: 'postgres',
+  url: process.env.DATABASE_URL,
+  synchronize: false, // Set to false in production
+  logging: true,
+  entities: [Product, Order, OrderItem],
+  subscribers: [],
+  migrations: [],
+})
+
+export const initializeDatabase = async () => {
+  try {
+    await AppDataSource.initialize()
+    console.log('Database connection established')
+  } catch (error) {
+    console.error('Error connecting to database:', error)
+    throw error
+  }
+}
+```
+
+## Create Entities
+
+Create your TypeORM entities:
+
+```typescript
+// entities/Product.ts
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm'
+import { OrderItem } from './OrderItem'
+
+@Entity('products')
+export class Product {
+  @PrimaryGeneratedColumn()
+  id!: number
+
+  @Column({ type: 'text', nullable: false })
+  name!: string
+
+  @Column({ type: 'decimal', precision: 7, scale: 2, nullable: false })
+  price!: number
+
+  @Column({ type: 'integer', nullable: true })
+  rating!: number
+
+  @OneToMany(() => OrderItem, orderItem => orderItem.product)
+  orderItems!: OrderItem[]
+}
+```
+
+```typescript
+// entities/Order.ts
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn } from 'typeorm'
+import { OrderItem } from './OrderItem'
+
+@Entity('orders')
+export class Order {
+  @PrimaryGeneratedColumn()
+  id!: number
+
+  @CreateDateColumn({ type: 'timestamp with time zone' })
+  created_at!: Date
+
+  @OneToMany(() => OrderItem, orderItem => orderItem.order)
+  orderItems!: OrderItem[]
+}
+```
+
+```typescript
+// entities/OrderItem.ts
+import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn } from 'typeorm'
+import { Product } from './Product'
+import { Order } from './Order'
+
+@Entity('order_items')
+export class OrderItem {
+  @PrimaryColumn({ type: 'integer' })
+  order_id!: number
+
+  @PrimaryColumn({ type: 'integer' })
+  product_id!: number
+
+  @Column({ type: 'integer', nullable: false })
+  qty!: number
+
+  @ManyToOne(() => Order, order => order.orderItems)
+  @JoinColumn({ name: 'order_id' })
+  order!: Order
+
+  @ManyToOne(() => Product, product => product.orderItems)
+  @JoinColumn({ name: 'product_id' })
+  product!: Product
+}
+```
+
+## Create Services
+
+Create service layer for database operations:
+
+```typescript
+// services/ProductService.ts
+import { Repository } from 'typeorm'
+import { AppDataSource } from '../config/database'
+import { Product } from '../entities/Product'
+
+export class ProductService {
+  private productRepository: Repository<Product>
+
+  constructor() {
+    this.productRepository = AppDataSource.getRepository(Product)
+  }
+
+  async getAllProducts(): Promise<Product[]> {
+    return await this.productRepository.find()
+  }
+
+  async getProductById(id: number): Promise<Product | null> {
+    return await this.productRepository.findOne({ where: { id } })
+  }
+
+  async createProduct(name: string, price: number, rating?: number): Promise<Product> {
+    const product = this.productRepository.create({
+      name,
+      price,
+      rating
+    })
+    return await this.productRepository.save(product)
+  }
+
+  async updateProduct(id: number, updates: Partial<Product>): Promise<Product | null> {
+    await this.productRepository.update(id, updates)
+    return await this.getProductById(id)
+  }
+
+  async deleteProduct(id: number): Promise<boolean> {
+    const result = await this.productRepository.delete(id)
+    return result.affected !== 0
+  }
+
+  async getProductsByRating(rating: number): Promise<Product[]> {
+    return await this.productRepository.find({ where: { rating } })
+  }
+
+  async getProductsByPriceRange(minPrice: number, maxPrice: number): Promise<Product[]> {
+    return await this.productRepository
+      .createQueryBuilder('product')
+      .where('product.price >= :minPrice', { minPrice })
+      .andWhere('product.price <= :maxPrice', { maxPrice })
+      .getMany()
+  }
+}
+```
+
+```typescript
+// services/OrderService.ts
+import { Repository } from 'typeorm'
+import { AppDataSource } from '../config/database'
+import { Order } from '../entities/Order'
+import { OrderItem } from '../entities/OrderItem'
+import { Product } from '../entities/Product'
+
+export class OrderService {
+  private orderRepository: Repository<Order>
+  private orderItemRepository: Repository<OrderItem>
+
+  constructor() {
+    this.orderRepository = AppDataSource.getRepository(Order)
+    this.orderItemRepository = AppDataSource.getRepository(OrderItem)
+  }
+
+  async getAllOrders(): Promise<Order[]> {
+    return await this.orderRepository.find({
+      relations: ['orderItems', 'orderItems.product']
+    })
+  }
+
+  async getOrderById(id: number): Promise<Order | null> {
+    return await this.orderRepository.findOne({
+      where: { id },
+      relations: ['orderItems', 'orderItems.product']
+    })
+  }
+
+  async createOrder(): Promise<Order> {
+    const order = this.orderRepository.create()
+    return await this.orderRepository.save(order)
+  }
+
+  async addItemToOrder(orderId: number, productId: number, qty: number): Promise<OrderItem | null> {
+    const order = await this.getOrderById(orderId)
+    const product = await AppDataSource.getRepository(Product).findOne({ where: { id: productId } })
+
+    if (!order || !product) {
+      return null
+    }
+
+    const orderItem = this.orderItemRepository.create({
+      order_id: orderId,
+      product_id: productId,
+      qty
+    })
+
+    return await this.orderItemRepository.save(orderItem)
+  }
+
+  async getOrdersWithProductDetails(): Promise<any[]> {
+    return await this.orderRepository
+      .createQueryBuilder('order')
+      .select([
+        'order.id as order_id',
+        'order.created_at as created_at',
+        'product.name as product_name',
+        'product.price as price',
+        'orderItem.qty as qty',
+        '(product.price * orderItem.qty) as total'
+      ])
+      .leftJoin('order.orderItems', 'orderItem')
+      .leftJoin('orderItem.product', 'product')
+      .getRawMany()
+  }
+}
+```
+
+## Create Sample Application
+
+Create a simple application to demonstrate the functionality:
+
+```typescript
+// app.ts
+import 'reflect-metadata'
+import { initializeDatabase } from './config/database'
+import { ProductService } from './services/ProductService'
+import { OrderService } from './services/OrderService'
+import { AppDataSource } from './data-source'; // Adjust the path if needed
+
+async function main() {
+  try {
+    // Initialize database connection
+    await initializeDatabase()
+
+    const productService = new ProductService()
+    const orderService = new OrderService()
+
+    // Create sample products
+    console.log('Creating sample products...')
+    const products = await Promise.all([
+      productService.createProduct('Wireless Headphones', 99.99, 5),
+      productService.createProduct('Smartphone', 699.99, 4),
+      productService.createProduct('Laptop', 1299.99, 5),
+      productService.createProduct('Coffee Maker', 89.99, 4)
+    ])
+
+    console.log(`Created ${products.length} products`)
+
+    // Display all products
+    console.log('\nAll products:')
+    const allProducts = await productService.getAllProducts()
+    for (const product of allProducts) {
+      console.log(`- ${product.name}: $${product.price} (Rating: ${product.rating}/5)`)
+    }
+
+    // Get products by rating
+    console.log('\nTop-rated products (5 stars):')
+    const topProducts = await productService.getProductsByRating(5)
+    for (const product of topProducts) {
+      console.log(`- ${product.name}: $${product.price}`)
+    }
+
+    // Create an order with items
+    console.log('\nCreating an order...')
+    const order = await orderService.createOrder()
+    console.log(`Created order #${order.id}`)
+
+    // Add items to order
+    await orderService.addItemToOrder(order.id, products[0].id, 2) // 2 headphones
+    await orderService.addItemToOrder(order.id, products[2].id, 1) // 1 laptop
+
+    // Get order details with products
+    console.log('\nOrder details:')
+    const orderDetails = await orderService.getOrdersWithProductDetails()
+    for (const detail of orderDetails) {
+      console.log(`Order #${detail.order_id}: ${detail.product_name} x${detail.qty} = $${detail.total}`)
+    }
+
+    // Update a product
+    console.log('\nUpdating product...')
+    const updatedProduct = await productService.updateProduct(products[0].id, {
+      name: 'Premium Wireless Headphones',
+      price: 129.99
+    })
+    if (updatedProduct) {
+      console.log(`Updated: ${updatedProduct.name} - $${updatedProduct.price}`)
+    }
+
+  } catch (error) {
+    console.error('Error:', error)
+  } finally {
+    await AppDataSource.destroy()
+  }
+}
+
+main()
+```
+
+## Create Package Scripts
+
+Update your `package.json` scripts:
+
+```json
+{
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/app.js",
+    "dev": "ts-node app.ts",
+    "typeorm": "typeorm-ts-node-commonjs"
+  }
+}
+```
+
+## Run the Application
+
+Install dependencies and run the application:
+
+```bash
+npm install ts-node dotenv
+npm run dev
+```
+
+## Create Express API (Optional)
+
+For a web API, you can integrate with Express:
+
+```typescript
+// api.ts
+import 'reflect-metadata'
+import express from 'express'
+import { initializeDatabase } from './config/database'
+import { ProductService } from './services/ProductService'
+import { OrderService } from './services/OrderService'
+
+const app = express()
+app.use(express.json())
+
+let productService: ProductService
+let orderService: OrderService
+
+// Initialize database and services
+initializeDatabase().then(() => {
+  productService = new ProductService()
+  orderService = new OrderService()
+})
+
+// Product routes
+app.get('/api/products', async (req, res) => {
+  try {
+    const products = await productService.getAllProducts()
+    res.json(products)
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch products' })
+  }
+})
+
+app.get('/api/products/:id', async (req, res) => {
+  try {
+    const product = await productService.getProductById(parseInt(req.params.id))
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' })
+    }
+    res.json(product)
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch product' })
+  }
+})
+
+app.post('/api/products', async (req, res) => {
+  try {
+    const { name, price, rating } = req.body
+    const product = await productService.createProduct(name, price, rating)
+    res.status(201).json(product)
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create product' })
+  }
+})
+
+app.put('/api/products/:id', async (req, res) => {
+  try {
+    const product = await productService.updateProduct(parseInt(req.params.id), req.body)
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' })
+    }
+    res.json(product)
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update product' })
+  }
+})
+
+app.delete('/api/products/:id', async (req, res) => {
+  try {
+    const success = await productService.deleteProduct(parseInt(req.params.id))
+    if (!success) {
+      return res.status(404).json({ error: 'Product not found' })
+    }
+    res.status(204).send()
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete product' })
+  }
+})
+
+app.get('/api/products/rating/:rating', async (req, res) => {
+  try {
+    const products = await productService.getProductsByRating(parseInt(req.params.rating))
+    res.json(products)
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch products' })
+  }
+})
+
+// Order routes
+app.get('/api/orders', async (req, res) => {
+  try {
+    const orders = await orderService.getAllOrders()
+    res.json(orders)
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch orders' })
+  }
+})
+
+app.get('/api/orders/:id', async (req, res) => {
+  try {
+    const order = await orderService.getOrderById(parseInt(req.params.id))
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' })
+    }
+    res.json(order)
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch order' })
+  }
+})
+
+const PORT = process.env.PORT || 3000
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`)
+})
+```
+
+To run the Express API:
+
+```bash
+npm install express
+npm install -D @types/express
+npx ts-node api.ts
+```
+
+## Next Steps
+
+- Explore [Xata branching](/core-concepts/branching) for development workflows
+- Learn about [schema changes](/core-concepts/schema-changes) with zero downtime
+- Join our [Discord community](https://discord.gg/xata) for help and support 

@@ -1,0 +1,344 @@
+---
+title: "Connect Rails to Xata"
+description: "Learn how to connect your Ruby on Rails application to Xata's PostgreSQL platform. Get started with Rails and PostgreSQL for rapid web development."
+---
+
+## Prerequisites
+
+- Xata account and project setup
+- Ruby 3.0+ installed
+- Basic knowledge of Ruby and Rails
+
+## Setup Xata Database
+
+First, set up your Xata database with the common e-commerce dataset:
+
+1. Create a project and branch in the [Xata console](https://console.xata.io)
+2. Navigate to the **Queries** tab in your branch
+3. Run the following SQL commands to create the initial schema:
+
+```sql
+CREATE TABLE products (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  price NUMERIC(7,2) NOT NULL,
+  rating INTEGER
+);
+
+CREATE TABLE orders (
+  id SERIAL PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE order_items (
+  order_id INTEGER REFERENCES orders(id),
+  product_id INTEGER REFERENCES products(id),
+  qty INTEGER NOT NULL,
+  PRIMARY KEY (order_id, product_id)
+);
+```
+
+## Create Rails Project
+
+Create a new Rails project with PostgreSQL:
+
+```bash
+rails new my_xata_app --database=postgresql --api
+cd my_xata_app
+```
+
+## Initialize Xata Project
+
+Initialize your Xata project configuration:
+
+```bash
+xata init
+```
+
+This will create a `.xata` directory with your project configuration.
+
+## Store Your Credentials
+
+Create a `.env` file in your project root to store your Xata connection string:
+
+```bash
+# .env
+DATABASE_URL="postgresql://username:password@host:port/database"
+```
+
+Get your connection string from the Xata console or CLI:
+
+```bash
+xata branch url
+```
+
+**Important:** Never commit your `.env` file to version control. Add it to your `.gitignore` file.
+
+## Install Dependencies
+
+Add the dotenv gem to your Gemfile:
+
+```ruby
+# Gemfile
+source "https://rubygems.org"
+
+# ... existing gems ...
+
+gem 'dotenv-rails', groups: [:development, :test]
+```
+
+Install the gems:
+
+```bash
+bundle install
+```
+
+## Configure Database Connection
+
+Update your `config/database.yml` to use environment variables:
+
+```yaml
+# config/database.yml
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+
+development:
+  <<: *default
+  url: <%= ENV['DATABASE_URL'] %>
+
+test:
+  <<: *default
+  url: <%= ENV['DATABASE_URL'] %>
+
+production:
+  <<: *default
+  url: <%= ENV['DATABASE_URL'] %>
+```
+
+Load environment variables in `config/application.rb`:
+
+```ruby
+# config/application.rb
+require_relative "boot"
+require "rails/all"
+
+Bundler.require(*Rails.groups)
+
+module MyXataApp
+  class Application < Rails::Application
+    config.load_defaults 7.0
+    
+    # Load environment variables
+    Dotenv::Railtie.load if Rails.env.development? || Rails.env.test?
+  end
+end
+```
+
+## Create Models
+
+Generate your models:
+
+```bash
+rails generate model Product name:string price:decimal rating:integer
+rails generate model Order created_at:datetime
+rails generate model OrderItem order:references product:references qty:integer
+```
+
+Update the generated models:
+
+```ruby
+# app/models/product.rb
+class Product < ApplicationRecord
+  has_many :order_items, dependent: :destroy
+  has_many :orders, through: :order_items
+  
+  validates :name, presence: true
+  validates :price, presence: true, numericality: { greater_than: 0 }
+  validates :rating, numericality: { only_integer: true, greater_than: 0, less_than: 6 }, allow_nil: true
+end
+```
+
+```ruby
+# app/models/order.rb
+class Order < ApplicationRecord
+  has_many :order_items, dependent: :destroy
+  has_many :products, through: :order_items
+end
+```
+
+```ruby
+# app/models/order_item.rb
+class OrderItem < ApplicationRecord
+  belongs_to :order
+  belongs_to :product
+  
+  validates :qty, presence: true, numericality: { greater_than: 0 }
+  validates :order_id, uniqueness: { scope: :product_id }
+end
+```
+
+## Create Controllers
+
+Generate API controllers:
+
+```bash
+rails generate controller Api::Products index show create
+rails generate controller Api::Orders index
+```
+
+Update the controllers:
+
+```ruby
+# app/controllers/api/products_controller.rb
+class Api::ProductsController < ApplicationController
+  def index
+    products = Product.all
+    render json: products
+  end
+
+  def show
+    product = Product.find(params[:id])
+    render json: product
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: 'Product not found' }, status: :not_found
+  end
+
+  def create
+    product = Product.new(product_params)
+    if product.save
+      render json: product, status: :created
+    else
+      render json: { errors: product.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
+  private
+
+  def product_params
+    params.require(:product).permit(:name, :price, :rating)
+  end
+end
+```
+
+```ruby
+# app/controllers/api/orders_controller.rb
+class Api::OrdersController < ApplicationController
+  def index
+    orders = Order.joins(:order_items, :products)
+                  .select('orders.id as order_id, orders.created_at, products.name as product_name, order_items.qty, (products.price * order_items.qty) as total')
+    
+    render json: orders
+  end
+end
+```
+
+## Configure Routes
+
+Update your `config/routes.rb`:
+
+```ruby
+# config/routes.rb
+Rails.application.routes.draw do
+  namespace :api do
+    resources :products, only: [:index, :show, :create]
+    resources :orders, only: [:index]
+  end
+end
+```
+
+## Run Migrations
+
+Since you're using an existing database schema, you can create a migration that matches your existing tables:
+
+```bash
+rails generate migration CreateExistingTables
+```
+
+Edit the generated migration:
+
+```ruby
+# db/migrate/YYYYMMDDHHMMSS_create_existing_tables.rb
+class CreateExistingTables < ActiveRecord::Migration[7.0]
+  def up
+    # Create products table if it doesn't exist
+    unless table_exists?(:products)
+      create_table :products do |t|
+        t.string :name, null: false
+        t.decimal :price, precision: 7, scale: 2, null: false
+        t.integer :rating
+        
+        t.timestamps
+      end
+    end
+
+    # Create orders table if it doesn't exist
+    unless table_exists?(:orders)
+      create_table :orders do |t|
+        t.timestamps
+      end
+    end
+
+    # Create order_items table if it doesn't exist
+    unless table_exists?(:order_items)
+      create_table :order_items do |t|
+        t.references :order, null: false, foreign_key: true
+        t.references :product, null: false, foreign_key: true
+        t.integer :qty, null: false
+        
+        t.timestamps
+      end
+      
+      add_index :order_items, [:order_id, :product_id], unique: true
+    end
+  end
+
+  def down
+    drop_table :order_items if table_exists?(:order_items)
+    drop_table :orders if table_exists?(:orders)
+    drop_table :products if table_exists?(:products)
+  end
+end
+```
+
+Run the migration:
+
+```bash
+rails db:migrate
+```
+
+## Run the Application
+
+Start your development server:
+
+```bash
+rails server
+```
+
+Your API will be available at:
+- `http://localhost:3000/api/products`
+- `http://localhost:3000/api/orders`
+
+## Test Your API
+
+You can test the endpoints using curl:
+
+```bash
+# Get all products
+curl http://localhost:3000/api/products
+
+# Create a new product
+curl -X POST http://localhost:3000/api/products \
+  -H "Content-Type: application/json" \
+  -d '{"product":{"name":"Wireless Headphones","price":99.99,"rating":5}}'
+
+# Get orders with products
+curl http://localhost:3000/api/orders
+```
+
+## Next Steps
+
+- Explore [Xata branching](/core-concepts/branching) for development workflows
+- Learn about [schema changes](/core-concepts/schema-changes) with zero downtime
+- Join our [Discord community](https://discord.gg/xata) for help and support 

@@ -1,0 +1,266 @@
+---
+title: "Connect Nuxt to Xata"
+description: "Learn how to connect your Nuxt application to Xata's PostgreSQL platform. Get started with Nuxt and PostgreSQL for universal Vue.js applications."
+---
+
+## Prerequisites
+
+- Xata account and project setup
+- Node.js 18+ installed
+- Basic knowledge of Vue.js and Nuxt
+
+## Setup Xata Database
+
+First, set up your Xata database with the common e-commerce dataset:
+
+1. Create a project and branch in the [Xata console](https://console.xata.io)
+2. Navigate to the **Queries** tab in your branch
+3. Run the following SQL commands to create the initial schema:
+
+```sql
+CREATE TABLE products (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  price NUMERIC(7,2) NOT NULL,
+  rating INTEGER
+);
+
+CREATE TABLE orders (
+  id SERIAL PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE order_items (
+  order_id INTEGER REFERENCES orders(id),
+  product_id INTEGER REFERENCES products(id),
+  qty INTEGER NOT NULL,
+  PRIMARY KEY (order_id, product_id)
+);
+```
+
+## Create Nuxt Project
+
+Create a new Nuxt project:
+
+```bash
+npx nuxi@latest init my-xata-app
+cd my-xata-app
+```
+
+## Initialize Xata Project
+
+Initialize your Xata project configuration:
+
+```bash
+xata init
+```
+
+This will create a `.xata` directory with your project configuration.
+
+## Store Your Credentials
+
+Create a `.env` file in your project root to store your Xata connection string:
+
+```bash
+# .env
+DATABASE_URL="postgresql://username:password@host:port/database"
+```
+
+Get your connection string from the Xata console or CLI:
+
+```bash
+xata branch url
+```
+
+**Important:** Never commit your `.env` file to version control. Add it to your `.gitignore` file.
+
+## Install Dependencies
+
+Install the PostgreSQL client:
+
+```bash
+npm install postgres
+npm install -D @types/pg
+```
+
+## Configure Database Connection
+
+Create a database configuration file:
+
+```typescript
+// server/utils/db.ts
+import postgres from 'postgres';
+
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error('DATABASE_URL environment variable is required');
+}
+
+export const sql = postgres(connectionString);
+```
+
+## Create Server API Routes
+
+Create API routes for your products:
+
+```typescript
+// server/api/products.get.ts
+import { sql } from '~/server/utils/db';
+
+export default defineEventHandler(async (event) => {
+  try {
+    const products = await sql`SELECT * FROM products`;
+    return products;
+  } catch (error) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Failed to fetch products'
+    });
+  }
+});
+```
+
+```typescript
+// server/api/products.post.ts
+import { sql } from '~/server/utils/db';
+
+export default defineEventHandler(async (event) => {
+  try {
+    const body = await readBody(event);
+    const [newProduct] = await sql`
+      INSERT INTO products (name, price, rating)
+      VALUES (${body.name}, ${body.price}, ${body.rating})
+      RETURNING *
+    `;
+    return newProduct;
+  } catch (error) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Failed to create product'
+    });
+  }
+});
+```
+
+```typescript
+// server/api/products/[id].get.ts
+import { sql } from '~/server/utils/db';
+
+export default defineEventHandler(async (event) => {
+  try {
+    const id = getRouterParam(event, 'id');
+    const [product] = await sql`SELECT * FROM products WHERE id = ${id}`;
+    
+    if (!product) {
+      throw createError({
+        statusCode: 404,
+        statusMessage: 'Product not found'
+      });
+    }
+    
+    return product;
+  } catch (error) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Failed to fetch product'
+    });
+  }
+});
+```
+
+## Create Components
+
+Create a products list component:
+
+```vue
+<!-- components/ProductsList.vue -->
+<template>
+  <div>
+    <div v-if="pending" class="text-center py-8">
+      Loading products...
+    </div>
+    <div v-else-if="error" class="text-center py-8 text-red-600">
+      Error loading products
+    </div>
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div
+        v-for="product in data"
+        :key="product.id"
+        class="border rounded-lg p-4 hover:shadow-lg transition-shadow"
+      >
+        <h3 class="text-lg font-semibold">{{ product.name }}</h3>
+        <p class="text-gray-600">${{ product.price }}</p>
+        <div v-if="product.rating" class="flex items-center mt-2">
+          <span class="text-yellow-500">★</span>
+          <span class="ml-1">{{ product.rating }}/5</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import type { Product } from '~/server/utils/schema';
+
+const { data, pending, error } = await useFetch<Product[]>('/api/products');
+</script>
+```
+
+## Create Pages
+
+Create the main page to display products:
+
+```vue
+<!-- pages/index.vue -->
+<template>
+  <div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-8">Xata E-commerce Store</h1>
+    <ProductsList />
+  </div>
+</template>
+
+<script setup lang="ts">
+definePageMeta({
+  title: 'Xata E-commerce Store'
+});
+</script>
+```
+
+## Configure Nuxt
+
+Update your `nuxt.config.ts` to include TypeScript support:
+
+```typescript
+// nuxt.config.ts
+export default defineNuxtConfig({
+  devtools: { enabled: true },
+  typescript: {
+    strict: true
+  }
+});
+```
+
+## Create app.vue
+
+```
+<template>
+  <NuxtPage />
+</template>
+```
+
+## Run the Application
+
+Start your development server:
+
+```bash
+npm run dev
+```
+
+Visit `http://localhost:3000` to see your application.
+
+## Next Steps
+
+- Explore [Xata branching](/core-concepts/branching) for development workflows
+- Learn about [schema changes](/core-concepts/schema-changes) with zero downtime
+- Join our [Discord community](https://discord.gg/xata) for help and support 
