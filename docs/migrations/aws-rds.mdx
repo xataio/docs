@@ -15,7 +15,7 @@ description: "Learn how to migrate your AWS RDS PostgreSQL database to Xata usin
 Connect to your RDS instance and create a dedicated user for migration:
 
 ```sql
--- Create snapshot user (no REPLICATION privilege needed)
+-- Create snapshot user
 CREATE USER xata_snapshot WITH LOGIN PASSWORD 'your_secure_password';
 
 -- Grant necessary privileges
@@ -25,8 +25,6 @@ GRANT USAGE ON SCHEMA public TO xata_snapshot;
 -- Grant privileges on future tables
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO xata_snapshot;
 ```
-
-> **Note:** The user only needs `SELECT` on all tables and `USAGE` on the schema. The `REPLICATION` privilege is NOT required for snapshot migrations with `xata clone`.
 
 ## Network Configuration
 
