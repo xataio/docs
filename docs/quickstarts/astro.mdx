@@ -1,7 +1,15 @@
 ---
-title: "Connect Astro to Xata"
-description: "Learn how to connect your Astro application to Xata's PostgreSQL platform. Get started with Astro and PostgreSQL for fast, modern web apps."
+title: Connect Astro to Xata
+description: Learn how to connect your Astro application to Xata's PostgreSQL platform. Get started with Astro and PostgreSQL for fast, modern web apps.
+keywords: ["astro", "postgresql", "database", "quickstart", "full-stack"]
 ---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Connect Astro to Xata
+
+Learn how to connect your Astro application to Xata's PostgreSQL platform. Get started with Astro and PostgreSQL for fast, modern web apps.
 
 ## Prerequisites
 
@@ -14,7 +22,7 @@ description: "Learn how to connect your Astro application to Xata's PostgreSQL p
 First, set up your Xata database with the common e-commerce dataset:
 
 1. Create a project and branch in the [Xata console](https://console.xata.io)
-2. Navigate to the **Queries** tab in your branch
+2. Navigate to the Queries tab in your branch
 3. Run the following SQL commands to create the initial schema and populate the tables:
 
 ```sql
@@ -37,19 +45,70 @@ CREATE TABLE order_items (
   PRIMARY KEY (order_id, product_id)
 );
 
-INSERT INTO products(name,price) SELECT LEFT(md5(i::text),8),(random()*90+10)::numeric(7,2) FROM generate_series(1,10)i;
-WITH o AS (INSERT INTO orders DEFAULT VALUES RETURNING id) INSERT INTO order_items(order_id,product_id,qty) SELECT o.id,pid,(1+floor(random()*3))::int FROM o,(SELECT id pid FROM products ORDER BY random() LIMIT 5)p;
+INSERT INTO products(name,price,rating) 
+SELECT 
+  LEFT(md5(i::text),8),
+  (random()*90+10)::numeric(7,2),
+  (1+floor(random()*5))::int 
+FROM generate_series(1,10) i;
+
+WITH o AS (INSERT INTO orders DEFAULT VALUES RETURNING id) 
+INSERT INTO order_items(order_id,product_id,qty) 
+SELECT o.id,pid,(1+floor(random()*3))::int 
+FROM o,(SELECT id pid FROM products ORDER BY random() LIMIT 5) p;
 ```
 
 ## Create Astro Project
 
-Create a new Astro project:
+Create a new Astro project with React support:
 
-```bash
-npm create astro@latest
-cd my-xata-app
-npm install
-```
+<Tabs>
+  <TabItem value="npm" label="npm" default>
+    ```bash
+    npm create astro@latest my-xata-app
+    cd my-xata-app
+    
+    # When prompted, select:
+    # - Yes, use TypeScript
+    # - Strict TypeScript config
+    # - Yes, install dependencies
+    # - Yes, initialize git repository
+    
+    # Add React integration
+    npx astro add react
+    ```
+  </TabItem>
+  <TabItem value="pnpm" label="pnpm">
+    ```bash
+    pnpm create astro@latest my-xata-app
+    cd my-xata-app
+    
+    # When prompted, select:
+    # - Yes, use TypeScript
+    # - Strict TypeScript config
+    # - Yes, install dependencies
+    # - Yes, initialize git repository
+    
+    # Add React integration
+    pnpx astro add react
+    ```
+  </TabItem>
+  <TabItem value="yarn" label="yarn">
+    ```bash
+    yarn create astro my-xata-app
+    cd my-xata-app
+    
+    # When prompted, select:
+    # - Yes, use TypeScript
+    # - Strict TypeScript config
+    # - Yes, install dependencies
+    # - Yes, initialize git repository
+    
+    # Add React integration
+    yarn astro add react
+    ```
+  </TabItem>
+</Tabs>
 
 ## Initialize Xata Project
 
@@ -61,12 +120,36 @@ xata init
 
 This will create a `.xata` directory with your project configuration.
 
+## Install Dependencies
+
+Install the PostgreSQL client and types:
+
+<Tabs>
+  <TabItem value="npm" label="npm" default>
+    ```bash
+    npm install postgres
+    npm install -D @types/pg
+    ```
+  </TabItem>
+  <TabItem value="pnpm" label="pnpm">
+    ```bash
+    pnpm add postgres
+    pnpm add -D @types/pg
+    ```
+  </TabItem>
+  <TabItem value="yarn" label="yarn">
+    ```bash
+    yarn add postgres
+    yarn add -D @types/pg
+    ```
+  </TabItem>
+</Tabs>
+
 ## Store Your Credentials
 
 Create a `.env` file in your project root to store your Xata connection string:
 
-```bash
-# .env
+```bash title=".env"
 DATABASE_URL="postgresql://username:password@host:port/database"
 ```
 
@@ -76,23 +159,15 @@ Get your connection string from the Xata console or CLI:
 xata branch url
 ```
 
-**Important:** Never commit your `.env` file to version control. Add it to your `.gitignore` file.
-
-## Install Dependencies
-
-Install the PostgreSQL client:
-
-```bash
-npm install postgres
-npm install -D @types/pg
-```
+:::warning Important
+Never commit your `.env` file to version control. Add it to your `.gitignore` file.
+:::
 
 ## Configure Database Connection
 
 Create a database configuration file:
 
-```typescript
-// src/lib/db.ts
+```typescript title="src/lib/db.ts"
 import postgres from 'postgres';
 
 const connectionString = import.meta.env.DATABASE_URL;
@@ -101,113 +176,103 @@ if (!connectionString) {
   throw new Error('DATABASE_URL environment variable is required');
 }
 
-export const sql = postgres(connectionString);
+export const sql = postgres(connectionString, {
+  ssl: 'require',
+  idle_timeout: 20,
+  max_lifetime: 60 * 30
+});
+
+export type Product = {
+  id: number;
+  name: string;
+  price: string;
+  rating?: number;
+};
 ```
 
 ## Create API Endpoint
 
 Create an API endpoint to fetch products:
 
-```typescript
-// src/pages/api/products.ts
+```typescript title="src/pages/api/products.ts"
 import type { APIRoute } from 'astro';
 import { sql } from '../../lib/db';
 
 export const GET: APIRoute = async () => {
   try {
-    const products = await sql`SELECT * FROM products`;
+    const products = await sql`
+      SELECT id, name, price, rating 
+      FROM products 
+      ORDER BY id
+    `;
+    
     return new Response(JSON.stringify(products), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Cache-Control': 'max-age=60'
+      },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: 'Failed to fetch products' }), { status: 500 });
+    console.error('Database error:', error);
+    return new Response(
+      JSON.stringify({ error: 'Failed to fetch products' }), 
+      { 
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
   }
 };
 ```
 
-## Create Products Page
+## Create Products Component
 
-Create a page to display products:
+Create a React component for the product list:
 
-```astro
----
-// src/pages/index.astro
-import { useEffect, useState } from 'react';
-
-const [products, setProducts] = useState([]);
-const [loading, setLoading] = useState(true);
-
-useEffect(() => {
-  fetch('/api/products')
-    .then(res => res.json())
-    .then(data => {
-      setProducts(data);
-      setLoading(false);
-    })
-    .catch(() => setLoading(false));
-}, []);
----
-
-<html>
-  <head>
-    <title>Xata E-commerce Store</title>
-  </head>
-  <body>
-    <h1>Xata E-commerce Store</h1>
-    {loading ? (
-      <div>Loading products...</div>
-    ) : (
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-        {products.map(product => (
-          <div style="border: 1px solid #ccc; border-radius: 8px; padding: 1rem;">
-            <h3>{product.name}</h3>
-            <p>${product.price}</p>
-            {product.rating && (
-              <div>
-                <span>★</span>
-                <span>{product.rating}/5</span>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    )}
-  </body>
-</html>
-```
-
-## Create Products List Component
-
-Create a products list component:
-
-```astro
+```tsx title="src/components/ProductsList.tsx"
 import React, { useEffect, useState } from 'react';
+import type { Product } from '../lib/db';
 
-export default function ProductList() {
-  const [products, setProducts] = useState([]);
+export default function ProductsList() {
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/products')
-      .then(res => res.json())
-      .then(data => {
+      .then(async (res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
         setProducts(data);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
   }, []);
 
-  if (loading) return <div>Loading products...</div>;
+  if (loading) {
+    return <div className="loading">Loading products...</div>;
+  }
+
+  if (error) {
+    return <div className="error">Error: {error}</div>;
+  }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-      {products.map(product => (
-        <div key={product.id} style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '1rem' }}>
+    <div className="products-grid">
+      {products.map((product) => (
+        <div key={product.id} className="product-card">
           <h3>{product.name}</h3>
-          <p>${product.price}</p>
+          <p className="price">${product.price}</p>
           {product.rating && (
-            <div>
+            <div className="rating">
               <span>★</span> <span>{product.rating}/5</span>
             </div>
           )}
@@ -218,36 +283,171 @@ export default function ProductList() {
 }
 ```
 
-## Modify index.astro
+## Create Main Page
 
-```
+Update your main page to use the component:
+
+```astro title="src/pages/index.astro"
 ---
-import ProductList from '../components/ProductsList.jsx';
+import ProductsList from '../components/ProductsList';
+import '../styles/global.css';
 ---
 
-<html>
+<html lang="en">
   <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Xata E-commerce Store</title>
   </head>
   <body>
-    <h1>Xata E-commerce Store</h1>
-    <ProductList client:load />
+    <div class="container">
+      <h1>🛍️ Xata E-commerce Store</h1>
+      <ProductsList client:load />
+    </div>
   </body>
 </html>
+```
+
+## Add Styles
+
+Create a CSS file for styling:
+
+```css title="src/styles/global.css"
+body {
+  font-family: system-ui, sans-serif;
+  margin: 0;
+  padding: 2rem;
+  background: #f5f5f5;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+h1 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 2rem;
+}
+
+.loading, .error {
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.1rem;
+}
+
+.error {
+  color: #d32f2f;
+  background: #ffebee;
+  border-radius: 8px;
+}
+
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.product-card {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.product-card h3 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+}
+
+.price {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #2e7d32;
+  margin: 0.5rem 0;
+}
+
+.rating {
+  color: #ff9800;
+  font-weight: 500;
+}
+```
+
+## Environment Configuration
+
+Update your `astro.config.mjs` to ensure environment variables are available:
+
+```javascript title="astro.config.mjs"
+import { defineConfig } from 'astro/config';
+import react from '@astrojs/react';
+
+export default defineConfig({
+  integrations: [react()],
+  vite: {
+    define: {
+      'process.env': process.env
+    }
+  }
+});
 ```
 
 ## Run the Application
 
 Start your development server:
 
-```bash
-npm run dev
-```
+<Tabs>
+  <TabItem value="npm" label="npm" default>
+    ```bash
+    npm run dev
+    ```
+  </TabItem>
+  <TabItem value="pnpm" label="pnpm">
+    ```bash
+    pnpm dev
+    ```
+  </TabItem>
+  <TabItem value="yarn" label="yarn">
+    ```bash
+    yarn dev
+    ```
+  </TabItem>
+</Tabs>
 
 Visit `http://localhost:4321` to see your application.
 
+## Troubleshooting
+
+### Environment Variables
+- Ensure your `.env` file is in the project root
+- Verify `DATABASE_URL` is correctly formatted
+- Check that the file is not committed to version control
+
+### Database Connection
+- Test your connection string using `xata branch url`
+- Ensure your Xata database is running and accessible
+- Verify SSL requirements are met
+
+### Build Issues
+- Ensure all dependencies are installed
+- Check TypeScript configuration is correct
+- Verify React integration is properly configured
+
+### CORS Issues
+API routes in Astro automatically handle CORS for same-origin requests. If you encounter issues, ensure you're making requests to the correct endpoint.
+
 ## Next Steps
 
-- Explore [Xata branching](/core-concepts/branching) for development workflows
-- Learn about [schema changes](/core-concepts/schema-changes) with zero downtime
-- Join our [Discord community](https://discord.gg/xata) for help and support 
+- Explore [Xata branching](/documentation/core-concepts/branching) for development workflows
+- Learn about [schema changes](/documentation/core-concepts/schema-changes) with zero downtime
+- Check out [transactions](/documentation/core-concepts/transactions) for complex operations
+- Join our [Discord community](https://discord.gg/xata) for help and support
