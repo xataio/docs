@@ -11,6 +11,55 @@
       "file": "docs/getting-started.mdx"
     },
     {
+      "title": "Deployment models",
+      "href": "/deployment",
+      "file": "docs/deployment.mdx"
+    },
+    {
+      "title": "Core concepts",
+      "href": "/core-concepts",
+      "file": "docs/core-concepts/core-concepts.mdx",
+      "items": [
+        {
+          "title": "Instant branching",
+          "href": "/core-concepts/branching",
+          "file": "docs/core-concepts/branching.mdx"
+        },
+        {
+          "title": "Data anonymization",
+          "href": "/core-concepts/anonymization",
+          "file": "docs/core-concepts/anonymization.mdx"
+        },
+        {
+          "title": "Schema changes",
+          "href": "/core-concepts/schema-changes",
+          "file": "docs/core-concepts/schema-changes.mdx"
+        }
+      ]
+    },
+    {
+      "title": "Tutorials",
+      "href": "/tutorials",
+      "file": "docs/tutorials/tutorials.mdx",
+      "items": [
+        {
+          "title": "Set up staging replica",
+          "href": "/tutorials/create-staging-replica",
+          "file": "docs/tutorials/create-staging-replica.mdx"
+        },
+        {
+          "title": "Migrate to Xata",
+          "href": "/tutorials/migrate-to-xata",
+          "file": "docs/tutorials/migrate-to-xata.mdx"
+        },
+        {
+          "title": "Schema changes",
+          "href": "/tutorials/schema-change",
+          "file": "docs/tutorials/schema-change.mdx"
+        }
+      ]
+    },
+    {
       "title": "Quickstarts",
       "href": "/quickstarts",
       "file": "docs/quickstarts/quickstarts.mdx",
@@ -113,33 +162,6 @@
       ]
     },
     {
-      "title": "Deployment models",
-      "href": "/deployment",
-      "file": "docs/deployment.mdx"
-    },
-    {
-      "title": "Tutorials",
-      "href": "/tutorials",
-      "file": "docs/tutorials/tutorials.mdx",
-      "items": [
-        {
-          "title": "Set up staging replica",
-          "href": "/tutorials/create-staging-replica",
-          "file": "docs/tutorials/create-staging-replica.mdx"
-        },
-        {
-          "title": "Migrate to Xata",
-          "href": "/tutorials/migrate-to-xata",
-          "file": "docs/tutorials/migrate-to-xata.mdx"
-        },
-        {
-          "title": "Schema changes",
-          "href": "/tutorials/schema-change",
-          "file": "docs/tutorials/schema-change.mdx"
-        }
-      ]
-    },
-    {
       "title": "Migration Guides",
       "href": "/migrations",
       "file": "docs/migrations/migrations.mdx",
@@ -198,28 +220,6 @@
           "title": "Supabase",
           "href": "/migrations/supabase",
           "file": "docs/migrations/supabase.mdx"
-        }
-      ]
-    },
-    {
-      "title": "Core concepts",
-      "href": "/core-concepts",
-      "file": "docs/core-concepts/core-concepts.mdx",
-      "items": [
-        {
-          "title": "Instant branching",
-          "href": "/core-concepts/branching",
-          "file": "docs/core-concepts/branching.mdx"
-        },
-        {
-          "title": "Data anonymization",
-          "href": "/core-concepts/anonymization",
-          "file": "docs/core-concepts/anonymization.mdx"
-        },
-        {
-          "title": "Schema changes",
-          "href": "/core-concepts/schema-changes",
-          "file": "docs/core-concepts/schema-changes.mdx"
         }
       ]
     },
