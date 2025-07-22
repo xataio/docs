@@ -10,42 +10,18 @@ description: "Learn how to migrate your DigitalOcean Managed Database for Postgr
 - Xata account and project setup
 - Network access to your DigitalOcean database
 
-## Enable Logical Replication
+## Install and Configure the Xata CLI
 
-### 1. Access DigitalOcean Console
+Install the Xata CLI:
 
-1. Go to [DigitalOcean Console](https://cloud.digitalocean.com)
-2. Navigate to "Databases" in the left menu
-3. Select your PostgreSQL database cluster
+```bash
+curl -fsSL https://xata.io/install.sh | bash
+```
 
-### 2. Configure Database Settings
+Authenticate with your Xata account:
 
-1. **Go to "Settings"** tab
-2. **Click "Edit Configuration"**
-3. **Add the following configuration**:
-   ```json
-   {
-     "wal_level": "logical",
-     "max_replication_slots": 5,
-     "max_wal_senders": 10
-   }
-   ```
-4. **Click "Save"** to apply changes
-5. **Wait for the configuration** to be applied
-
-### 3. Verify Configuration
-
-Connect to your DigitalOcean database and verify the settings:
-
-```sql
--- Check if logical replication is enabled
-SHOW wal_level;
-
--- Check replication slots
-SELECT * FROM pg_replication_slots;
-
--- Check WAL senders
-SHOW max_wal_senders;
+```bash
+xata auth login
 ```
 
 ## Create Snapshot User
@@ -53,7 +29,7 @@ SHOW max_wal_senders;
 Connect to your DigitalOcean database and create a dedicated user for migration:
 
 ```sql
--- Create snapshot user (no REPLICATION privilege needed)
+-- Create snapshot user
 CREATE USER xata_snapshot WITH LOGIN PASSWORD 'your_secure_password';
 
 -- Grant necessary privileges
@@ -109,23 +85,7 @@ If you have a VPC setup:
 DigitalOcean connection strings typically look like this:
 
 ```
-postgresql://xata_snapshot:your_password@your-db-host:5432/defaultdb?sslmode=require
-```
-
-### Using the Snapshot User
-
-Replace the default user with your snapshot user:
-
-```
-postgresql://xata_snapshot:your_password@your-db-host:5432/defaultdb?sslmode=require
-```
-
-### SSL Configuration
-
-DigitalOcean requires SSL. Always include SSL parameters:
-
-```
-postgresql://user:password@host:port/database?sslmode=require
+postgresql://xata_snapshot:your_secure_password@your-db-host:5432/defaultdb?sslmode=require
 ```
 
 ## Initialize Xata Project
@@ -142,7 +102,7 @@ Set up your clone configuration with optional anonymization:
 
 ```bash
 # Set your source URL
-export XATA_CLI_SOURCE_POSTGRES_URL="postgresql://xata_snapshot:your_password@your-db-host:5432/defaultdb?sslmode=require"
+export XATA_CLI_SOURCE_POSTGRES_URL="postgresql://xata_snapshot:your_secure_password@your-db-host:5432/defaultdb?sslmode=require"
 
 # Configure anonymization rules
 xata clone config --source-url $XATA_CLI_SOURCE_POSTGRES_URL --mode prompt
@@ -171,7 +131,7 @@ After migration, verify your data:
 
 1. **Connect to Xata Branch**:
    ```bash
-   xata branch url
+   psql `xata branch url`
    ```
 
 2. **Check Data Integrity**:
@@ -184,95 +144,6 @@ After migration, verify your data:
    ```
 
 3. **Test Relationships**: Verify foreign key relationships work correctly
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Connection Refused**:
-   - Check trusted sources in DigitalOcean Console
-   - Verify the host address is correct
-   - Ensure the database is running
-
-2. **SSL Connection Required**:
-   - Add `?sslmode=require` to your connection string
-   - Verify SSL is enabled on the database
-
-3. **Permission Denied**:
-   - Verify the snapshot user has correct privileges
-   - Check that the user has sufficient permissions
-
-4. **Configuration Not Applied**:
-   - Wait for configuration changes to apply
-   - Check database status in DigitalOcean Console
-   - Verify configuration in database settings
-
-### Using DigitalOcean CLI
-
-You can also configure your database using DigitalOcean CLI:
-
-```bash
-# Install doctl if not already installed
-snap install doctl
-
-# Authenticate
-doctl auth init
-
-# List your databases
-doctl databases list
-
-# Get connection details
-doctl databases get your-database-id
-```
-
-## Security Best Practices
-
-1. **Use Private Networks** when possible
-2. **Remove public access** after migration
-3. **Use strong passwords** for snapshot users
-4. **Limit trusted sources** to specific IPs
-5. **Enable monitoring** to track access
-
-## Performance Considerations
-
-### Database Plans
-
-DigitalOcean offers different database plans:
-
-- **Basic**: 1GB RAM, 1 vCPU
-- **Professional**: 2GB RAM, 1 vCPU
-- **Professional-2**: 4GB RAM, 2 vCPU
-- **Professional-4**: 8GB RAM, 4 vCPU
-
-### Migration Timing
-
-- **Choose appropriate plan** for your database size
-- **Run during low-traffic** periods
-- **Monitor resource usage** during migration
-- **Consider upgrading** if needed for large datasets
-
-## Migration Strategies
-
-### Strategy 1: Direct Migration
-
-1. **Enable logical replication** in DigitalOcean
-2. **Clone data** to Xata
-3. **Update application** to use Xata
-4. **Remove DigitalOcean database**
-
-### Strategy 2: Gradual Migration
-
-1. **Keep DigitalOcean database** during transition
-2. **Clone data** to Xata
-3. **Gradually migrate** features to Xata
-4. **Eventually consolidate** to Xata
-
-### Strategy 3: Backup and Restore
-
-1. **Create DigitalOcean backup**
-2. **Restore to Xata**
-3. **Update application**
-4. **Remove DigitalOcean database**
 
 ## Next Steps
 
