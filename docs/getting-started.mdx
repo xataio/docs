@@ -25,7 +25,29 @@ Within your project, create your first branch (e.g., `main`). A branch is a Post
 
 ![Create branch page](assets/images/getting-started/create-branch.png)
 
-## 4. Enable schema history
+## 4. Install and configure the Xata CLI
+
+Install the Xata CLI:
+
+```bash
+curl -fsSL https://xata.io/install.sh | bash
+```
+
+Authenticate with your Xata account:
+
+```bash
+xata auth login
+```
+
+Initialize your project by running this command in your project directory:
+
+```bash
+xata init
+```
+
+This will create a `.xata` directory with your project configuration.
+
+## 5. Enable schema history
 
 Go to the **Branches** section and select your branch (e.g., `main`). Here you can view your schema and enable schema history for zero-downtime schema changes.
 
@@ -37,7 +59,7 @@ To enable schema history, run:
 xata roll init
 ```
 
-## 5. Create initial tables
+## 6. Create initial tables
 
 Using `xata roll`, we can now safely create a migration file for our initial schema:
 
@@ -111,7 +133,7 @@ Apply the migration:
 xata roll migrate --complete true
 ```
 
-## 6. Insert sample data
+## 7. Insert sample data
 
 Let's insert some sample data using `psql`. If you don't have `psql` installed:
 
@@ -146,7 +168,7 @@ INSERT INTO products(name,price) SELECT LEFT(md5(i::text),8),(random()*90+10)::n
 WITH o AS (INSERT INTO orders DEFAULT VALUES RETURNING id) INSERT INTO order_items(order_id,product_id,qty) SELECT o.id,pid,(1+floor(random()*3))::int FROM o,(SELECT id pid FROM products ORDER BY random() LIMIT 5)p;
 ```
 
-## 7. Create a development branch with the CLI
+## 8. Create a development branch with the CLI
 
 Create a new branch from `main`:
 
@@ -156,7 +178,7 @@ xata branch create --name dev --parent-branch `xata branch get id`
 
 This command will automatically checkout the new branch for you.
 
-## 8. Add a column
+## 9. Add a column
 
 Let's add a rating column to the products table using pgroll. Create a new migration file:
 
@@ -179,13 +201,13 @@ xata roll migrate
 
 This will add the `rating` column to the products table.
 
-## 9. Check the schema diff in the branch details page
+## 10. Check the schema diff in the branch details page
 
 After making changes in a branch, use the **Schema Diff** feature in the `dev` branch details page to compare your branch with its parent.
 
 ![Schema diff page](assets/images/getting-started/schema-diff.png)
 
-## 10. Merge your changes back to main
+## 11. Merge your changes back to main
 
 Now that you've made changes in your dev branch, you'll need to checkout `main` branch and apply the local migrations from your `dev` branch:
 
@@ -208,7 +230,7 @@ Once you're happy with the shcema change, you can complete the migration:
 xata roll complete
 ```
 
-## 11. Start from a clean slate
+## 12. Start from a clean slate
 
 Now that you're all set up, let's get you reset and ready to start building.
 
@@ -240,7 +262,7 @@ xata roll migrate --complete true
 
 This will leave your main branch clean for your next project or migration.
 
-## 12. Next steps: choose your workflow
+## 13. Next steps: choose your workflow
 
 Now that your environment is clean, you're ready to dive deeper:
 

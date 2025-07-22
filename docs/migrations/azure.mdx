@@ -10,14 +10,26 @@ description: "Learn how to migrate your Azure Database for PostgreSQL to Xata us
 - Xata account and project setup
 - Network access to your Azure database
 
+## Install and Configure the Xata CLI
 
+Install the Xata CLI:
+
+```bash
+curl -fsSL https://xata.io/install.sh | bash
+```
+
+Authenticate with your Xata account:
+
+```bash
+xata auth login
+```
 
 ## Create Snapshot User
 
 Connect to your Azure database and create a dedicated user for migration:
 
 ```sql
--- Create snapshot user (no REPLICATION privilege needed)
+-- Create snapshot user
 CREATE USER xata_snapshot WITH LOGIN PASSWORD 'your_secure_password';
 
 -- Grant necessary privileges
@@ -74,23 +86,7 @@ If you're using Flexible Server:
 Azure connection strings typically look like this:
 
 ```
-postgresql://xata_snapshot:your_password@your-server.postgres.database.azure.com:5432/postgres?sslmode=require
-```
-
-### Azure-Specific Formatting
-
-Note that Azure often uses this format for usernames:
-
-```
-postgresql://xata_snapshot@your-server:your_password@your-server.postgres.database.azure.com:5432/postgres?sslmode=require
-```
-
-### SSL Configuration
-
-Azure requires SSL. Always include SSL parameters:
-
-```
-postgresql://user:password@host:port/database?sslmode=require
+postgresql://xata_snapshot@your-server:your_secure_password@your-server.postgres.database.azure.com:5432/postgres?sslmode=require
 ```
 
 ## Initialize Xata Project
@@ -149,91 +145,6 @@ After migration, verify your data:
    ```
 
 3. **Test Relationships**: Verify foreign key relationships work correctly
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Connection Refused**:
-   - Check firewall rules in Azure Portal
-   - Verify the server name is correct
-   - Ensure the server is running
-
-2. **SSL Connection Required**:
-   - Add `?sslmode=require` to your connection string
-   - Verify SSL is enabled on the Azure server
-
-3. **Permission Denied**:
-   - Verify the snapshot user has correct privileges
-   - Check that the user has sufficient permissions
-
-4. **Parameter Changes Not Applied**:
-   - Wait for the server restart to complete
-   - Verify parameters are set correctly in Azure Portal
-
-5. **Username Format Issues**:
-   - Azure may require `username@servername` format
-   - Check the exact format in Azure connection strings
-
-### Using Azure CLI
-
-You can also configure Azure Database using Azure CLI:
-
-```bash
-# Install Azure CLI if not already installed
-curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-
-# Login to Azure
-az login
-
-# Set server parameters
-az postgres server configuration set \
-  --resource-group your-resource-group \
-  --server-name your-server-name \
-  --name wal_level \
-  --value logical
-
-az postgres server configuration set \
-  --resource-group your-resource-group \
-  --server-name your-server-name \
-  --name max_replication_slots \
-  --value 5
-
-az postgres server configuration set \
-  --resource-group your-resource-group \
-  --server-name your-server-name \
-  --name max_wal_senders \
-  --value 10
-
-# Restart the server
-az postgres server restart \
-  --resource-group your-resource-group \
-  --name your-server-name
-```
-
-## Security Best Practices
-
-1. **Use Private Endpoints** when possible
-2. **Remove public access** after migration
-3. **Use strong passwords** for replication users
-4. **Limit firewall rules** to specific IPs
-5. **Enable Azure Monitor** to track access
-
-## Azure Database for PostgreSQL Flexible Server
-
-If you're using Flexible Server, the process is similar but with some differences:
-
-### Flexible Server Parameters
-
-1. **Go to "Server parameters"**
-2. **Set the same parameters** as above
-3. **No restart required** for Flexible Server
-
-### Flexible Server Networking
-
-1. **Choose "Private access (VNet Integration)"** for better security
-2. **Or use "Public access"** with firewall rules
-3. **Configure Azure Private DNS** if using private access
 
 ## Next Steps
 
