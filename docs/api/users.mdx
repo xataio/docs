@@ -10,14 +10,8 @@ The Users API allows you to manage user accounts within your Xata organization, 
 Retrieves a list of all users in an organization.
 
 ```bash
-GET /organizations/{organizationID}/users
+GET /users
 ```
-
-### Path parameters
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| organizationID | string | Unique identifier for the organization |
 
 ### Response
 
@@ -40,14 +34,13 @@ GET /organizations/{organizationID}/users
 Retrieves detailed information about a specific user.
 
 ```bash
-GET /organizations/{organizationID}/users/{userID}
+GET /users/{userID}
 ```
 
 ### Path parameters
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| organizationID | string | Unique identifier for the organization |
 | userID | string | Unique identifier for the user |
 
 ### Response
@@ -67,14 +60,13 @@ GET /organizations/{organizationID}/users/{userID}
 Updates user information within an organization.
 
 ```bash
-PATCH /organizations/{organizationID}/users/{userID}
+PATCH /users/{userID}
 ```
 
 ### Path parameters
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| organizationID | string | Unique identifier for the organization |
 | userID | string | Unique identifier for the user |
 
 ### Request body
@@ -103,14 +95,13 @@ PATCH /organizations/{organizationID}/users/{userID}
 Removes a user from an organization.
 
 ```bash
-DELETE /organizations/{organizationID}/users/{userID}
+DELETE /users/{userID}
 ```
 
 ### Path parameters
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| organizationID | string | Unique identifier for the organization |
 | userID | string | Unique identifier for the user |
 
 ### Response
