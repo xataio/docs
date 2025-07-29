@@ -24,28 +24,12 @@ Authenticate with your Xata account:
 xata auth login
 ```
 
-## Create Snapshot User
-
-Connect to your Supabase database and create a dedicated user for migration:
-
-```sql
--- Create snapshot user
-CREATE USER xata_snapshot WITH LOGIN PASSWORD 'your_secure_password';
-
--- Grant necessary privileges
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO xata_snapshot;
-GRANT USAGE ON SCHEMA public TO xata_snapshot;
-
--- Grant privileges on future tables
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO xata_snapshot;
-```
-
 ## Get Connection String
 
 ### Find Your Connection Details
 
 1. Go to Supabase Dashboard → Your Project
-2. Navigate to "Settings" → "Database"
+2. Go to "Settings" → "Database"
 3. Copy the connection string from "Connection string" section
 
 ### Connection String Format
@@ -53,17 +37,50 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO xata_snapsho
 Supabase connection strings typically look like this:
 
 ```
-postgresql://xata_snapshot:your_secure_password@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres
+postgresql://your_username:your_password@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres
 ```
 
-### Using the Snapshot User
+### SSL Configuration
 
-Replace the default `postgres` user with your snapshot user:
+Supabase requires SSL by default. Include SSL parameters in your connection string:
 
 ```
-postgresql://xata_snapshot:your_secure_password@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres
+postgresql://your_username:your_password@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres
 ```
 
+## Replicate Database Roles
+
+Before migrating your data, you'll need to replicate the database roles from your source database to your Xata branch.
+
+### Extract Roles from Source Database
+
+Connect to your source database and extract the role definitions:
+
+```sql
+-- Extract role definitions (run this on your source database)
+SELECT 
+    'CREATE ROLE ' || rolname || ' WITH ' ||
+    CASE WHEN rolcanlogin THEN 'LOGIN ' ELSE 'NOLOGIN ' END ||
+    CASE WHEN rolsuper THEN 'SUPERUSER ' ELSE 'NOSUPERUSER ' END ||
+    CASE WHEN rolinherit THEN 'INHERIT ' ELSE 'NOINHERIT ' END ||
+    CASE WHEN rolcreaterole THEN 'CREATEROLE ' ELSE 'NOCREATEROLE ' END ||
+    CASE WHEN rolcreatedb THEN 'CREATEDB ' ELSE 'NOCREATEDB ' END ||
+    CASE WHEN rolreplication THEN 'REPLICATION ' ELSE 'NOREPLICATION ' END ||
+    CASE WHEN rolbypassrls THEN 'BYPASSRLS ' ELSE 'NOBYPASSRLS ' END ||
+    'CONNECTION LIMIT ' || COALESCE(rolconnlimit, -1) || ';' as create_role_statement
+FROM pg_roles 
+WHERE rolname NOT LIKE 'pg_%'
+ORDER BY rolname;
+```
+
+### Apply Roles to Xata Branch
+
+1. **Connect to your Xata branch**:
+   ```bash
+   psql `xata branch url`
+   ```
+
+2. **Execute the role creation statements** from the previous step
 
 ## Initialize Xata Project
 
@@ -79,7 +96,7 @@ Set up your clone configuration with optional anonymization:
 
 ```bash
 # Set your source URL
-export XATA_CLI_SOURCE_POSTGRES_URL="postgresql://xata_snapshot:your_secure_password@db.project-ref.supabase.co:5432/postgres"
+export XATA_CLI_SOURCE_POSTGRES_URL="postgresql://your_username:your_password@db.project-ref.supabase.co:5432/postgres"
 
 # Configure anonymization rules
 xata clone config --source-url $XATA_CLI_SOURCE_POSTGRES_URL --mode prompt

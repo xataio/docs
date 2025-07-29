@@ -48,11 +48,6 @@
           "file": "docs/tutorials/create-staging-replica.mdx"
         },
         {
-          "title": "Migrate to Xata",
-          "href": "/tutorials/migrate-to-xata",
-          "file": "docs/tutorials/migrate-to-xata.mdx"
-        },
-        {
           "title": "Schema changes",
           "href": "/tutorials/schema-change",
           "file": "docs/tutorials/schema-change.mdx"
