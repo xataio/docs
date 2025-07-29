@@ -34,6 +34,11 @@
           "title": "Schema changes",
           "href": "/core-concepts/schema-changes",
           "file": "docs/core-concepts/schema-changes.mdx"
+        },
+        {
+          "title": "Scale to Zero",
+          "href": "/core-concepts/scale-to-zero",
+          "file": "docs/core-concepts/scale-to-zero.mdx"
         }
       ]
     },
@@ -46,11 +51,6 @@
           "title": "Set up staging replica",
           "href": "/tutorials/create-staging-replica",
           "file": "docs/tutorials/create-staging-replica.mdx"
-        },
-        {
-          "title": "Migrate to Xata",
-          "href": "/tutorials/migrate-to-xata",
-          "file": "docs/tutorials/migrate-to-xata.mdx"
         },
         {
           "title": "Schema changes",

@@ -67,6 +67,10 @@ POST /organizations/{organizationID}/projects/{projectID}/branches
     "instances": 1,
     "region": "us-east-1",
     "storage": 10
+  },
+  "scaleToZero": {
+    "enabled": true,
+    "idleTime": 300
   }
 }
 ```
@@ -79,6 +83,7 @@ POST /organizations/{organizationID}/projects/{projectID}/branches
 | description | string | Optional description for the branch purpose or contents (max 50 characters) |
 | parentID | string | If present, the branch will inherit the parent branch configuration and data |
 | configuration | object | Configuration for the underlying database cluster if not inheriting from a parent |
+| scaleToZero | object | Scale to zero configuration for the branch |
 
 ### Response
 
@@ -147,6 +152,10 @@ GET /organizations/{organizationID}/projects/{projectID}/branches/{branchID}
       "phase": "running",
       "message": "Branch is operational"
     }
+  },
+  "scaleToZero": {
+    "enabled": true,
+    "idleTime": 300
   }
 }
 ```
@@ -211,6 +220,37 @@ DELETE /organizations/{organizationID}/projects/{projectID}/branches/{branchID}
 ### Response
 
 Returns a 204 status code with no content on success.
+
+## Get branch credentials
+
+Retrieves credentials for accessing a branch database.
+
+```bash
+GET /organizations/{organizationID}/projects/{projectID}/branches/{branchID}/credentials
+```
+
+### Path parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| organizationID | string | Unique identifier for the organization |
+| projectID | string | Unique identifier for the project |
+| branchID | string | Unique identifier for the branch |
+
+### Query parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| username | string | Username that the credentials are requested for (optional) |
+
+### Response
+
+```json
+{
+  "username": "xata_user",
+  "password": "secure_password_123"
+}
+```
 
 ## Get branch metrics
 

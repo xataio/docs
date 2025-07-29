@@ -10,6 +10,20 @@ description: "Learn how to migrate your MySQL database to Xata using mysqldump a
 - Xata account and project setup
 - Network access to your MySQL server
 
+## Install and Configure the Xata CLI
+
+Install the Xata CLI:
+
+```bash
+curl -fsSL https://xata.io/install.sh | bash
+```
+
+Authenticate with your Xata account:
+
+```bash
+xata auth login
+```
+
 ## Important Note
 
 Xata is built on PostgreSQL, so migrating from MySQL requires:
@@ -263,69 +277,6 @@ After importing, reset sequences:
 -- For each table with auto increment
 SELECT setval('table_name_id_seq', (SELECT MAX(id) FROM table_name));
 ```
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Connection Issues**:
-   - Verify MySQL server is accessible
-   - Check user privileges
-   - Ensure network connectivity
-
-2. **Schema Conversion Errors**:
-   - Review MySQL-specific features
-   - Convert data types manually
-   - Handle MySQL-specific functions
-
-3. **Data Import Errors**:
-   - Check for encoding issues
-   - Verify data type compatibility
-   - Handle NULL values appropriately
-
-4. **Performance Issues**:
-   - Import data in batches
-   - Disable indexes during import
-   - Rebuild indexes after import
-
-### Using mysqldump with Options
-
-```bash
-# Export with specific options
-mysqldump \
-  --single-transaction \
-  --routines \
-  --triggers \
-  --set-gtid-purged=OFF \
-  --default-character-set=utf8mb4 \
-  -h your-mysql-host \
-  -u xata_migration \
-  -p your_database > backup.sql
-```
-
-## Migration Strategies
-
-### Strategy 1: Full Migration
-
-1. **Export MySQL schema and data**
-2. **Convert schema to PostgreSQL**
-3. **Import into Xata**
-4. **Update application** to use Xata
-5. **Decommission MySQL**
-
-### Strategy 2: Gradual Migration
-
-1. **Migrate read-only data** first
-2. **Keep MySQL for writes** during transition
-3. **Gradually migrate** write operations
-4. **Eventually consolidate** to Xata
-
-### Strategy 3: Parallel Systems
-
-1. **Keep MySQL** for existing features
-2. **Use Xata** for new features
-3. **Sync data** between systems
-4. **Gradually migrate** features
 
 ## Next Steps
 

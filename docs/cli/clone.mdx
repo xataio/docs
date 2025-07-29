@@ -11,21 +11,24 @@ The `clone` command helps you create a copy of your Xata database or clone an ex
 Snapshot performs a snapshot of the configured source Postgres database into the configured target.
 
 ```bash
-xata clone start [--source-url <url>] [--config <file>] [--log-level <level>] [--postgres-url <url>] [--profile] [--reset] [--tables <tables>] [--target <type>] [--target-url <url>] [--organization <id>] [--project <id>] [--branch <id>] [--validation-mode <mode>] [-h|--help]
+xata clone start [--source-url <url>] [--config <file>] [--log-level <level>] [--dump-file <file>] [--postgres-url <url>] [--profile] [--reset] [--tables <tables>] [--target <type>] [--target-url <url>] [--organization <id>] [--project <id>] [--branch <id>] [--filter-tables <tables>] [--validation-mode <mode>] [--role <role>] [-h|--help]
 ```
 - `--source-url`: The source URL of the database to clone
 - `--config`: .env or .yaml config file to use with pgstream if any
 - `--log-level`: Log level for the application. One of trace, debug, info, warn, error, fatal, panic
+- `--dump-file`: File where the pg_dump output will be written
 - `--postgres-url`: Source postgres database to perform the snapshot from
 - `--profile`: Whether to produce CPU and memory profile files, as well as exposing a /debug/pprof endpoint on localhost:6060
 - `--reset`: Whether to reset the target before snapshotting (only for postgres target)
-- `--tables`: List of tables to snapshot. If not specified, the schema `public` will be assumed. Wildcards are supported
+- `--tables`: List of tables to snapshot, in the format <schema>.<table>. If not specified, the schema `public` will be assumed. Wildcards are supported
 - `--target`: Target type. One of postgres, opensearch, elasticsearch, kafka
 - `--target-url`: Target URL
 - `--organization`: Organization ID (default: "")
 - `--project`: Project ID (default: "")
 - `--branch`: Branch ID (default: "")
+- `--filter-tables`: Tables to filter (default: *.*)
 - `--validation-mode`: Anonymization validation mode, strict implies that all tables and columns should be specified (strict|relaxed|prompt, default: prompt)
+- `--role`: Postgres role to use for the clone
 - `-h, --help`: Print help information and exit
 
 ### config

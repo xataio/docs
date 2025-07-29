@@ -1,29 +1,27 @@
 ---
 title: "Migrate from AWS Aurora to Xata"
-description: "Learn how to migrate your AWS Aurora PostgreSQL database to Xata using xata clone. Step-by-step instructions for configuring the migration."
+description: "Learn how to migrate your AWS Aurora PostgreSQL database to Xata using xata clone. Step-by-step instructions for secure migration from Aurora."
 ---
 
 ## Prerequisites
 
 - AWS Aurora PostgreSQL cluster
-- Access to AWS Console and RDS parameter groups
+- Access to AWS Console
 - Xata account and project setup
 - Network access to your Aurora cluster
 
-## Create Snapshot User
+## Install and Configure the Xata CLI
 
-Connect to your Aurora cluster and create a dedicated user for migration:
+Install the Xata CLI:
 
-```sql
--- Create snapshot user (no REPLICATION privilege needed)
-CREATE USER xata_snapshot WITH LOGIN PASSWORD 'your_secure_password';
+```bash
+curl -fsSL https://xata.io/install.sh | bash
+```
 
--- Grant necessary privileges
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO xata_snapshot;
-GRANT USAGE ON SCHEMA public TO xata_snapshot;
+Authenticate with your Xata account:
 
--- Grant privileges on future tables
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO xata_snapshot;
+```bash
+xata auth login
 ```
 
 ## Network Configuration
@@ -52,20 +50,45 @@ For better security, run the migration from within AWS:
    - Use the private endpoint for connection
 
 ## Get Connection String
-
-### Aurora Connection String Format
-
 ```
-postgresql://xata_snapshot:your_password@your-aurora-cluster-endpoint:5432/your_database
+postgresql://your_username:your_password@your-aurora-endpoint:5432/your_database
 ```
 
-You can find the endpoint in the AWS RDS Console under your cluster details.
+You can find the endpoint in the AWS Aurora Console under your cluster details.
 
-### Aurora-Specific Considerations
+## Replicate Database Roles
 
-- **Use the cluster endpoint** (not individual instance endpoints)
-- **Aurora Serverless v2** supports the same connection format
-- **Multi-AZ deployments** will automatically failover if needed
+Before migrating your data, you'll need to replicate the database roles from your source database to your Xata branch.
+
+### Extract Roles from Source Database
+
+Connect to your source database and extract the role definitions:
+
+```sql
+-- Extract role definitions (run this on your source database)
+SELECT 
+    'CREATE ROLE ' || rolname || ' WITH ' ||
+    CASE WHEN rolcanlogin THEN 'LOGIN ' ELSE 'NOLOGIN ' END ||
+    CASE WHEN rolsuper THEN 'SUPERUSER ' ELSE 'NOSUPERUSER ' END ||
+    CASE WHEN rolinherit THEN 'INHERIT ' ELSE 'NOINHERIT ' END ||
+    CASE WHEN rolcreaterole THEN 'CREATEROLE ' ELSE 'NOCREATEROLE ' END ||
+    CASE WHEN rolcreatedb THEN 'CREATEDB ' ELSE 'NOCREATEDB ' END ||
+    CASE WHEN rolreplication THEN 'REPLICATION ' ELSE 'NOREPLICATION ' END ||
+    CASE WHEN rolbypassrls THEN 'BYPASSRLS ' ELSE 'NOBYPASSRLS ' END ||
+    'CONNECTION LIMIT ' || COALESCE(rolconnlimit, -1) || ';' as create_role_statement
+FROM pg_roles 
+WHERE rolname NOT LIKE 'pg_%'
+ORDER BY rolname;
+```
+
+### Apply Roles to Xata Branch
+
+1. **Connect to your Xata branch**:
+   ```bash
+   psql `xata branch url`
+   ```
+
+2. **Execute the role creation statements** from the previous step
 
 ## Initialize Xata Project
 
@@ -81,7 +104,7 @@ Set up your clone configuration with optional anonymization:
 
 ```bash
 # Set your source URL
-export XATA_CLI_SOURCE_POSTGRES_URL="postgresql://xata_snapshot:your_password@your-aurora-cluster-endpoint:5432/your_database"
+export XATA_CLI_SOURCE_POSTGRES_URL="postgresql://your_username:your_password@your-aurora-endpoint:5432/your_database"
 
 # Configure anonymization rules
 xata clone config --source-url $XATA_CLI_SOURCE_POSTGRES_URL --mode prompt
@@ -110,7 +133,7 @@ After migration, verify your data:
 
 1. **Connect to Xata Branch**:
    ```bash
-   xata branch url
+   psql `xata branch url`
    ```
 
 2. **Check Data Integrity**:
@@ -124,55 +147,9 @@ After migration, verify your data:
 
 3. **Test Relationships**: Verify foreign key relationships work correctly
 
-## Troubleshooting
-
-### Common Issues
-
-1. **Connection Refused**:
-   - Check security group rules
-   - Verify the cluster endpoint is correct
-   - Ensure the cluster is publicly accessible (if using public endpoint)
-
-2. **Permission Denied**:
-   - Verify the snapshot user has correct privileges
-   - Check that the user has sufficient permissions
-
-3. **Cluster Parameter Group Issues**:
-   - Ensure your Aurora cluster supports the required features
-   - Check if any cluster parameter group restrictions apply
-
-4. **Aurora Serverless v1 Limitations**:
-   - Aurora Serverless v1 has limited support for certain operations
-   - Consider upgrading to Aurora Serverless v2 if needed
-
-### SSL Configuration
-
-If you encounter SSL issues, add SSL parameters to your connection string:
-
-```
-postgresql://xata_snapshot:your_password@your-aurora-cluster-endpoint:5432/your_database?sslmode=require
-```
-
-## Aurora-Specific Features
-
-### Aurora Serverless v2
-
-If you're using Aurora Serverless v2:
-
-- **Automatic scaling** won't affect the migration
-- **Connection limits** may apply during scaling events
-- **Consider migration timing** to avoid scaling operations
-
-### Multi-AZ Deployments
-
-For Multi-AZ Aurora clusters:
-
-- **Use the cluster endpoint** for automatic failover
-- **Migration will continue** even if a failover occurs
-- **Monitor cluster health** during migration
-
 ## Next Steps
 
 - Explore [Xata branching](/core-concepts/branching) for development workflows
 - Learn about [schema changes](/core-concepts/schema-changes) with zero downtime
-- Set up [continuous sync](/tutorials/create-staging-replica) for ongoing replication 
+- Set up [continuous sync](/tutorials/create-staging-replica) for ongoing replication
+- Consider [deployment options](/deployment) for your Xata instance 

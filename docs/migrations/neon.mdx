@@ -10,34 +10,18 @@ description: "Learn how to migrate your Neon PostgreSQL database to Xata using x
 - Xata account and project setup
 - Network access to your Neon database
 
-## About Neon and Xata
+## Install and Configure the Xata CLI
 
-Both Neon and Xata offer PostgreSQL branching capabilities, but they serve different purposes:
+Install the Xata CLI:
 
-- **Neon**: Serverless PostgreSQL with branching for development
-- **Xata**: PostgreSQL with branching for production workflows and data operations
+```bash
+curl -fsSL https://xata.io/install.sh | bash
+```
 
-Migrating from Neon to Xata allows you to:
-- Use Neon branches as staging data for Xata production
-- Leverage Xata's advanced data operations and branching workflows
-- Take advantage of Xata's deployment flexibility (SaaS or BYOC)
+Authenticate with your Xata account:
 
-
-
-## Create Snapshot User
-
-Connect to your Neon database and create a dedicated user for migration:
-
-```sql
--- Create snapshot user (no REPLICATION privilege needed)
-CREATE USER xata_snapshot WITH LOGIN PASSWORD 'your_secure_password';
-
--- Grant necessary privileges
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO xata_snapshot;
-GRANT USAGE ON SCHEMA public TO xata_snapshot;
-
--- Grant privileges on future tables
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO xata_snapshot;
+```bash
+xata auth login
 ```
 
 ## Get Connection String
@@ -53,16 +37,42 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO xata_snapsho
 Neon connection strings typically look like this:
 
 ```
-postgresql://xata_snapshot:your_password@ep-cool-name-123456.us-east-2.aws.neon.tech/neondb?sslmode=require
+postgresql://your_username:your_password@ep-cool-name-123456.us-east-2.aws.neon.tech/your_db?sslmode=require
 ```
 
-### Branch-Specific Connection
+## Replicate Database Roles
 
-If you want to clone from a specific Neon branch:
+Before migrating your data, you'll need to replicate the database roles from your source database to your Xata branch.
 
-1. **Create or select a branch** in Neon Console
-2. **Use that branch's connection string**
-3. **The clone will copy that branch's data**
+### Extract Roles from Source Database
+
+Connect to your source database and extract the role definitions:
+
+```sql
+-- Extract role definitions (run this on your source database)
+SELECT 
+    'CREATE ROLE ' || rolname || ' WITH ' ||
+    CASE WHEN rolcanlogin THEN 'LOGIN ' ELSE 'NOLOGIN ' END ||
+    CASE WHEN rolsuper THEN 'SUPERUSER ' ELSE 'NOSUPERUSER ' END ||
+    CASE WHEN rolinherit THEN 'INHERIT ' ELSE 'NOINHERIT ' END ||
+    CASE WHEN rolcreaterole THEN 'CREATEROLE ' ELSE 'NOCREATEROLE ' END ||
+    CASE WHEN rolcreatedb THEN 'CREATEDB ' ELSE 'NOCREATEDB ' END ||
+    CASE WHEN rolreplication THEN 'REPLICATION ' ELSE 'NOREPLICATION ' END ||
+    CASE WHEN rolbypassrls THEN 'BYPASSRLS ' ELSE 'NOBYPASSRLS ' END ||
+    'CONNECTION LIMIT ' || COALESCE(rolconnlimit, -1) || ';' as create_role_statement
+FROM pg_roles 
+WHERE rolname NOT LIKE 'pg_%'
+ORDER BY rolname;
+```
+
+### Apply Roles to Xata Branch
+
+1. **Connect to your Xata branch**:
+   ```bash
+   psql `xata branch url`
+   ```
+
+2. **Execute the role creation statements** from the previous step
 
 ## Initialize Xata Project
 
@@ -78,7 +88,7 @@ Set up your clone configuration with optional anonymization:
 
 ```bash
 # Set your source URL
-export XATA_CLI_SOURCE_POSTGRES_URL="postgresql://xata_snapshot:your_password@ep-cool-name-123456.us-east-2.aws.neon.tech/neondb?sslmode=require"
+export XATA_CLI_SOURCE_POSTGRES_URL="postgresql://your_username:your_password@ep-cool-name-123456.us-east-2.aws.neon.tech/your_db?sslmode=require"
 
 # Configure anonymization rules
 xata clone config --source-url $XATA_CLI_SOURCE_POSTGRES_URL --mode prompt
@@ -107,7 +117,7 @@ After migration, verify your data:
 
 1. **Connect to Xata Branch**:
    ```bash
-   xata branch url
+   psql `xata branch url`
    ```
 
 2. **Check Data Integrity**:
@@ -120,93 +130,6 @@ After migration, verify your data:
    ```
 
 3. **Test Relationships**: Verify foreign key relationships work correctly
-
-## Neon Branching Strategy
-
-### Option 1: Clone Production Branch
-
-Clone your Neon production branch to Xata:
-
-```bash
-# Use production branch connection string
-export XATA_CLI_SOURCE_POSTGRES_URL="postgresql://xata_snapshot:password@ep-prod-branch.us-east-2.aws.neon.tech/neondb?sslmode=require"
-xata clone start --source-url $XATA_CLI_SOURCE_POSTGRES_URL
-```
-
-### Option 2: Clone Development Branch
-
-Clone a Neon development branch for testing:
-
-```bash
-# Use development branch connection string
-export XATA_CLI_SOURCE_POSTGRES_URL="postgresql://xata_snapshot:password@ep-dev-branch.us-east-2.aws.neon.tech/neondb?sslmode=require"
-xata clone start --source-url $XATA_CLI_SOURCE_POSTGRES_URL
-```
-
-### Option 3: Continuous Sync from Production
-
-Keep Xata in sync with Neon production:
-
-```bash
-# Set up continuous sync
-xata clone start --source-url $XATA_CLI_SOURCE_POSTGRES_URL --continuous
-```
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Connection Issues**:
-   - Check that SSL is enabled (`sslmode=require`)
-   - Verify the connection string format
-   - Ensure the user has correct privileges
-
-2. **Permission Denied**:
-   - Verify the snapshot user has correct privileges
-   - Check that the user has sufficient permissions
-
-3. **Branch Not Found**:
-   - Ensure you're using the correct branch connection string
-   - Verify the branch exists in Neon Console
-
-
-
-### SSL Configuration
-
-Neon requires SSL. Always include SSL parameters:
-
-```
-postgresql://user:password@host/database?sslmode=require
-```
-
-## Migration Strategies
-
-### Strategy 1: One-Time Migration
-
-For complete migration from Neon to Xata:
-
-1. **Clone production data** to Xata
-2. **Update application** to use Xata connection
-3. **Verify functionality** with Xata
-4. **Decommission Neon** when ready
-
-### Strategy 2: Hybrid Approach
-
-Keep both systems during transition:
-
-1. **Clone Neon to Xata** for development
-2. **Use Xata for new features**
-3. **Gradually migrate** existing features
-4. **Maintain sync** during transition
-
-### Strategy 3: Staging Workflow
-
-Use Neon for development, Xata for production:
-
-1. **Develop on Neon** branches
-2. **Clone to Xata** for staging
-3. **Deploy from Xata** to production
-4. **Use Xata branching** for production workflows
 
 ## Next Steps
 

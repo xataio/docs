@@ -10,22 +10,18 @@ description: "Learn how to migrate your Azure Database for PostgreSQL to Xata us
 - Xata account and project setup
 - Network access to your Azure database
 
+## Install and Configure the Xata CLI
 
+Install the Xata CLI:
 
-## Create Snapshot User
+```bash
+curl -fsSL https://xata.io/install.sh | bash
+```
 
-Connect to your Azure database and create a dedicated user for migration:
+Authenticate with your Xata account:
 
-```sql
--- Create snapshot user (no REPLICATION privilege needed)
-CREATE USER xata_snapshot WITH LOGIN PASSWORD 'your_secure_password';
-
--- Grant necessary privileges
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO xata_snapshot;
-GRANT USAGE ON SCHEMA public TO xata_snapshot;
-
--- Grant privileges on future tables
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO xata_snapshot;
+```bash
+xata auth login
 ```
 
 ## Network Configuration
@@ -63,35 +59,45 @@ If you're using Flexible Server:
 
 ## Get Connection String
 
-### Find Your Connection Details
-
-1. Go to Azure Portal → Your PostgreSQL Server
-2. Click "Connection strings" in the left menu
-3. Copy the connection string
-
-### Connection String Format
-
 Azure connection strings typically look like this:
 
 ```
-postgresql://xata_snapshot:your_password@your-server.postgres.database.azure.com:5432/postgres?sslmode=require
+postgresql://your_username:your_password@your-server.postgres.database.azure.com:5432/postgres?sslmode=require
 ```
 
-### Azure-Specific Formatting
+## Replicate Database Roles
 
-Note that Azure often uses this format for usernames:
+Before migrating your data, you'll need to replicate the database roles from your source database to your Xata branch.
 
+### Extract Roles from Source Database
+
+Connect to your source database and extract the role definitions:
+
+```sql
+-- Extract role definitions (run this on your source database)
+SELECT 
+    'CREATE ROLE ' || rolname || ' WITH ' ||
+    CASE WHEN rolcanlogin THEN 'LOGIN ' ELSE 'NOLOGIN ' END ||
+    CASE WHEN rolsuper THEN 'SUPERUSER ' ELSE 'NOSUPERUSER ' END ||
+    CASE WHEN rolinherit THEN 'INHERIT ' ELSE 'NOINHERIT ' END ||
+    CASE WHEN rolcreaterole THEN 'CREATEROLE ' ELSE 'NOCREATEROLE ' END ||
+    CASE WHEN rolcreatedb THEN 'CREATEDB ' ELSE 'NOCREATEDB ' END ||
+    CASE WHEN rolreplication THEN 'REPLICATION ' ELSE 'NOREPLICATION ' END ||
+    CASE WHEN rolbypassrls THEN 'BYPASSRLS ' ELSE 'NOBYPASSRLS ' END ||
+    'CONNECTION LIMIT ' || COALESCE(rolconnlimit, -1) || ';' as create_role_statement
+FROM pg_roles 
+WHERE rolname NOT LIKE 'pg_%'
+ORDER BY rolname;
 ```
-postgresql://xata_snapshot@your-server:your_password@your-server.postgres.database.azure.com:5432/postgres?sslmode=require
-```
 
-### SSL Configuration
+### Apply Roles to Xata Branch
 
-Azure requires SSL. Always include SSL parameters:
+1. **Connect to your Xata branch**:
+   ```bash
+   psql `xata branch url`
+   ```
 
-```
-postgresql://user:password@host:port/database?sslmode=require
-```
+2. **Execute the role creation statements** from the previous step
 
 ## Initialize Xata Project
 
@@ -107,7 +113,7 @@ Set up your clone configuration with optional anonymization:
 
 ```bash
 # Set your source URL
-export XATA_CLI_SOURCE_POSTGRES_URL="postgresql://xata_snapshot@your-server:your_password@your-server.postgres.database.azure.com:5432/postgres?sslmode=require"
+export XATA_CLI_SOURCE_POSTGRES_URL="postgresql://your_username:your_password@your-server.postgres.database.azure.com:5432/postgres?sslmode=require"
 
 # Configure anonymization rules
 xata clone config --source-url $XATA_CLI_SOURCE_POSTGRES_URL --mode prompt
@@ -149,91 +155,6 @@ After migration, verify your data:
    ```
 
 3. **Test Relationships**: Verify foreign key relationships work correctly
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Connection Refused**:
-   - Check firewall rules in Azure Portal
-   - Verify the server name is correct
-   - Ensure the server is running
-
-2. **SSL Connection Required**:
-   - Add `?sslmode=require` to your connection string
-   - Verify SSL is enabled on the Azure server
-
-3. **Permission Denied**:
-   - Verify the snapshot user has correct privileges
-   - Check that the user has sufficient permissions
-
-4. **Parameter Changes Not Applied**:
-   - Wait for the server restart to complete
-   - Verify parameters are set correctly in Azure Portal
-
-5. **Username Format Issues**:
-   - Azure may require `username@servername` format
-   - Check the exact format in Azure connection strings
-
-### Using Azure CLI
-
-You can also configure Azure Database using Azure CLI:
-
-```bash
-# Install Azure CLI if not already installed
-curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-
-# Login to Azure
-az login
-
-# Set server parameters
-az postgres server configuration set \
-  --resource-group your-resource-group \
-  --server-name your-server-name \
-  --name wal_level \
-  --value logical
-
-az postgres server configuration set \
-  --resource-group your-resource-group \
-  --server-name your-server-name \
-  --name max_replication_slots \
-  --value 5
-
-az postgres server configuration set \
-  --resource-group your-resource-group \
-  --server-name your-server-name \
-  --name max_wal_senders \
-  --value 10
-
-# Restart the server
-az postgres server restart \
-  --resource-group your-resource-group \
-  --name your-server-name
-```
-
-## Security Best Practices
-
-1. **Use Private Endpoints** when possible
-2. **Remove public access** after migration
-3. **Use strong passwords** for replication users
-4. **Limit firewall rules** to specific IPs
-5. **Enable Azure Monitor** to track access
-
-## Azure Database for PostgreSQL Flexible Server
-
-If you're using Flexible Server, the process is similar but with some differences:
-
-### Flexible Server Parameters
-
-1. **Go to "Server parameters"**
-2. **Set the same parameters** as above
-3. **No restart required** for Flexible Server
-
-### Flexible Server Networking
-
-1. **Choose "Private access (VNet Integration)"** for better security
-2. **Or use "Public access"** with firewall rules
-3. **Configure Azure Private DNS** if using private access
 
 ## Next Steps
 

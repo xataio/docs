@@ -11,27 +11,33 @@ The `roll` commands help you manage database migrations using pgroll.
 Create a baseline migration for an existing database schema.
 
 ```bash
-xata roll baseline [--lock-timeout <ms>] [--pgroll-schema <schema>] [--postgres-url <url>] [--role <role>] [--schema <schema>] [--verbose] [-h|--help]
+xata roll baseline [--lock-timeout <ms>] [--pgroll-schema <schema>] [--postgres-url <url>] [--role <role>] [--schema <schema>] [--use-version-schema] [--verbose] [--json] [--yes] [-h|--help] [<name>] [<folder>]
 ```
 - `--lock-timeout`: Postgres lock timeout in milliseconds for pgroll DDL operations
 - `--pgroll-schema`: Postgres schema to use for pgroll internal state
 - `--postgres-url`: Postgres URL
 - `--role`: Optional postgres role to set when executing migrations
 - `--schema`: Postgres schema to use for the migration
+- `--use-version-schema`: Create version schemas for each migration
 - `--verbose`: Enable verbose logging
+- `--json`: Output in JSON format instead of YAML
+- `--yes`: Skip confirmation prompt
 - `-h, --help`: Print help information and exit
+- `<name>`: Name of the migration (e.g., "01_initial_schema")
+- `<folder>`: The directory that contains the migrations (default: `.xata/migrations`)
 
 ### complete
 Complete an ongoing migration with the operations present in the given file.
 
 ```bash
-xata roll complete [--lock-timeout <ms>] [--pgroll-schema <schema>] [--postgres-url <url>] [--role <role>] [--schema <schema>] [--verbose] [-h|--help]
+xata roll complete [--lock-timeout <ms>] [--pgroll-schema <schema>] [--postgres-url <url>] [--role <role>] [--schema <schema>] [--use-version-schema] [--verbose] [-h|--help]
 ```
 - `--lock-timeout`: Postgres lock timeout in milliseconds for pgroll DDL operations
 - `--pgroll-schema`: Postgres schema to use for pgroll internal state
 - `--postgres-url`: Postgres URL
 - `--role`: Optional postgres role to set when executing migrations
 - `--schema`: Postgres schema to use for the migration
+- `--use-version-schema`: Create version schemas for each migration
 - `--verbose`: Enable verbose logging
 - `-h, --help`: Print help information and exit
 
@@ -39,13 +45,14 @@ xata roll complete [--lock-timeout <ms>] [--pgroll-schema <schema>] [--postgres-
 Initialize pgroll in the target database.
 
 ```bash
-xata roll init [--lock-timeout <ms>] [--pgroll-schema <schema>] [--postgres-url <url>] [--role <role>] [--schema <schema>] [--verbose] [-h|--help]
+xata roll init [--lock-timeout <ms>] [--pgroll-schema <schema>] [--postgres-url <url>] [--role <role>] [--schema <schema>] [--use-version-schema] [--verbose] [-h|--help]
 ```
 - `--lock-timeout`: Postgres lock timeout in milliseconds for pgroll DDL operations
 - `--pgroll-schema`: Postgres schema to use for pgroll internal state
 - `--postgres-url`: Postgres URL
 - `--role`: Optional postgres role to set when executing migrations
 - `--schema`: Postgres schema to use for the migration
+- `--use-version-schema`: Create version schemas for each migration
 - `--verbose`: Enable verbose logging
 - `-h, --help`: Print help information and exit
 
@@ -133,7 +140,7 @@ xata roll rollback [--lock-timeout <ms>] [--pgroll-schema <schema>] [--postgres-
 Start a migration for the operations present in the given file.
 
 ```bash
-xata roll start <file> [--lock-timeout <ms>] [--pgroll-schema <schema>] [--postgres-url <url>] [--role <role>] [--schema <schema>] [--verbose] [--backfill-batch-delay <delay>] [--backfill-batch-size <size>] [--complete] [--skip-validation] [-h|--help]
+xata roll start <file> [--lock-timeout <ms>] [--pgroll-schema <schema>] [--postgres-url <url>] [--role <role>] [--schema <schema>] [--use-version-schema] [--verbose] [--backfill-batch-delay <delay>] [--backfill-batch-size <size>] [--complete] [--skip-validation] [-h|--help]
 ```
 - `<file>`: The migration file to start
 - `--lock-timeout`: Postgres lock timeout in milliseconds for pgroll DDL operations
@@ -141,6 +148,7 @@ xata roll start <file> [--lock-timeout <ms>] [--pgroll-schema <schema>] [--postg
 - `--postgres-url`: Postgres URL
 - `--role`: Optional postgres role to set when executing migrations
 - `--schema`: Postgres schema to use for the migration
+- `--use-version-schema`: Create version schemas for each migration
 - `--verbose`: Enable verbose logging
 - `--backfill-batch-delay`: Duration of delay between batch backfills (eg. 1s, 1000ms)
 - `--backfill-batch-size`: Number of rows backfilled in each batch

@@ -10,89 +10,113 @@ description: "Learn how to migrate your self-hosted PostgreSQL database to Xata 
 - Xata account and project setup
 - Network access to your PostgreSQL server
 
+## Install and Configure the Xata CLI
 
+Install the Xata CLI:
 
-## Create Snapshot User
+```bash
+curl -fsSL https://xata.io/install.sh | bash
+```
 
-Connect to your PostgreSQL instance and create a dedicated user for migration:
+Authenticate with your Xata account:
 
-```sql
--- Create snapshot user (no REPLICATION privilege needed)
-CREATE USER xata_snapshot WITH LOGIN PASSWORD 'your_secure_password';
-
--- Grant necessary privileges
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO xata_snapshot;
-GRANT USAGE ON SCHEMA public TO xata_snapshot;
-
--- Grant privileges on future tables
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO xata_snapshot;
+```bash
+xata auth login
 ```
 
 ## Network Configuration
 
-### Option 1: Direct Connection
+### Option 1: Public Access (Less Secure)
 
 If your PostgreSQL server is accessible from the internet:
 
-1. **Ensure PostgreSQL is listening** on the correct interface:
+1. **Configure Firewall Rules**:
+   - Allow PostgreSQL port (5432) from your IP address
+   - Or temporarily allow from anywhere (0.0.0.0/0) for migration
+
+2. **Update PostgreSQL Configuration**:
+   - Edit `postgresql.conf`: Set `listen_addresses = '*'`
+   - Edit `pg_hba.conf`: Add `host all all 0.0.0.0/0 md5`
+
+### Option 2: Private Network (Recommended)
+
+For better security, use private network access:
+
+1. **VPN or Private Network**:
+   - Connect via VPN to your private network
+   - Use private IP addresses for connection
+   - Ensure your migration machine is in the same network
+
+2. **SSH Tunnel**:
    ```bash
-   # In postgresql.conf
-   listen_addresses = '*'
+   ssh -L 5432:localhost:5432 user@your-server-ip
    ```
 
-2. **Configure firewall** to allow PostgreSQL port (5432):
-   ```bash
-   # Linux (ufw)
-   sudo ufw allow 5432/tcp
-   
-   # Linux (iptables)
-   sudo iptables -A INPUT -p tcp --dport 5432 -j ACCEPT
-   
-   # macOS
-   sudo pfctl -e
-   # Add rule to /etc/pf.conf
-   ```
+### Option 3: Direct Server Access
 
-### Option 2: SSH Tunnel (Recommended)
+If you have direct access to the server:
 
-For better security, use SSH tunneling:
-
-```bash
-# Create SSH tunnel
-ssh -L 5432:localhost:5432 user@your-postgres-server
-
-# Then connect to localhost:5432 from your migration machine
-```
-
-### Option 3: VPN Connection
-
-If you have a VPN setup:
-
-1. **Connect to your VPN**
-2. **Use the internal IP** of your PostgreSQL server
-3. **Ensure VPN allows** PostgreSQL traffic
+1. **Run migration locally** on the PostgreSQL server
+2. **Install Xata CLI** on the server
+3. **Use localhost** for connection
 
 ## Get Connection String
 
 ### Connection String Format
 
+Self-hosted PostgreSQL connection strings typically look like this:
+
 ```
-postgresql://xata_snapshot:your_password@your-server-ip:5432/your_database
+postgresql://your_username:your_password@your-server-ip:5432/your_database
 ```
 
 ### SSL Configuration
 
-If you have SSL certificates configured:
+If your PostgreSQL server requires SSL:
 
 ```
-postgresql://xata_snapshot:your_password@your-server-ip:5432/your_database?sslmode=require
+postgresql://your_username:your_password@your-server-ip:5432/your_database?sslmode=require
 ```
 
-If you don't have SSL configured:
+If SSL is disabled:
 
 ```
-postgresql://xata_snapshot:your_password@your-server-ip:5432/your_database?sslmode=disable
+postgresql://your_username:your_password@your-server-ip:5432/your_database?sslmode=disable
 ```
+
+## Replicate Database Roles
+
+Before migrating your data, you'll need to replicate the database roles from your source database to your Xata branch.
+
+### Extract Roles from Source Database
+
+Connect to your source database and extract the role definitions:
+
+```sql
+-- Extract role definitions (run this on your source database)
+SELECT 
+    'CREATE ROLE ' || rolname || ' WITH ' ||
+    CASE WHEN rolcanlogin THEN 'LOGIN ' ELSE 'NOLOGIN ' END ||
+    CASE WHEN rolsuper THEN 'SUPERUSER ' ELSE 'NOSUPERUSER ' END ||
+    CASE WHEN rolinherit THEN 'INHERIT ' ELSE 'NOINHERIT ' END ||
+    CASE WHEN rolcreaterole THEN 'CREATEROLE ' ELSE 'NOCREATEROLE ' END ||
+    CASE WHEN rolcreatedb THEN 'CREATEDB ' ELSE 'NOCREATEDB ' END ||
+    CASE WHEN rolreplication THEN 'REPLICATION ' ELSE 'NOREPLICATION ' END ||
+    CASE WHEN rolbypassrls THEN 'BYPASSRLS ' ELSE 'NOBYPASSRLS ' END ||
+    'CONNECTION LIMIT ' || COALESCE(rolconnlimit, -1) || ';' as create_role_statement
+FROM pg_roles 
+WHERE rolname NOT LIKE 'pg_%'
+ORDER BY rolname;
+```
+
+### Apply Roles to Xata Branch
+
+1. **Connect to your Xata branch**:
+   ```bash
+   psql `xata branch url`
+   ```
+
+2. **Execute the role creation statements** from the previous step
 
 ## Initialize Xata Project
 
@@ -108,7 +132,7 @@ Set up your clone configuration with optional anonymization:
 
 ```bash
 # Set your source URL
-export XATA_CLI_SOURCE_POSTGRES_URL="postgresql://xata_snapshot:your_password@your-server-ip:5432/your_database"
+export XATA_CLI_SOURCE_POSTGRES_URL="postgresql://your_username:your_password@your-server-ip:5432/your_database"
 
 # Configure anonymization rules
 xata clone config --source-url $XATA_CLI_SOURCE_POSTGRES_URL --mode prompt
@@ -137,7 +161,7 @@ After migration, verify your data:
 
 1. **Connect to Xata Branch**:
    ```bash
-   xata branch url
+   psql `xata branch url`
    ```
 
 2. **Check Data Integrity**:
@@ -150,91 +174,6 @@ After migration, verify your data:
    ```
 
 3. **Test Relationships**: Verify foreign key relationships work correctly
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Connection Refused**:
-   - Check if PostgreSQL is running
-   - Verify the port is correct (default 5432)
-   - Check firewall settings
-   - Ensure PostgreSQL is listening on the correct interface
-
-2. **Permission Denied**:
-   - Verify the snapshot user has correct privileges
-   - Check that the user has sufficient permissions
-   - Ensure pg_hba.conf allows connections
-
-3. **Configuration Not Applied**:
-   - Restart PostgreSQL after configuration changes
-   - Check PostgreSQL logs for errors
-   - Verify configuration file syntax
-
-4. **Network Issues**:
-   - Test connectivity with `telnet your-server-ip 5432`
-   - Check if the server is reachable from your migration machine
-   - Verify DNS resolution if using hostnames
-
-### PostgreSQL Logs
-
-Check PostgreSQL logs for errors:
-
-```bash
-# Common log locations:
-# Linux: /var/log/postgresql/postgresql-{version}-main.log
-# macOS: /usr/local/var/log/postgresql.log
-# Windows: PostgreSQL installation directory
-
-# Check logs in real-time
-tail -f /var/log/postgresql/postgresql-{version}-main.log
-```
-
-### Using pg_dump as Alternative
-
-If `xata clone` cannot be used, you can use `pg_dump`:
-
-```bash
-# Create a dump
-pg_dump --format=custom -h your-server-ip -U xata_snapshot -d your_database -f backup.dump
-
-# Get Xata connection string
-xata branch url
-
-# Restore to Xata
-pg_restore --dbname "your-xata-connection-string" backup.dump
-```
-
-## Security Best Practices
-
-1. **Use SSH tunneling** when possible
-2. **Configure firewall rules** to limit access
-3. **Use strong passwords** for replication users
-4. **Enable SSL** if PostgreSQL is exposed to the internet
-5. **Monitor access logs** regularly
-
-## Performance Considerations
-
-### Large Databases
-
-For large databases, consider:
-
-1. **Increase WAL settings**:
-   ```bash
-   # In postgresql.conf
-   max_wal_senders = 20
-   max_replication_slots = 10
-   ```
-
-2. **Optimize network**:
-   - Use wired connections when possible
-   - Ensure sufficient bandwidth
-   - Consider running migration during low-traffic periods
-
-3. **Monitor resources**:
-   - Check CPU and memory usage
-   - Monitor disk I/O
-   - Watch network utilization
 
 ## Next Steps
 

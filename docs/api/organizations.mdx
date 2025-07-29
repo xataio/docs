@@ -102,4 +102,43 @@ DELETE /organizations/{organizationID}
 
 ### Response
 
-Returns a 204 status code with no content on success. 
+Returns a 204 status code with no content on success.
+
+## Get available regions
+
+Retrieves a list of all regions where new branches can be deployed for the specified organization.
+
+```bash
+GET /organizations/{organizationID}/regions
+```
+
+### Path parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| organizationID | string | Unique identifier for the organization |
+
+### Response
+
+```json
+{
+  "regions": [
+    {
+      "id": "us-east-1",
+      "publicAccess": true
+    },
+    {
+      "id": "eu-west-1",
+      "publicAccess": false
+    }
+  ]
+}
+```
+
+### Response fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| regions | array | Array of available regions with their properties |
+| id | string | Unique identifier for the region |
+| publicAccess | boolean | Whether data plane is public-facing to the internet in this region |

@@ -1,0 +1,78 @@
+---
+title: Scale to Zero
+description: Minimize costs by hibernating inactive database branches
+---
+
+## Overview
+
+Xata's Scale to Zero feature allows you to minimize costs by hibernating database branches during periods of inactivity. This is particularly useful for development, testing, and staging environments that don't need to be active 24/7.
+
+When a branch is hibernated:
+- Compute is paused and no active database connections are allowed
+- Your data remains safe and accessible
+- You only pay for storage, not compute costs
+- Branches can be reactivated immediately
+
+## Manual Hibernation
+
+Currently, you can manually hibernate branches through the Xata Console:
+
+### How to Hibernate a Branch
+
+1. Go to Branch Settings in the Xata Console
+2. Toggle "Hibernate branch" to enabled
+3. Click "Update branch settings"
+
+### Hibernation Status
+
+You can monitor hibernation status in the Xata Console:
+- Active branches are running and accepting connections
+- Hibernated branches are paused and not accepting connections
+
+### Waking Up a Hibernated Branch
+
+To reactivate a hibernated branch:
+1. Go to the branch settings
+2. Toggle "Hibernate branch" to "off"
+3. Click "Update branch settings"
+4. The branch will immediately start accepting connections
+
+## Automatic Scale to Zero (Coming Soon)
+
+We're developing automatic scale-to-zero capabilities that will provide even more cost optimization:
+
+### Planned Features
+
+- Branches will automatically hibernate after a configurable period of inactivity
+- Branches will automatically wake up when connection requests are made
+- You can set custom inactivity periods for different types of branches
+
+We're actively developing enhanced scale to zero capabilities, [please reach out with any feedback or feature requests](https://xata.io/discord).
+
+## When to use Scale to Zero
+
+### Development Branches
+Perfect for feature branches that are only used during active development:
+- You can hibernate branches when not actively developing
+- Branches wake up instantly when you start working
+- This reduces costs for long-running feature development
+
+### Staging Environments
+Ideal for staging databases that mirror production:
+- You can hibernate staging environments when not testing
+- Branches wake up for deployment testing
+- This maintains production-like data without 24/7 costs
+
+### Testing Environments
+Great for automated testing databases:
+- You can hibernate between test runs
+- Branches wake up for CI/CD pipelines
+- This optimizes costs for comprehensive testing
+
+
+## Related Concepts
+
+- **[Instant Branching](/core-concepts/branching)** - Create branches for hibernation
+- **[Schema Changes](/core-concepts/schema-changes)** - Safe schema evolution
+- **[Data Anonymization](/core-concepts/anonymization)** - Secure development data
+- **[Deployment Models](/deployment)** - Choose your deployment strategy 
