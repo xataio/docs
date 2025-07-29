@@ -34,6 +34,11 @@
           "title": "Schema changes",
           "href": "/core-concepts/schema-changes",
           "file": "docs/core-concepts/schema-changes.mdx"
+        },
+        {
+          "title": "Scale to Zero",
+          "href": "/core-concepts/scale-to-zero",
+          "file": "docs/core-concepts/scale-to-zero.mdx"
         }
       ]
     },
