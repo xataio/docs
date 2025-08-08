@@ -162,7 +162,7 @@
       ]
     },
     {
-      "title": "Migration Guides",
+      "title": "Migration guides",
       "href": "/migrations",
       "file": "docs/migrations/migrations.mdx",
       "items": [
@@ -222,6 +222,11 @@
           "file": "docs/migrations/supabase.mdx"
         }
       ]
+    },
+    {
+      "title": "Supported extensions",
+      "href": "/extensions",
+      "file": "docs/extensions/index.mdx"
     },
     {
       "title": "Command-line Interface",
