@@ -3,7 +3,19 @@ title: Branches API
 description: Manage database branches and their settings
 ---
 
-The Branches API allows you to manage your database branches, including listing, creating, updating, and deleting branches.
+The Branches API allows you to manage your database branches, including listing, creating, updating, and deleting branches. All endpoints require authentication via API key or OIDC.
+
+## Authentication
+
+All endpoints require authentication. You can authenticate using:
+- **API Key**: Include your API key in the `Authorization` header: `Authorization: Bearer <your-api-key>`
+- **OIDC**: Use OIDC tokens for authentication
+
+Required scopes for different operations:
+- **branch:read**: Read branch information and list branches
+- **branch:write**: Create, update, and delete branches
+- **credentials:read**: Access branch credentials
+- **metrics:read**: Access branch metrics
 
 ## List branches
 
@@ -13,14 +25,19 @@ Retrieves a list of all branches within a project.
 GET /organizations/{organizationID}/projects/{projectID}/branches
 ```
 
+### Summary
+Returns a paginated list of branches in a project with basic metadata including ID, name, creation date, region, and public access settings.
+
 ### Path parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| organizationID | string | Unique identifier for the organization |
-| projectID | string | Unique identifier for the project |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| organizationID | string | Yes | Unique identifier for the organization |
+| projectID | string | Yes | Unique identifier for the project |
 
 ### Response
+
+**Status:** `200 OK`
 
 ```json
 {
@@ -32,12 +49,26 @@ GET /organizations/{organizationID}/projects/{projectID}/branches
       "updatedAt": "2024-01-01T00:00:00Z",
       "region": "us-east-1",
       "publicAccess": false,
-      "description": "Main branch",
+      "description": "Main production branch",
       "parentID": null
     }
   ]
 }
 ```
+
+### Response schema
+
+| Field | Type | Description |
+|-------|------|-------------|
+| branches | array | Array of branch objects |
+| id | string | Unique identifier for the branch |
+| name | string | Human-readable name for the branch |
+| createdAt | string (date-time) | Timestamp when the branch was created |
+| updatedAt | string (date-time) | Timestamp when the branch was last updated |
+| region | string | Geographic region where the branch is deployed |
+| publicAccess | boolean | Whether the branch allows public access without authentication |
+| description | string | Optional description of the branch purpose or contents |
+| parentID | string | Identifier of the parent branch if derived, null otherwise |
 
 ## Create branch
 
@@ -47,26 +78,28 @@ Creates a new branch within a project. Branches can be created from scratch or d
 POST /organizations/{organizationID}/projects/{projectID}/branches
 ```
 
+### Summary
+Creates a new database branch with specified configuration. If a parent branch is specified, the new branch inherits the parent's configuration and data. Otherwise, a new cluster is created with the specified configuration.
+
 ### Path parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| organizationID | string | Unique identifier for the organization |
-| projectID | string | Unique identifier for the project |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| organizationID | string | Yes | Unique identifier for the organization |
+| projectID | string | Yes | Unique identifier for the project |
 
 ### Request body
 
 ```json
 {
-  "name": "new-branch",
-  "description": "Development branch",
+  "name": "staging-branch",
+  "description": "Staging environment for testing",
   "parentID": "br_123",
   "configuration": {
-    "image": "postgresql:16",
-    "instanceType": "standard",
+    "image": "postgresql:17",
+    "instanceType": "small",
     "instances": 1,
-    "region": "us-east-1",
-    "storage": 10
+    "region": "us-east-1"
   },
   "scaleToZero": {
     "enabled": true,
@@ -77,29 +110,45 @@ POST /organizations/{organizationID}/projects/{projectID}/branches
 
 ### Request body parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| name | string | Human-readable name for the new branch |
-| description | string | Optional description for the branch purpose or contents (max 50 characters) |
-| parentID | string | If present, the branch will inherit the parent branch configuration and data |
-| configuration | object | Configuration for the underlying database cluster if not inheriting from a parent |
-| scaleToZero | object | Scale to zero configuration for the branch |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| name | string | Yes | Human-readable name for the new branch (max 50 characters, pattern: `^[a-zA-Z0-9]+[a-zA-Z0-9- ]*$`) |
+| description | string | No | Optional description for the branch purpose or contents (max 50 characters) |
+| parentID | string | No | If present, the branch will inherit the parent branch configuration and data |
+| configuration | ClusterConfiguration | No | Configuration for the underlying database cluster if not inheriting from a parent |
+| scaleToZero | ScaleToZeroConfiguration | No | Scale to zero configuration for the branch |
 
 ### Response
+
+**Status:** `201 Created`
 
 ```json
 {
   "id": "br_456",
-  "name": "new-branch",
+  "name": "staging-branch",
   "createdAt": "2024-01-01T00:00:00Z",
   "updatedAt": "2024-01-01T00:00:00Z",
   "region": "us-east-1",
   "publicAccess": false,
-  "description": "Development branch",
+  "description": "Staging environment for testing",
   "parentID": "br_123",
-  "connectionString": "postgresql://..."
+  "connectionString": "postgresql://xata_user:password@host:port/database"
 }
 ```
+
+### Response schema
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string | Unique identifier for the created branch |
+| name | string | Name of the branch |
+| createdAt | string (date-time) | Timestamp when the branch was created |
+| updatedAt | string (date-time) | Timestamp when the branch was last updated |
+| region | string | Geographic region where the branch is deployed |
+| publicAccess | boolean | Whether the branch allows public access |
+| description | string | Description of the branch |
+| parentID | string | Identifier of the parent branch if derived |
+| connectionString | string | Database connection string for the branch |
 
 ## Get branch
 
@@ -109,15 +158,20 @@ Retrieves detailed information about a specific branch.
 GET /organizations/{organizationID}/projects/{projectID}/branches/{branchID}
 ```
 
+### Summary
+Returns comprehensive information about a branch including its configuration, status, connection details, and operational state.
+
 ### Path parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| organizationID | string | Unique identifier for the organization |
-| projectID | string | Unique identifier for the project |
-| branchID | string | Unique identifier for the branch |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| organizationID | string | Yes | Unique identifier for the organization |
+| projectID | string | Yes | Unique identifier for the project |
+| branchID | string | Yes | Unique identifier for the branch |
 
 ### Response
+
+**Status:** `200 OK`
 
 ```json
 {
@@ -127,15 +181,14 @@ GET /organizations/{organizationID}/projects/{projectID}/branches/{branchID}
   "updatedAt": "2024-01-01T00:00:00Z",
   "region": "us-east-1",
   "publicAccess": false,
-  "description": "Main branch",
+  "description": "Main production branch",
   "parentID": null,
-  "connectionString": "postgresql://...",
+  "connectionString": "postgresql://xata_user:password@host:port/database",
   "configuration": {
-    "image": "postgresql:16",
-    "instanceType": "standard",
+    "image": "postgresql:17",
+    "instanceType": "small",
     "instances": 1,
-    "region": "us-east-1",
-    "storage": 10
+    "region": "us-east-1"
   },
   "status": {
     "instanceCount": 1,
@@ -160,6 +213,23 @@ GET /organizations/{organizationID}/projects/{projectID}/branches/{branchID}
 }
 ```
 
+### Response schema
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string | Unique identifier for the branch |
+| name | string | Human-readable name for the branch |
+| createdAt | string (date-time) | Timestamp when the branch was created |
+| updatedAt | string (date-time) | Timestamp when the branch was last updated |
+| region | string | Geographic region where the branch is deployed |
+| publicAccess | boolean | Whether the branch allows public access |
+| description | string | Description of the branch |
+| parentID | string | Identifier of the parent branch if derived |
+| connectionString | string | Database connection string for the branch |
+| configuration | ClusterConfiguration | Configuration details for the underlying database cluster |
+| status | BranchStatus | Current operational status of the branch |
+| scaleToZero | ScaleToZeroConfiguration | Scale to zero configuration for the branch |
+
 ## Update branch
 
 Updates the configuration of a branch.
@@ -168,58 +238,75 @@ Updates the configuration of a branch.
 PATCH /organizations/{organizationID}/projects/{projectID}/branches/{branchID}
 ```
 
+### Summary
+Updates branch metadata such as name and description. Note that cluster configuration changes require creating a new branch.
+
 ### Path parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| organizationID | string | Unique identifier for the organization |
-| projectID | string | Unique identifier for the project |
-| branchID | string | Unique identifier for the branch |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| organizationID | string | Yes | Unique identifier for the organization |
+| projectID | string | Yes | Unique identifier for the project |
+| branchID | string | Yes | Unique identifier for the branch |
 
 ### Request body
 
 ```json
 {
-  "name": "updated-branch",
-  "description": "Updated description"
+  "name": "updated-branch-name",
+  "description": "Updated description for the branch"
 }
 ```
 
+### Request body parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| name | string | No | New name for the branch |
+| description | string | No | New description for the branch |
+
 ### Response
+
+**Status:** `200 OK`
 
 ```json
 {
   "id": "br_123",
-  "name": "updated-branch",
+  "name": "updated-branch-name",
   "createdAt": "2024-01-01T00:00:00Z",
   "updatedAt": "2024-01-01T00:00:00Z",
   "region": "us-east-1",
   "publicAccess": false,
-  "description": "Updated description",
+  "description": "Updated description for the branch",
   "parentID": null,
-  "connectionString": "postgresql://..."
+  "connectionString": "postgresql://xata_user:password@host:port/database"
 }
 ```
 
 ## Delete branch
 
-Permanently deletes a branch and all its associated data. This action cannot be undone.
+Permanently deletes a branch and all its associated data.
 
 ```bash
 DELETE /organizations/{organizationID}/projects/{projectID}/branches/{branchID}
 ```
 
+### Summary
+Permanently removes a branch and all associated data. This action cannot be undone and will terminate all active connections.
+
 ### Path parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| organizationID | string | Unique identifier for the organization |
-| projectID | string | Unique identifier for the project |
-| branchID | string | Unique identifier for the branch |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| organizationID | string | Yes | Unique identifier for the organization |
+| projectID | string | Yes | Unique identifier for the project |
+| branchID | string | Yes | Unique identifier for the branch |
 
 ### Response
 
-Returns a 204 status code with no content on success.
+**Status:** `204 No Content`
+
+No response body is returned on successful deletion.
 
 ## Get branch credentials
 
@@ -229,21 +316,26 @@ Retrieves credentials for accessing a branch database.
 GET /organizations/{organizationID}/projects/{projectID}/branches/{branchID}/credentials
 ```
 
+### Summary
+Returns database credentials (username and password) for connecting to a specific branch. These credentials can be used with the connection string returned by the branch details endpoint.
+
 ### Path parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| organizationID | string | Unique identifier for the organization |
-| projectID | string | Unique identifier for the project |
-| branchID | string | Unique identifier for the branch |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| organizationID | string | Yes | Unique identifier for the organization |
+| projectID | string | Yes | Unique identifier for the project |
+| branchID | string | Yes | Unique identifier for the branch |
 
 ### Query parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| username | string | Username that the credentials are requested for (optional) |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| username | string | No | Username that the credentials are requested for (optional) |
 
 ### Response
+
+**Status:** `200 OK`
 
 ```json
 {
@@ -252,79 +344,159 @@ GET /organizations/{organizationID}/projects/{projectID}/branches/{branchID}/cre
 }
 ```
 
-## Get branch metrics
+### Response schema
 
-Retrieves metrics for a specific branch over a time period.
+| Field | Type | Description |
+|-------|------|-------------|
+| username | string | Username for accessing the branch database |
+| password | string | Password for accessing the branch database |
 
-```bash
-POST /organizations/{organizationID}/projects/{projectID}/branches/{branchID}/metrics
-```
+## Branch Metrics
 
-### Path parameters
+For detailed metrics and monitoring data for branches, see the [Metrics API](/api/metrics) documentation.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| organizationID | string | Unique identifier for the organization |
-| projectID | string | Unique identifier for the project |
-| branchID | string | Unique identifier for the branch |
+The Metrics API provides comprehensive performance monitoring including CPU, memory, and disk usage across branch instances with support for multiple aggregation types and time-series data.
 
-### Request body
+## Error Handling
 
-```json
-{
-  "start": "2024-01-01T00:00:00Z",
-  "end": "2024-01-01T23:59:59Z",
-  "metric": "cpu",
-  "instances": ["inst_123", "inst_456"],
-  "aggregations": ["avg", "max", "min"]
-}
-```
-
-### Request body parameters
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| start | string (date-time) | Start time for the metrics query |
-| end | string (date-time) | End time for the metrics query |
-| metric | string | Metric name to query. Options: `cpu`, `memory`, `disk` |
-| instances | array | List of instance IDs to query |
-| aggregations | array | List of aggregations to apply. Options: `avg`, `max`, `min` |
-
-### Response
+The API uses standard HTTP status codes and returns error responses in the following format:
 
 ```json
 {
-  "start": "2024-01-01T00:00:00Z",
-  "end": "2024-01-01T23:59:59Z",
-  "metric": "cpu",
-  "unit": "percentage",
-  "series": [
-    {
-      "instance": "inst_123",
-      "aggregation": "avg",
-      "data": [
-        {
-          "timestamp": "2024-01-01T00:00:00Z",
-          "value": 25.5
-        },
-        {
-          "timestamp": "2024-01-01T01:00:00Z",
-          "value": 30.2
-        }
-      ]
-    }
-  ]
+  "id": "error_identifier",
+  "message": "Human-readable error message explaining the issue"
 }
 ```
 
-### Metric types
+### Common error responses
 
-- **cpu**: CPU usage percentage
-- **memory**: Memory usage in bytes
-- **disk**: Disk usage in bytes
+| Status | Error Type | Description |
+|--------|------------|-------------|
+| 400 | BadRequestError | Request was malformed or contained invalid parameters |
+| 401 | AuthorizationError | Authentication failed or is missing |
+| 404 | GenericError | Requested resource does not exist |
+| 5XX | GenericError | Server error occurred |
 
-### Aggregation types
+## Schema Reference
 
-- **avg**: Average value over the time interval
-- **max**: Maximum value over the time interval
-- **min**: Minimum value over the time interval 
+### Core Data Models
+
+#### BranchListMetadata
+Basic branch information returned when listing branches.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| id | string | Yes | Unique identifier for the branch |
+| name | string | Yes | Human-readable name for the branch |
+| createdAt | string (date-time) | Yes | Timestamp when the branch was created |
+| updatedAt | string (date-time) | Yes | Timestamp when the branch was last updated |
+| region | string | Yes | Geographic region where the branch is deployed |
+| publicAccess | boolean | Yes | Whether the branch allows public access without authentication |
+| description | string | No | Optional description of the branch purpose or contents |
+| parentID | string | No | Identifier of the parent branch if this is a derived branch, null otherwise |
+
+#### BranchMetadata
+Complete branch information including configuration and status details.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| id | string | Yes | Unique identifier for the branch |
+| name | string | Yes | Human-readable name for the branch |
+| createdAt | string (date-time) | Yes | Timestamp when the branch was created |
+| updatedAt | string (date-time) | Yes | Timestamp when the branch was last updated |
+| region | string | Yes | Geographic region where the branch is deployed |
+| status | BranchStatus | Yes | Current operational status of the branch |
+| connectionString | string | Yes | Database connection string for accessing this branch |
+| configuration | ClusterConfiguration | Yes | Configuration details for the underlying database cluster |
+| publicAccess | boolean | Yes | Whether the branch allows public access without authentication |
+| scaleToZero | ScaleToZeroConfiguration | Yes | Scale to zero configuration for the branch |
+| description | string | No | Optional description of the branch purpose or contents |
+| parentID | string | No | Identifier of the parent branch if this is a derived branch, null otherwise |
+
+#### BranchShortMetadata
+Simplified branch information returned for create/update operations.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| id | string | Yes | Unique identifier for the branch |
+| name | string | Yes | Human-readable name for the branch |
+| createdAt | string (date-time) | Yes | Timestamp when the branch was created |
+| updatedAt | string (date-time) | Yes | Timestamp when the branch was last updated |
+| region | string | Yes | Geographic region where the branch is deployed |
+| publicAccess | boolean | Yes | Whether the branch allows public access without authentication |
+| connectionString | string | No | Database connection string for accessing this branch |
+| description | string | No | Optional description of the branch purpose or contents |
+| parentID | string | No | Identifier of the parent branch if this is a derived branch, null otherwise |
+
+#### ClusterConfiguration
+Database cluster configuration including image, instance type, and region.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| image | string | Yes | Database image to use (e.g., "postgresql:17") |
+| instanceType | string | Yes | Instance type for the database cluster |
+| instances | integer | Yes | Number of database instances |
+| region | string | Yes | Geographic region for deployment |
+
+#### ScaleToZeroConfiguration
+Configuration for automatic scaling to zero when branches are idle.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| enabled | boolean | Yes | Whether scale to zero is enabled |
+| idleTime | integer | Yes | Time in seconds before scaling to zero when idle |
+
+#### BranchStatus
+Operational status information including instance counts and lifecycle state.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| instanceCount | integer | Yes | Total number of instances for the branch |
+| instanceReadyCount | integer | Yes | Number of instances that are ready |
+| instances | array | Yes | Array of instance objects with status information |
+| lifecycle | object | Yes | Lifecycle information including phase and message |
+
+#### BranchCredentials
+Database access credentials for a specific branch.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| username | string | Yes | Username for accessing the branch database |
+| password | string | Yes | Password for accessing the branch database |
+
+#### BranchCreationDetails
+Details required when creating a new branch.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| name | string | Yes | Human-readable name for the new branch |
+| description | string | No | Optional description for the branch purpose or contents (max 50 characters, pattern: `^[a-zA-Z0-9]+[a-zA-Z0-9- ]*$`) |
+| parentID | string | No | If present, the branch will inherit the parent branch configuration and data |
+| configuration | ClusterConfiguration | No | Configuration for the underlying database cluster if not inheriting from a parent |
+| scaleToZero | ScaleToZeroConfiguration | No | Scale to zero configuration for the branch |
+
+#### BranchUpdateDetails
+Details that can be updated for an existing branch.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| name | string | No | New name for the branch |
+| description | string | No | New description for the branch |
+
+#### InstanceMetadata
+Information about a specific database instance.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| id | string | Yes | Unique identifier for the instance |
+| status | string | Yes | Current status of the instance |
+| region | string | Yes | Geographic region where the instance is deployed |
+| createdAt | string (date-time) | Yes | Timestamp when the instance was created |
+
+#### LifecycleInfo
+Lifecycle information for a branch.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| phase | string | Yes | Current lifecycle phase (e.g., "running", "starting", "stopping") |
+| message | string | Yes | Human-readable message describing the current state | 

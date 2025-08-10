@@ -3,7 +3,16 @@ title: Organizations API
 description: Manage organizations and their settings
 ---
 
-The Organizations API allows you to manage your Xata organizations, including listing, creating, updating, and deleting organizations.
+The Organizations API allows you to manage your Xata organizations, including listing, creating, updating, and deleting organizations. All endpoints require authentication via API key or OIDC.
+
+## Authentication
+
+All endpoints require authentication. You can authenticate using:
+- **API Key**: Include your API key in the `Authorization` header: `Authorization: Bearer <your-api-key>`
+- **OIDC**: Use OIDC tokens for authentication
+
+Required scopes for different operations:
+- **project:read**: Read organization information and list available regions
 
 ## List organizations
 
@@ -13,7 +22,12 @@ Retrieves a list of all organizations you have access to.
 GET /organizations
 ```
 
+### Summary
+Returns a list of all organizations that the authenticated user has access to, including basic metadata such as ID, name, and creation/update timestamps.
+
 ### Response
+
+**Status:** `200 OK`
 
 ```json
 {
@@ -28,6 +42,16 @@ GET /organizations
 }
 ```
 
+### Response schema
+
+| Field | Type | Description |
+|-------|------|-------------|
+| organizations | array | Array of organization objects |
+| id | string | Unique identifier for the organization |
+| name | string | Human-readable name for the organization |
+| createdAt | string (date-time) | Timestamp when the organization was created |
+| updatedAt | string (date-time) | Timestamp when the organization was last updated |
+
 ## Get organization
 
 Retrieves detailed information about a specific organization.
@@ -36,13 +60,18 @@ Retrieves detailed information about a specific organization.
 GET /organizations/{organizationID}
 ```
 
+### Summary
+Returns comprehensive information about a specific organization by its ID, including all metadata and settings.
+
 ### Path parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| organizationID | string | Unique identifier for the organization |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| organizationID | string | Yes | Unique identifier for the organization |
 
 ### Response
+
+**Status:** `200 OK`
 
 ```json
 {
@@ -53,6 +82,15 @@ GET /organizations/{organizationID}
 }
 ```
 
+### Response schema
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string | Unique identifier for the organization |
+| name | string | Human-readable name for the organization |
+| createdAt | string (date-time) | Timestamp when the organization was created |
+| updatedAt | string (date-time) | Timestamp when the organization was last updated |
+
 ## Update organization
 
 Updates the name of an organization.
@@ -61,11 +99,14 @@ Updates the name of an organization.
 PATCH /organizations/{organizationID}
 ```
 
+### Summary
+Updates the organization's name. This is the only field that can be modified for an existing organization.
+
 ### Path parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| organizationID | string | Unique identifier for the organization |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| organizationID | string | Yes | Unique identifier for the organization |
 
 ### Request body
 
@@ -75,7 +116,15 @@ PATCH /organizations/{organizationID}
 }
 ```
 
+### Request body parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| name | string | Yes | New name for the organization |
+
 ### Response
+
+**Status:** `200 OK`
 
 ```json
 {
@@ -86,6 +135,15 @@ PATCH /organizations/{organizationID}
 }
 ```
 
+### Response schema
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string | Unique identifier for the organization |
+| name | string | Updated name for the organization |
+| createdAt | string (date-time) | Timestamp when the organization was created |
+| updatedAt | string (date-time) | Timestamp when the organization was last updated |
+
 ## Delete organization
 
 Permanently deletes an organization and all its associated data. This action cannot be undone.
@@ -94,51 +152,117 @@ Permanently deletes an organization and all its associated data. This action can
 DELETE /organizations/{organizationID}
 ```
 
+### Summary
+Permanently removes an organization and all associated projects, branches, and data. This is a destructive operation that cannot be reversed.
+
 ### Path parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| organizationID | string | Unique identifier for the organization |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| organizationID | string | Yes | Unique identifier for the organization |
 
 ### Response
 
-Returns a 204 status code with no content on success.
+**Status:** `204 No Content`
+
+No response body is returned on successful deletion.
 
 ## Get available regions
 
-Retrieves a list of all regions where new branches can be deployed for the specified organization.
+Retrieves a list of all regions where new projects can be deployed within an organization.
 
 ```bash
 GET /organizations/{organizationID}/regions
 ```
 
+### Summary
+Returns a list of available geographic regions where new projects and branches can be deployed, along with information about public access capabilities for each region.
+
 ### Path parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| organizationID | string | Unique identifier for the organization |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| organizationID | string | Yes | Unique identifier for the organization |
 
 ### Response
+
+**Status:** `200 OK`
 
 ```json
 {
   "regions": [
     {
       "id": "us-east-1",
-      "publicAccess": true
+      "publicAccess": false
     },
     {
       "id": "eu-west-1",
-      "publicAccess": false
+      "publicAccess": true
     }
   ]
 }
 ```
 
-### Response fields
+### Response schema
 
 | Field | Type | Description |
 |-------|------|-------------|
-| regions | array | Array of available regions with their properties |
+| regions | array | Array of available regions |
 | id | string | Unique identifier for the region |
 | publicAccess | boolean | Whether data plane is public-facing to the internet in this region |
+
+## Error Handling
+
+The API uses standard HTTP status codes and returns error responses in the following format:
+
+```json
+{
+  "id": "error_identifier",
+  "message": "Human-readable error message explaining the issue"
+}
+```
+
+### Common error responses
+
+| Status | Error Type | Description |
+|--------|------------|-------------|
+| 400 | GenericError | Request was malformed or contained invalid parameters |
+| 401 | AuthorizationError | Authentication failed or is missing |
+| 404 | GenericError | Requested organization does not exist |
+| 5XX | GenericError | Server error occurred |
+
+## Schema Reference
+
+### Core Data Models
+
+#### Organization
+Basic organization information.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| id | string | Yes | Unique identifier for the organization |
+| name | string | Yes | Human-readable name for the organization |
+| createdAt | string (date-time) | Yes | Timestamp when the organization was created |
+| updatedAt | string (date-time) | Yes | Timestamp when the organization was last updated |
+
+#### OrganizationID
+Unique identifier for an organization.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| value | string | Yes | The organization ID string |
+
+#### Region
+Information about an available deployment region.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| id | string | Yes | Unique identifier for the region |
+| publicAccess | boolean | Yes | Whether data plane is public-facing to the internet in this region |
+
+#### OrganizationUpdateRequest
+Request body for updating organization details.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| name | string | Yes | New name for the organization |

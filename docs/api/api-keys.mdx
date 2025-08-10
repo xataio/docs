@@ -3,7 +3,17 @@ title: API Keys API
 description: Manage API keys for authentication
 ---
 
-The API Keys API allows you to manage API keys for users and organizations, including creating, listing, and deleting API keys.
+The API Keys API allows you to manage API keys for users and organizations, including creating, listing, and deleting API keys. All endpoints require authentication via API key or OIDC.
+
+## Authentication
+
+All endpoints require authentication. You can authenticate using:
+- **API Key**: Include your API key in the `Authorization` header: `Authorization: Bearer <your-api-key>`
+- **OIDC**: Use OIDC tokens for authentication
+
+Required scopes for different operations:
+- **api_key:read**: Read API key information and list keys
+- **api_key:write**: Create and delete API keys
 
 ## List API keys
 
@@ -15,20 +25,21 @@ Retrieves a list of API keys for a user or organization.
 GET /api-keys
 ```
 
-### List organization API keys
-
-```bash
-GET /api-keys
-```
+### Summary
+Returns a paginated list of all API keys associated with the authenticated user, including metadata such as name, creation date, expiry, scopes, and access permissions.
 
 ### Query parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| organization | string | Filter by organization ID (optional) |
-| user | string | Filter by user ID (optional) |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| organization | string | No | Filter by organization ID (optional) |
+| user | string | No | Filter by user ID (optional) |
+| page | integer | No | Page number for pagination (default: 1) |
+| size | integer | No | Number of items per page (default: 20, max: 100) |
 
 ### Response
+
+**Status:** `200 OK`
 
 ```json
 {
@@ -46,9 +57,37 @@ GET /api-keys
       "projects": ["proj_123"],
       "branches": ["br_123"]
     }
-  ]
+  ],
+  "pagination": {
+    "page": 1,
+    "size": 20,
+    "total": 45,
+    "pages": 3
+  }
 }
 ```
+
+### Response schema
+
+| Field | Type | Description |
+|-------|------|-------------|
+| keys | array | Array of API key objects |
+| pagination | object | Pagination information |
+| pagination.page | integer | Current page number |
+| pagination.size | integer | Number of items per page |
+| pagination.total | integer | Total number of items |
+| pagination.pages | integer | Total number of pages |
+| id | string | Unique identifier for the API key |
+| name | string | Human-readable name for the API key |
+| preview | string | Preview of the API key (first few characters) |
+| created_at | string (date-time) | Timestamp when the API key was created |
+| created_by | string | ID of the user that created this API key |
+| created_by_key | string | ID of the API key that created this API key |
+| expiry | string (date-time) | Date when the API key expires (null if no expiry) |
+| last_used | string (date-time) | Timestamp of the last time the key was used |
+| scopes | array | List of scopes granted to this API key |
+| projects | array | List of project IDs the key has access to |
+| branches | array | List of branch IDs the key has access to |
 
 ## Create API key
 
@@ -57,6 +96,9 @@ Creates a new API key for a user or organization.
 ```bash
 POST /api-keys
 ```
+
+### Summary
+Creates a new API key with specified permissions, scopes, and access restrictions. The full key is only returned once upon creation.
 
 ### Request body
 
@@ -72,21 +114,24 @@ POST /api-keys
 
 ### Request body parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| name | string | Human-readable name for the API key |
-| expiry | string (date-time) | Optional expiration date for the API key |
-| scopes | array | List of scopes for the API key |
-| projects | array | List of project IDs the key has access to |
-| branches | array | List of branch IDs the key has access to |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| name | string | Yes | Human-readable name for the API key |
+| expiry | string (date-time) | No | Optional expiration date for the API key |
+| scopes | array | Yes | List of scopes for the API key |
+| projects | array | No | List of project IDs the key has access to |
+| branches | array | No | List of branch IDs the key has access to |
 
 ### Response
+
+**Status:** `201 Created`
 
 ```json
 {
   "id": "key_123",
   "name": "New API Key",
-  "key": "xata_live_abc123...",
+  "key": "xata_live_abc123def456ghi789jkl012mno345pqr678stu901vwx234yz567890",
+  "preview": "xata_...",
   "created_at": "2024-01-01T00:00:00Z",
   "created_by": "user_123",
   "created_by_key": null,
@@ -97,21 +142,44 @@ POST /api-keys
 }
 ```
 
+**Note:** The `key` field is only returned once upon creation. Store this securely as it cannot be retrieved later.
+
+### Response schema
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string | Unique identifier for the created API key |
+| key | string | The full API key (only returned once) |
+| name | string | Name of the API key |
+| preview | string | Preview of the API key (first few characters) |
+| created_at | string (date-time) | Timestamp when the API key was created |
+| created_by | string | ID of the user that created this API key |
+| created_by_key | string | ID of the API key that created this API key |
+| expiry | string (date-time) | Date when the API key expires |
+| scopes | array | List of scopes granted to this API key |
+| projects | array | List of project IDs the key has access to |
+| branches | array | List of branch IDs the key has access to |
+
 ## Get API key
 
-Retrieves details about a specific API key.
+Retrieves detailed information about a specific API key.
 
 ```bash
-GET /api-keys/{apiKeyID}
+GET /api-keys/{keyID}
 ```
+
+### Summary
+Returns comprehensive information about an API key including all metadata, permissions, and access details.
 
 ### Path parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| apiKeyID | string | Unique identifier for the API key |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| keyID | string | Yes | Unique identifier for the API key |
 
 ### Response
+
+**Status:** `200 OK`
 
 ```json
 {
@@ -129,20 +197,252 @@ GET /api-keys/{apiKeyID}
 }
 ```
 
+### Response schema
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string | Unique identifier for the API key |
+| name | string | Human-readable name for the API key |
+| preview | string | Preview of the API key (first few characters) |
+| created_at | string (date-time) | Timestamp when the API key was created |
+| created_by | string | ID of the user that created this API key |
+| created_by_key | string | ID of the API key that created this API key |
+| expiry | string (date-time) | Date when the API key expires (null if no expiry) |
+| last_used | string (date-time) | Timestamp of the last time the key was used |
+| scopes | array | List of scopes granted to this API key |
+| projects | array | List of project IDs the key has access to |
+| branches | array | List of branch IDs the key has access to |
+
 ## Delete API key
 
 Permanently deletes an API key.
 
 ```bash
-DELETE /api-keys/{apiKeyID}
+DELETE /api-keys/{keyID}
 ```
+
+### Summary
+Permanently removes an API key. This action cannot be undone and will immediately revoke all access for the specified key.
 
 ### Path parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| apiKeyID | string | Unique identifier for the API key |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| keyID | string | Yes | Unique identifier for the API key |
 
 ### Response
 
-Returns a 204 status code with no content on success. 
+**Status:** `204 No Content`
+
+No response body is returned on successful deletion.
+
+## Error Handling
+
+The API uses standard HTTP status codes and returns error responses in the following format:
+
+```json
+{
+  "id": "error_identifier",
+  "message": "Human-readable error message explaining the issue"
+}
+```
+
+### Common error responses
+
+| Status | Error Type | Description |
+|--------|------------|-------------|
+| 400 | GenericError | Request was malformed or contained invalid parameters |
+| 401 | AuthorizationError | Authentication failed or is missing |
+| 403 | AuthorizationError | API key lacks required scopes for the operation |
+| 404 | GenericError | Requested API key does not exist |
+| 429 | RateLimitError | Rate limit exceeded |
+| 5XX | GenericError | Server error occurred |
+
+### Error examples
+
+**400 Bad Request - Invalid scope**
+```json
+{
+  "id": "invalid_scope",
+  "message": "Invalid scope 'invalid_scope_name' provided. Valid scopes are: read, write, admin, metrics:read, credentials:read, branch:read, branch:write, project:read, project:write, user:read, user:write, api_key:read, api_key:write"
+}
+```
+
+**401 Unauthorized - Invalid API key**
+```json
+{
+  "id": "invalid_api_key",
+  "message": "Invalid or expired API key provided"
+}
+```
+
+**403 Forbidden - Insufficient scopes**
+```json
+{
+  "id": "insufficient_scopes",
+  "message": "API key lacks required scope 'api_key:write' for this operation"
+}
+```
+
+**404 Not Found - API key not found**
+```json
+{
+  "id": "api_key_not_found",
+  "message": "API key with ID 'key_999' not found"
+}
+```
+
+**429 Too Many Requests - Rate limit exceeded**
+```json
+{
+  "id": "rate_limit_exceeded",
+  "message": "Rate limit exceeded. Please try again in 60 seconds"
+}
+```
+
+### Error resolution guidance
+
+- **400 Bad Request**: Check request body format and parameter values
+- **401 Unauthorized**: Verify API key is valid and has required scopes
+- **403 Forbidden**: Ensure your API key has the necessary scopes for the operation
+- **404 Not Found**: Confirm API key ID is correct
+- **429 Too Many Requests**: Wait for the rate limit window to reset or implement exponential backoff
+- **5XX Server Error**: Retry the request or contact support if persistent
+
+## Rate Limiting
+
+API requests are subject to rate limiting. The current limits are:
+
+- 100 requests per minute per API key
+- 1000 requests per hour per API key
+
+Rate limit headers are included in all responses:
+
+- `X-RateLimit-Limit`: The maximum number of requests allowed per time window
+- `X-RateLimit-Remaining`: The number of requests remaining in the current time window
+- `X-RateLimit-Reset`: The time when the current rate limit window resets (Unix timestamp)
+
+When rate limits are exceeded, the API returns a `429 Too Many Requests` status with appropriate error details.
+
+## Schema Reference
+
+### Core Data Models
+
+#### APIKeyPreview
+Basic API key information returned when listing keys.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| id | string | Yes | Unique identifier for the API key |
+| name | string | Yes | Human-readable name for the API key |
+| preview | string | Yes | Preview of the API key (first few characters) |
+| created_at | string (date-time) | Yes | Timestamp when the API key was created |
+| expiry | string (date-time) | Yes | Date when the API key expires (null if no expiry) |
+| last_used | string (date-time) | Yes | Timestamp of the last time the key was used |
+| scopes | array | Yes | List of scopes granted to this API key |
+| projects | array | Yes | List of project IDs the key has access to |
+| branches | array | Yes | List of branch IDs the key has access to |
+| created_by | string | No | ID of the user that created this API key |
+| created_by_key | string | No | ID of the API key that created this API key |
+
+#### APIKeyCreationRequest
+Request body for creating a new API key.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| name | string | Yes | Human-readable name for the API key |
+| expiry | string (date-time) | No | Optional expiration date for the API key |
+| scopes | array | Yes | List of scopes for the API key |
+| projects | array | No | List of project IDs the key has access to |
+| branches | array | No | List of branch IDs the key has access to |
+
+#### APIKey
+Complete API key information including all metadata and permissions.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| id | string | Yes | Unique identifier for the API key |
+| name | string | Yes | Human-readable name for the API key |
+| preview | string | Yes | Preview of the API key (first few characters) |
+| created_at | string (date-time) | Yes | Timestamp when the API key was created |
+| expiry | string (date-time) | Yes | Date when the API key expires (null if no expiry) |
+| last_used | string (date-time) | Yes | Timestamp of the last time the key was used |
+| scopes | array | Yes | List of scopes granted to this API key |
+| projects | array | Yes | List of project IDs the key has access to |
+| branches | array | Yes | List of branch IDs the key has access to |
+| created_by | string | No | ID of the user that created this API key |
+| created_by_key | string | No | ID of the API key that created this API key |
+
+#### PaginationInfo
+Pagination metadata for list responses.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| page | integer | Yes | Current page number |
+| size | integer | Yes | Number of items per page |
+| total | integer | Yes | Total number of items |
+| pages | integer | Yes | Total number of pages |
+
+## Scopes
+
+API keys can have the following scopes that control access to different resources and operations:
+
+### Data Access Scopes
+- **read**: Read access to database records and metadata
+- **write**: Write access to create, update, and delete database records
+- **admin**: Full administrative access to all resources
+
+### Monitoring and Metrics
+- **metrics:read**: Access to performance metrics, query statistics, and monitoring data
+
+### Infrastructure Access
+- **credentials:read**: Access to database connection credentials and connection strings
+- **branch:read**: Read access to branch information and configuration
+- **branch:write**: Write access to create, update, and delete branches
+- **project:read**: Read access to project information and settings
+- **project:write**: Write access to create, update, and delete projects
+
+### User Management
+- **user:read**: Read access to user information and profiles
+- **user:write**: Write access to create, update, and delete users
+
+### API Key Management
+- **api_key:read**: Read access to API key information and list keys
+- **api_key:write**: Write access to create and delete API keys
+
+### Scope Combinations
+
+Common scope combinations for different use cases:
+
+- **Read-only access**: `["read"]`
+- **Full database access**: `["read", "write"]`
+- **Developer access**: `["read", "write", "branch:read", "project:read"]`
+- **Admin access**: `["admin"]`
+- **Monitoring access**: `["metrics:read", "credentials:read"]`
+
+## Best Practices
+
+### Security
+- Store API keys securely and never commit them to version control
+- Use environment variables or secure secret management systems
+- Rotate API keys regularly, especially for production environments
+- Set appropriate expiry dates for temporary or testing keys
+- Use the principle of least privilege - only grant necessary scopes
+
+### Key Management
+- Use descriptive names for API keys to easily identify their purpose
+- Create separate keys for different environments (development, staging, production)
+- Monitor key usage and set up alerts for unusual activity
+- Regularly audit and clean up unused or expired keys
+
+### Rate Limiting
+- Implement exponential backoff when hitting rate limits
+- Cache responses when possible to reduce API calls
+- Monitor rate limit headers to optimize request patterns
+- Consider implementing request queuing for high-volume operations
+
+### Error Handling
+- Always check HTTP status codes and handle errors gracefully
+- Implement retry logic with exponential backoff for transient errors
+- Log error details for debugging and monitoring
+- Provide user-friendly error messages in your applications 

@@ -3,7 +3,16 @@ title: Metrics API
 description: Retrieve metrics and monitoring data for branches
 ---
 
-The Metrics API allows you to retrieve performance and monitoring metrics for your database branches, including CPU, memory, and disk usage.
+The Metrics API allows you to retrieve performance and monitoring metrics for your database branches, including CPU, memory, and disk usage. All endpoints require authentication via API key or OIDC.
+
+## Authentication
+
+All endpoints require authentication. You can authenticate using:
+- **API Key**: Include your API key in the `Authorization` header: `Authorization: Bearer <your-api-key>`
+- **OIDC**: Use OIDC tokens for authentication
+
+Required scopes for different operations:
+- **metrics:read**: Access to metrics and monitoring data
 
 ## Get branch metrics
 
@@ -13,13 +22,16 @@ Retrieves metrics for a specific branch over a time period.
 POST /organizations/{organizationID}/projects/{projectID}/branches/{branchID}/metrics
 ```
 
+### Summary
+Returns time-series metrics data for CPU, memory, and disk usage across branch instances. Supports multiple aggregation types and can filter by specific instances.
+
 ### Path parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| organizationID | string | Unique identifier for the organization |
-| projectID | string | Unique identifier for the project |
-| branchID | string | Unique identifier for the branch |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| organizationID | string | Yes | Unique identifier for the organization |
+| projectID | string | Yes | Unique identifier for the project |
+| branchID | string | Yes | Unique identifier for the branch |
 
 ### Request body
 
@@ -35,15 +47,17 @@ POST /organizations/{organizationID}/projects/{projectID}/branches/{branchID}/me
 
 ### Request body parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| start | string (date-time) | Start time for the metrics query |
-| end | string (date-time) | End time for the metrics query |
-| metric | string | Metric name to query. Options: `cpu`, `memory`, `disk` |
-| instances | array | List of instance IDs to query |
-| aggregations | array | List of aggregations to apply. Options: `avg`, `max`, `min` |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| start | string (date-time) | Yes | Start time for the metrics query |
+| end | string (date-time) | Yes | End time for the metrics query |
+| metric | string | Yes | Metric name to query. Options: `cpu`, `memory`, `disk` |
+| instances | array | Yes | List of instance IDs to query |
+| aggregations | array | Yes | List of aggregations to apply. Options: `avg`, `max`, `min` |
 
 ### Response
+
+**Status:** `200 OK`
 
 ```json
 {
@@ -84,7 +98,7 @@ POST /organizations/{organizationID}/projects/{projectID}/branches/{branchID}/me
 }
 ```
 
-### Response fields
+### Response schema
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -104,4 +118,99 @@ POST /organizations/{organizationID}/projects/{projectID}/branches/{branchID}/me
 
 - **avg**: Average value over the time interval
 - **max**: Maximum value over the time interval
-- **min**: Minimum value over the time interval 
+- **min**: Minimum value over the time interval
+
+## Error Handling
+
+The API uses standard HTTP status codes and returns error responses in the following format:
+
+```json
+{
+  "id": "error_identifier",
+  "message": "Human-readable error message explaining the issue"
+}
+```
+
+### Common error responses
+
+| Status | Error Type | Description |
+|--------|------------|-------------|
+| 400 | GenericError | Request was malformed or contained invalid parameters |
+| 401 | AuthorizationError | Authentication failed or is missing |
+| 404 | GenericError | Requested organization, project, or branch does not exist |
+| 5XX | GenericError | Server error occurred |
+
+## Schema Reference
+
+### Core Data Models
+
+#### BranchMetrics
+Time-series metrics data for monitoring branch performance.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| start | string (date-time) | Yes | Start time of the metrics period |
+| end | string (date-time) | Yes | End time of the metrics period |
+| metric | string | Yes | The metric type that was queried |
+| unit | string | Yes | The unit of measurement (percentage, bytes, ms, etc.) |
+| series | array | Yes | Array of metric series, one per instance and aggregation |
+
+#### BranchMetricsRequest
+Parameters for querying branch metrics over a time period.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| start | string (date-time) | Yes | Start time for the metrics query |
+| end | string (date-time) | Yes | End time for the metrics query |
+| metric | string | Yes | Metric name to query. Options: `cpu`, `memory`, `disk` |
+| instances | array | Yes | List of instance IDs to query |
+| aggregations | array | Yes | List of aggregations to apply. Options: `avg`, `max`, `min` |
+
+#### MetricSeries
+Individual metric series data for a specific instance and aggregation.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| instance | string | Yes | Instance ID for this metric series |
+| aggregation | string | Yes | Aggregation type applied (avg, max, min) |
+| data | array | Yes | Array of timestamp-value pairs |
+
+#### MetricDataPoint
+Individual data point in a metric series.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| timestamp | string (date-time) | Yes | Timestamp for this data point |
+| value | number | Yes | Metric value at this timestamp |
+
+## Usage Examples
+
+### Monitor CPU usage over time
+
+```bash
+curl -X POST "https://api.xata.tech/organizations/org_123/projects/proj_456/branches/br_789/metrics" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "start": "2024-01-01T00:00:00Z",
+    "end": "2024-01-01T23:59:59Z",
+    "metric": "cpu",
+    "instances": ["inst_123"],
+    "aggregations": ["avg", "max"]
+  }'
+```
+
+### Check memory usage for multiple instances
+
+```bash
+curl -X POST "https://api.xata.tech/organizations/org_123/projects/proj_456/branches/br_789/metrics" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "start": "2024-01-01T00:00:00Z",
+    "end": "2024-01-01T23:59:59Z",
+    "metric": "memory",
+    "instances": ["inst_123", "inst_456"],
+    "aggregations": ["avg"]
+  }'
+```
