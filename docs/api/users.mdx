@@ -3,7 +3,17 @@ title: Users API
 description: Manage user accounts and profiles
 ---
 
-The Users API allows you to manage user accounts within your Xata organization, including listing, retrieving, updating, and deleting user accounts.
+The Users API allows you to manage user accounts within your Xata organization, including listing, retrieving, updating, and deleting user accounts. All endpoints require authentication via API key or OIDC.
+
+## Authentication
+
+All endpoints require authentication. You can authenticate using:
+- **API Key**: Include your API key in the `Authorization` header: `Authorization: Bearer <your-api-key>`
+- **OIDC**: Use OIDC tokens for authentication
+
+Required scopes for different operations:
+- **user:read**: Read user information and list users
+- **user:write**: Update and delete user accounts
 
 ## List users
 
@@ -13,7 +23,12 @@ Retrieves a list of all users in an organization.
 GET /users
 ```
 
+### Summary
+Returns a list of all users in the authenticated user's organization, including basic profile information such as ID, email, name, and timestamps.
+
 ### Response
+
+**Status:** `200 OK`
 
 ```json
 {
@@ -29,6 +44,17 @@ GET /users
 }
 ```
 
+### Response schema
+
+| Field | Type | Description |
+|-------|------|-------------|
+| users | array | Array of user objects |
+| id | string | Unique identifier for the user |
+| email | string | Email address of the user |
+| name | string | Human-readable name for the user |
+| createdAt | string (date-time) | Timestamp when the user account was created |
+| updatedAt | string (date-time) | Timestamp when the user account was last updated |
+
 ## Get user
 
 Retrieves detailed information about a specific user.
@@ -37,13 +63,18 @@ Retrieves detailed information about a specific user.
 GET /users/{userID}
 ```
 
+### Summary
+Returns comprehensive information about a specific user by their ID, including all profile details and account metadata.
+
 ### Path parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| userID | string | Unique identifier for the user |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| userID | string | Yes | Unique identifier for the user |
 
 ### Response
+
+**Status:** `200 OK`
 
 ```json
 {
@@ -55,6 +86,16 @@ GET /users/{userID}
 }
 ```
 
+### Response schema
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string | Unique identifier for the user |
+| email | string | Email address of the user |
+| name | string | Human-readable name for the user |
+| createdAt | string (date-time) | Timestamp when the user account was created |
+| updatedAt | string (date-time) | Timestamp when the user account was last updated |
+
 ## Update user
 
 Updates user information within an organization.
@@ -63,11 +104,14 @@ Updates user information within an organization.
 PATCH /users/{userID}
 ```
 
+### Summary
+Updates the user's profile information such as name and email address. Note that some fields may be restricted based on the authenticated user's permissions.
+
 ### Path parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| userID | string | Unique identifier for the user |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| userID | string | Yes | Unique identifier for the user |
 
 ### Request body
 
@@ -78,7 +122,16 @@ PATCH /users/{userID}
 }
 ```
 
+### Request body parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| name | string | No | New name for the user |
+| email | string | No | New email address for the user |
+
 ### Response
+
+**Status:** `200 OK`
 
 ```json
 {
@@ -90,6 +143,16 @@ PATCH /users/{userID}
 }
 ```
 
+### Response schema
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string | Unique identifier for the user |
+| email | string | Updated email address of the user |
+| name | string | Updated name for the user |
+| createdAt | string (date-time) | Timestamp when the user account was created |
+| updatedAt | string (date-time) | Timestamp when the user account was last updated |
+
 ## Delete user
 
 Removes a user from an organization.
@@ -98,12 +161,67 @@ Removes a user from an organization.
 DELETE /users/{userID}
 ```
 
+### Summary
+Permanently removes a user from the organization. This action cannot be undone and will revoke all access for the specified user.
+
 ### Path parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| userID | string | Unique identifier for the user |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| userID | string | Yes | Unique identifier for the user |
 
 ### Response
 
-Returns a 204 status code with no content on success. 
+**Status:** `204 No Content`
+
+No response body is returned on successful deletion.
+
+## Error Handling
+
+The API uses standard HTTP status codes and returns error responses in the following format:
+
+```json
+{
+  "id": "error_identifier",
+  "message": "Human-readable error message explaining the issue"
+}
+```
+
+### Common error responses
+
+| Status | Error Type | Description |
+|--------|------------|-------------|
+| 400 | GenericError | Request was malformed or contained invalid parameters |
+| 401 | AuthorizationError | Authentication failed or is missing |
+| 404 | GenericError | Requested user does not exist |
+| 5XX | GenericError | Server error occurred |
+
+## Schema Reference
+
+### Core Data Models
+
+#### User
+Basic user information.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| id | string | Yes | Unique identifier for the user |
+| email | string | Yes | Email address of the user |
+| name | string | Yes | Human-readable name for the user |
+| createdAt | string (date-time) | Yes | Timestamp when the user account was created |
+| updatedAt | string (date-time) | Yes | Timestamp when the user account was last updated |
+
+#### UserID
+Unique identifier for a user account.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| value | string | Yes | The user ID string |
+
+#### UserUpdateRequest
+Request body for updating user details.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| name | string | No | New name for the user |
+| email | string | No | New email address for the user | 

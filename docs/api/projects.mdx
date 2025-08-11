@@ -3,7 +3,17 @@ title: Projects API
 description: Manage projects and their settings
 ---
 
-The Projects API allows you to manage your Xata projects, including listing, creating, updating, and deleting projects.
+The Projects API allows you to manage your Xata projects, including listing, creating, updating, and deleting projects. All endpoints require authentication via API key or OIDC.
+
+## Authentication
+
+All endpoints require authentication. You can authenticate using:
+- **API Key**: Include your API key in the `Authorization` header: `Authorization: Bearer <your-api-key>`
+- **OIDC**: Use OIDC tokens for authentication
+
+Required scopes for different operations:
+- **project:read**: Read project information and list projects
+- **project:write**: Create, update, and delete projects
 
 ## List projects
 
@@ -13,13 +23,18 @@ Retrieves a list of all projects within an organization.
 GET /organizations/{organizationID}/projects
 ```
 
+### Summary
+Returns a paginated list of projects in an organization with basic metadata including ID, name, creation date, and update timestamp.
+
 ### Path parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| organizationID | string | Unique identifier for the organization |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| organizationID | string | Yes | Unique identifier for the organization |
 
 ### Response
+
+**Status:** `200 OK`
 
 ```json
 {
@@ -34,6 +49,16 @@ GET /organizations/{organizationID}/projects
 }
 ```
 
+### Response schema
+
+| Field | Type | Description |
+|-------|------|-------------|
+| projects | array | Array of project objects |
+| id | string | Unique identifier for the project |
+| name | string | Human-readable name for the project |
+| createdAt | string (date-time) | Timestamp when the project was created |
+| updatedAt | string (date-time) | Timestamp when the project was last updated |
+
 ## Create project
 
 Creates a new project within an organization.
@@ -42,11 +67,14 @@ Creates a new project within an organization.
 POST /organizations/{organizationID}/projects
 ```
 
+### Summary
+Creates a new project with the specified name. The project will be created in the organization's default region.
+
 ### Path parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| organizationID | string | Unique identifier for the organization |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| organizationID | string | Yes | Unique identifier for the organization |
 
 ### Request body
 
@@ -58,11 +86,13 @@ POST /organizations/{organizationID}/projects
 
 ### Request body parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| name | string | Human-readable name for the new project |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| name | string | Yes | Human-readable name for the new project |
 
 ### Response
+
+**Status:** `201 Created`
 
 ```json
 {
@@ -73,6 +103,15 @@ POST /organizations/{organizationID}/projects
 }
 ```
 
+### Response schema
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string | Unique identifier for the created project |
+| name | string | Name of the project |
+| createdAt | string (date-time) | Timestamp when the project was created |
+| updatedAt | string (date-time) | Timestamp when the project was last updated |
+
 ## Get project
 
 Retrieves detailed information about a specific project.
@@ -81,14 +120,19 @@ Retrieves detailed information about a specific project.
 GET /organizations/{organizationID}/projects/{projectID}
 ```
 
+### Summary
+Returns comprehensive information about a project including all metadata and settings.
+
 ### Path parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| organizationID | string | Unique identifier for the organization |
-| projectID | string | Unique identifier for the project |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| organizationID | string | Yes | Unique identifier for the organization |
+| projectID | string | Yes | Unique identifier for the project |
 
 ### Response
+
+**Status:** `200 OK`
 
 ```json
 {
@@ -99,20 +143,32 @@ GET /organizations/{organizationID}/projects/{projectID}
 }
 ```
 
+### Response schema
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string | Unique identifier for the project |
+| name | string | Human-readable name for the project |
+| createdAt | string (date-time) | Timestamp when the project was created |
+| updatedAt | string (date-time) | Timestamp when the project was last updated |
+
 ## Update project
 
-Updates the name of a project.
+Updates the configuration of a project.
 
 ```bash
 PATCH /organizations/{organizationID}/projects/{projectID}
 ```
 
+### Summary
+Updates project metadata such as name. Note that most project configuration changes require creating a new project.
+
 ### Path parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| organizationID | string | Unique identifier for the organization |
-| projectID | string | Unique identifier for the project |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| organizationID | string | Yes | Unique identifier for the organization |
+| projectID | string | Yes | Unique identifier for the project |
 
 ### Request body
 
@@ -124,11 +180,13 @@ PATCH /organizations/{organizationID}/projects/{projectID}
 
 ### Request body parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| name | string | New name for the project |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| name | string | No | New name for the project |
 
 ### Response
+
+**Status:** `200 OK`
 
 ```json
 {
@@ -139,60 +197,136 @@ PATCH /organizations/{organizationID}/projects/{projectID}
 }
 ```
 
+### Response schema
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string | Unique identifier for the project |
+| name | string | Updated name for the project |
+| createdAt | string (date-time) | Timestamp when the project was created |
+| updatedAt | string (date-time) | Timestamp when the project was last updated |
+
 ## Delete project
 
-Permanently deletes a project and all its associated data. This action cannot be undone.
+Permanently deletes a project and all its associated data.
 
 ```bash
 DELETE /organizations/{organizationID}/projects/{projectID}
 ```
 
+### Summary
+Permanently removes a project and all associated branches and data. This action cannot be undone and will terminate all active connections.
+
 ### Path parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| organizationID | string | Unique identifier for the organization |
-| projectID | string | Unique identifier for the project |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| organizationID | string | Yes | Unique identifier for the organization |
+| projectID | string | Yes | Unique identifier for the project |
 
 ### Response
 
-Returns a 204 status code with no content on success.
+**Status:** `204 No Content`
+
+No response body is returned on successful deletion.
 
 ## Get available regions
 
-Retrieves a list of all regions where new branches can be deployed for the specified organization.
+Retrieves a list of all regions where new branches can be deployed within a project.
 
 ```bash
-GET /organizations/{organizationID}/regions
+GET /organizations/{organizationID}/projects/{projectID}/regions
 ```
+
+### Summary
+Returns a list of available geographic regions where new branches can be deployed within the specified project, along with information about public access capabilities for each region.
 
 ### Path parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| organizationID | string | Unique identifier for the organization |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| organizationID | string | Yes | Unique identifier for the organization |
+| projectID | string | Yes | Unique identifier for the project |
 
 ### Response
+
+**Status:** `200 OK`
 
 ```json
 {
   "regions": [
     {
       "id": "us-east-1",
-      "publicAccess": true
+      "publicAccess": false
     },
     {
       "id": "eu-west-1",
-      "publicAccess": false
+      "publicAccess": true
     }
   ]
 }
 ```
 
-### Response fields
+### Response schema
 
 | Field | Type | Description |
 |-------|------|-------------|
-| regions | array | Array of available regions with their properties |
+| regions | array | Array of available regions |
 | id | string | Unique identifier for the region |
-| publicAccess | boolean | Whether data plane is public-facing to the internet in this region | 
+| publicAccess | boolean | Whether data plane is public-facing to the internet in this region |
+
+## Error Handling
+
+The API uses standard HTTP status codes and returns error responses in the following format:
+
+```json
+{
+  "id": "error_identifier",
+  "message": "Human-readable error message explaining the issue"
+}
+```
+
+### Common error responses
+
+| Status | Error Type | Description |
+|--------|------------|-------------|
+| 400 | GenericError | Request was malformed or contained invalid parameters |
+| 401 | AuthorizationError | Authentication failed or is missing |
+| 404 | GenericError | Requested organization or project does not exist |
+| 5XX | GenericError | Server error occurred |
+
+## Schema Reference
+
+### Core Data Models
+
+#### Project
+Basic project information.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| id | string | Yes | Unique identifier for the project |
+| name | string | Yes | Human-readable name for the project |
+| createdAt | string (date-time) | Yes | Timestamp when the project was created |
+| updatedAt | string (date-time) | Yes | Timestamp when the project was last updated |
+
+#### ProjectCreationRequest
+Request body for creating a new project.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| name | string | Yes | Human-readable name for the new project |
+
+#### ProjectUpdateRequest
+Request body for updating project details.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| name | string | No | New name for the project |
+
+#### Region
+Information about an available deployment region.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| id | string | Yes | Unique identifier for the region |
+| publicAccess | boolean | Yes | Whether data plane is public-facing to the internet in this region | 
