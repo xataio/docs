@@ -57,40 +57,6 @@ postgresql://your_username:your_password@your-rds-endpoint:5432/your_database
 
 You can find the endpoint in the AWS RDS Console under your instance details.
 
-## Replicate Database Roles
-
-Before migrating your data, you'll need to replicate the database roles from your source database to your Xata branch.
-
-### Extract Roles from Source Database
-
-Connect to your source database and extract the role definitions:
-
-```sql
--- Extract role definitions (run this on your source database)
-SELECT 
-    'CREATE ROLE ' || rolname || ' WITH ' ||
-    CASE WHEN rolcanlogin THEN 'LOGIN ' ELSE 'NOLOGIN ' END ||
-    CASE WHEN rolsuper THEN 'SUPERUSER ' ELSE 'NOSUPERUSER ' END ||
-    CASE WHEN rolinherit THEN 'INHERIT ' ELSE 'NOINHERIT ' END ||
-    CASE WHEN rolcreaterole THEN 'CREATEROLE ' ELSE 'NOCREATEROLE ' END ||
-    CASE WHEN rolcreatedb THEN 'CREATEDB ' ELSE 'NOCREATEDB ' END ||
-    CASE WHEN rolreplication THEN 'REPLICATION ' ELSE 'NOREPLICATION ' END ||
-    CASE WHEN rolbypassrls THEN 'BYPASSRLS ' ELSE 'NOBYPASSRLS ' END ||
-    'CONNECTION LIMIT ' || COALESCE(rolconnlimit, -1) || ';' as create_role_statement
-FROM pg_roles 
-WHERE rolname NOT LIKE 'pg_%'
-ORDER BY rolname;
-```
-
-### Apply Roles to Xata Branch
-
-1. **Connect to your Xata branch**:
-   ```bash
-   psql `xata branch url`
-   ```
-
-2. **Execute the role creation statements** from the previous step
-
 ## Initialize Xata Project
 
 Set up your Xata project configuration:
