@@ -8,11 +8,13 @@ The `clone` command helps you create a copy of your Xata database or clone an ex
 ## Subcommands
 
 ### start
+
 Snapshot performs a snapshot of the configured source Postgres database into the configured target.
 
 ```bash
 xata clone start [--source-url <url>] [--config <file>] [--log-level <level>] [--dump-file <file>] [--postgres-url <url>] [--profile] [--reset] [--tables <tables>] [--target <type>] [--target-url <url>] [--organization <id>] [--project <id>] [--branch <id>] [--filter-tables <tables>] [--validation-mode <mode>] [--role <role>] [-h|--help]
 ```
+
 - `--source-url`: The source URL of the database to clone
 - `--config`: .env or .yaml config file to use with pgstream if any
 - `--log-level`: Log level for the application. One of trace, debug, info, warn, error, fatal, panic
@@ -20,23 +22,25 @@ xata clone start [--source-url <url>] [--config <file>] [--log-level <level>] [-
 - `--postgres-url`: Source postgres database to perform the snapshot from
 - `--profile`: Whether to produce CPU and memory profile files, as well as exposing a /debug/pprof endpoint on localhost:6060
 - `--reset`: Whether to reset the target before snapshotting (only for postgres target)
-- `--tables`: List of tables to snapshot, in the format <schema>.<table>. If not specified, the schema `public` will be assumed. Wildcards are supported
+- `--tables`: List of tables to snapshot, in the format `<schema>.<table>`. If not specified, the schema `public` will be assumed. Wildcards are supported
 - `--target`: Target type. One of postgres, opensearch, elasticsearch, kafka
 - `--target-url`: Target URL
 - `--organization`: Organization ID (default: "")
 - `--project`: Project ID (default: "")
 - `--branch`: Branch ID (default: "")
-- `--filter-tables`: Tables to filter (default: *.*)
+- `--filter-tables`: Tables to filter (default: _._)
 - `--validation-mode`: Anonymization validation mode, strict implies that all tables and columns should be specified (strict|relaxed|prompt, default: prompt)
 - `--role`: Postgres role to use for the clone
 - `-h, --help`: Print help information and exit
 
 ### config
+
 Automatically configure the transforms for the clone command.
 
 ```bash
 xata clone config [--source-url <url>] [--mode <mode>] [--validation-mode <mode>] [--organization <id>] [--project <id>] [--branch <id>] [-h|--help]
 ```
+
 - `--source-url`: The source URL of the database to clone
 - `--mode`: The assisting mode to help with the configuration generation (auto|prompt|web|ai, default: prompt)
 - `--validation-mode`: Anonymization validation mode, strict implies that all tables and columns should be specified (strict|relaxed|prompt, default: prompt)
@@ -48,4 +52,4 @@ xata clone config [--source-url <url>] [--mode <mode>] [--validation-mode <mode>
 ## Global Flags
 
 - `-h, --help` - Print help information and exit
-- `--json` - Output in JSON format 
+- `--json` - Output in JSON format
