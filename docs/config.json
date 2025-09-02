@@ -53,6 +53,11 @@
           "file": "docs/tutorials/create-staging-replica.mdx"
         },
         {
+          "title": "Set up streaming replication",
+          "href": "/tutorials/streaming-replication",
+          "file": "docs/tutorials/streaming-replication.mdx"
+        },
+        {
           "title": "Schema changes",
           "href": "/tutorials/schema-change",
           "file": "docs/tutorials/schema-change.mdx"
