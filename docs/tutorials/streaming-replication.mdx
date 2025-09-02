@@ -62,69 +62,39 @@ Initialize the project by running:
 xata init
 ```
 
-Select the project and branch you created in the previous step. This will create a `.xata` folder with configuration files.
-
-## 5. Create a replication slot
-
-Create a dedicated replication slot on your source database:
-
-```sql
-SELECT pg_create_logical_replication_slot('xata_replication', 'pgoutput');
-```
-
-This slot will track changes in your database for streaming to Xata.
-
-## 6. Configure streaming replication
+## 5. Configure streaming replication
 
 Generate a configuration for the streaming process:
 
 ```bash
-xata clone config --source-url $CONN_STRING --mode=prompt
+xata clone config --source-url $CONN_STRING
 ```
 
 Where `CONN_STRING` is your PostgreSQL connection string with replication permissions.
 
 The configuration prompt will ask you to:
+
 - Select tables to replicate
 - Configure anonymization rules if needed
 - Set up transformation pipelines
 
 This creates a configuration file at `.xata/clone.yaml` that you can further customize.
 
-## 7. Initialize and start streaming
+## 6. Initialize and start streaming
 
 First, initialize the streaming setup with an optional initial snapshot:
 
 ```bash
-xata clone stream --source-url $CONN_STRING \
-  --init \
-  --replication-slot xata_replication \
-  --snapshot-tables "public.*"
+xata clone stream --source-url $CONN_STRING
 ```
 
 This command will:
+
 - Create an initial snapshot of your specified tables
 - Set up the streaming pipeline
 - Begin continuous replication
 
-For production deployments, you can run the stream command without `--init` if you've already performed an initial snapshot:
-
-```bash
-xata clone stream --source-url $CONN_STRING \
-  --replication-slot xata_replication
-```
-
-## 8. Monitor streaming status
-
-The streaming process runs continuously, keeping your Xata database synchronized with changes from the source. Monitor the streaming status by checking the logs:
-
-```bash
-xata clone stream --source-url $CONN_STRING \
-  --replication-slot xata_replication \
-  --log-level debug
-```
-
-## 9. Advanced configuration
+## 7. Advanced configuration
 
 ### Filtering specific tables
 
@@ -132,7 +102,6 @@ To stream only specific tables, use the `--filter-tables` flag:
 
 ```bash
 xata clone stream --source-url $CONN_STRING \
-  --replication-slot xata_replication \
   --filter-tables "users.*,orders.*,products.*"
 ```
 
@@ -164,9 +133,7 @@ docker run -d \
   --restart unless-stopped \
   -v $(pwd)/.xata:/config \
   xata/cli clone stream \
-  --source-url $CONN_STRING \
-  --config /config/clone.yaml \
-  --replication-slot xata_replication
+  --source-url $CONN_STRING
 ```
 
 ## 10. Handling failures and recovery
@@ -174,8 +141,7 @@ docker run -d \
 If the streaming connection is interrupted, the replication slot ensures no data is lost. Simply restart the streaming command:
 
 ```bash
-xata clone stream --source-url $CONN_STRING \
-  --replication-slot xata_replication
+xata clone stream --source-url $CONN_STRING
 ```
 
 The process will resume from where it left off, catching up with any changes that occurred during the downtime.
