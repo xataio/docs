@@ -1,0 +1,28 @@
+---
+title: Stream Command
+description: Commands for managing database streaming operations
+---
+
+The `stream` command helps you manage database streaming operations, including destroying pgstream setups.
+
+## Subcommands
+
+### destroy
+
+Destroy any pgstream setup, removing the replication slot and all the relevant tables/functions/triggers, along with the internal pgstream schema.
+
+```bash
+xata stream destroy --source-url <url> [--config <file>] [--log-level <level>] [--postgres-url <url>] [--replication-slot <name>] [-h|--help]
+```
+
+- `--source-url`: The source URL of the database to clone (required)
+- `--config`: .env or .yaml config file to use with pgstream if any
+- `--log-level`: Log level for pgstream (trace|debug|info|warn|error|fatal|panic, default: info)
+- `--postgres-url`: Source postgres URL where pgstream destroy will be run
+- `--replication-slot`: Name of the postgres replication slot to be deleted by pgstream from the source url
+- `-h, --help`: Print help information and exit
+
+## Global Flags
+
+- `-h, --help` - Print help information and exit
+- `--json` - Output in JSON format
