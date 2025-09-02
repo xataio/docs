@@ -1,6 +1,6 @@
 ---
 title: Clone Command
-description: Command for cloning Xata databases and external PostgreSQL databases
+description: "Commands for managing database streaming (logical replication) operations"
 ---
 
 The `clone` command helps you create a copy of your Xata database or clone an external PostgreSQL database into Xata. It supports data anonymization and advanced configuration for complex migration scenarios.
@@ -51,7 +51,7 @@ xata clone config [--source-url <url>] [--mode <mode>] [--validation-mode <mode>
 
 ### stream
 
-Start a continuous data stream from the configured source to the configured target.
+Start a continuous data stream from the configured source to the configured target using Postgres's logical replication.
 
 ```bash
 xata clone stream --source-url <url> [--config <file>] [--log-level <level>] [--init] [--profile] [--replication-slot <name>] [--reset] [--snapshot-tables <tables>] [--source <type>] [--target <type>] [--target-url <url>] [--organization <id>] [--project <id>] [--branch <id>] [--filter-tables <tables>] [--validation-mode <mode>] [--role <role>] [-h|--help]
@@ -73,7 +73,7 @@ xata clone stream --source-url <url> [--config <file>] [--log-level <level>] [--
 - `--branch`: Branch ID
 - `--filter-tables`: Tables to filter (default: _._)
 - `--validation-mode`: Anonymization validation mode, strict implies that all tables and columns should be specified (strict|relaxed|prompt, default: prompt)
-- `--role`: Postgres role to use for streaming
+- `--role`: Postgres role to use for streaming (it should have atleast REPLICATION privilege)
 - `-h, --help`: Print help information and exit
 
 ## Global Flags

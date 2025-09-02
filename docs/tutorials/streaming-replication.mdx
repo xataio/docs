@@ -82,7 +82,7 @@ This creates a configuration file at `.xata/clone.yaml` that you can further cus
 
 ## 6. Initialize and start streaming
 
-First, initialize the streaming setup with an optional initial snapshot:
+First, initialize the streaming setup with an initial snapshot:
 
 ```bash
 xata clone stream --source-url $CONN_STRING
@@ -146,9 +146,15 @@ xata clone stream --source-url $CONN_STRING
 
 The process will resume from where it left off, catching up with any changes that occurred during the downtime.
 
+If you terminate the `xata clone stream` process and do not wish to run streaming replication again. Clean up the replication slot and
+other `pgstream` objects using `xata stream destroy` command.
+
+Not cleaning up the replication slot will cause the WAL to be aggregated continuously and that would lead to full disk space. Use options like `max_slot_wal_keep_size`
+to keep the max WAL size in check.
+
 ## Summary
 
-- You now have real-time streaming replication from your PostgreSQL database to Xata
+- You now have real-time streaming replication (Postgres's logical replication) from your PostgreSQL database to Xata
 - Changes in your source database are automatically synchronized
 - Your data can be anonymized in transit using configurable transformers
 - The replication slot ensures no data loss during network interruptions
