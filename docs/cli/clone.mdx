@@ -9,7 +9,7 @@ The `clone` command helps you create a copy of your Xata database or clone an ex
 
 ### start
 
-Snapshot performs a snapshot of the configured source Postgres database into the configured target.
+Start performs a snapshot of the configured source Postgres database into the configured target.
 
 ```bash
 xata clone start [--source-url <url>] [--config <file>] [--log-level <level>] [--dump-file <file>] [--postgres-url <url>] [--profile] [--reset] [--tables <tables>] [--target <type>] [--target-url <url>] [--organization <id>] [--project <id>] [--branch <id>] [--filter-tables <tables>] [--validation-mode <mode>] [--role <role>] [-h|--help]
@@ -35,7 +35,7 @@ xata clone start [--source-url <url>] [--config <file>] [--log-level <level>] [-
 
 ### config
 
-Automatically configure the transforms for the clone command.
+Automatically configure the transformations for the clone command.
 
 ```bash
 xata clone config [--source-url <url>] [--mode <mode>] [--validation-mode <mode>] [--organization <id>] [--project <id>] [--branch <id>] [-h|--help]
@@ -71,7 +71,7 @@ xata clone stream --source-url <url> [--config <file>] [--log-level <level>] [--
 - `--organization`: Organization ID
 - `--project`: Project ID
 - `--branch`: Branch ID
-- `--filter-tables`: Tables to filter (default: *.*)
+- `--filter-tables`: Tables to filter (default: _._)
 - `--validation-mode`: Anonymization validation mode, strict implies that all tables and columns should be specified (strict|relaxed|prompt, default: prompt)
 - `--role`: Postgres role to use for streaming
 - `-h, --help`: Print help information and exit
