@@ -289,6 +289,11 @@
           "file": "docs/cli/status.mdx"
         },
         {
+          "title": "stream",
+          "href": "/cli/stream",
+          "file": "docs/cli/stream.mdx"
+        },
+        {
           "title": "upgrade",
           "href": "/cli/upgrade",
           "file": "docs/cli/upgrade.mdx"
