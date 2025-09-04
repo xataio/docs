@@ -135,6 +135,11 @@
           "file": "docs/quickstarts/rails.mdx"
         },
         {
+          "title": "Railway",
+          "href": "/quickstarts/railway",
+          "file": "docs/quickstarts/railway.mdx"
+        },
+        {
           "title": "Remix",
           "href": "/quickstarts/remix",
           "file": "docs/quickstarts/remix.mdx"
