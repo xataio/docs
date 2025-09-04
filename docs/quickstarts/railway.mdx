@@ -1,0 +1,44 @@
+---
+title: "Use Xata with Railway"
+description: "Learn how to connect your Railway project with a Xata PostgreSQL database."
+---
+
+## What is Railway
+
+[Railway](https://railway.com/) is Platform as a Service (PaaS) that supports almost any application stack or open-source framework. Railway will host your infrastructure so you don't have to deal with configuration, while allowing you to vertically and horizontally scale it.
+
+While Railway offers built-in PostgreSQL templates, this page shows you how to use Xata as a full-managed PostgreSQL service for Railway.
+
+## Prerequisites
+
+- Xata account
+- Railway account
+
+## Getting started
+
+1. Create a project and branch in the [Xata console](https://console.xata.io).
+2. In the **Overview** tab of the branch, copy the connection string.
+
+![Branch overview](assets/images/branch-overview.png)
+
+3. In the Railway Marketplace you can find the following Xata specific template:
+
+* [Xata PostgreSQL for Node.js and Drizzle](https://railway.com/deploy/xata-postgresql-nodejs-drizzle)
+
+4. Click **Deploy Now** in the template page.
+5. In the creation modal, use the connection string from step 2 as the `DATABASE_URL` setting.
+
+![Railway template modal](assets/images/railway-template-install.png)
+
+6. Click **Deploy**. Once the deployment is done, visit the resulting page at the assign domain. On success, it should show the PostgreSQL version.
+
+![Railway template success](assets/images/railway-template-success.png)
+
+
+## Add Xata PostgreSQL to your existing Railway project
+
+You can also add Xata to your existing project. To do this, you would typically replace the PostgreSQL service from the Railway canvas. To do this:
+
+1. Create a `DATABASE_URL` variable and set it to the PostgreSQL connection string, which you can copy from the Xata branch **Overview** page.
+2. Use `DATABASE_URL` as your PostgreSQL connection string in your application. See the various framework and programming language guides on how to do this.
+3. If you had PostgreSQL on your Railway canvas, you can remove it now.
