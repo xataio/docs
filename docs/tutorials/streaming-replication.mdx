@@ -75,14 +75,11 @@ Where `CONN_STRING` is your PostgreSQL connection string with replication permis
 The configuration prompt will ask you to:
 
 - Select tables to replicate
-- Configure anonymization rules if needed
-- Set up transformation pipelines
+- Set up transformation pipelines i.e. anonymization rules
 
 This creates a configuration file at `.xata/clone.yaml` that you can further customize.
 
 ## 6. Initialize and start streaming
-
-First, initialize the streaming setup with an initial snapshot:
 
 ```bash
 xata clone stream --source-url $CONN_STRING
@@ -145,8 +142,9 @@ xata clone stream --source-url $CONN_STRING
 ```
 
 The process will resume from where it left off, catching up with any changes that occurred during the downtime.
+However, if the too much lag accumulates then the Postgres server might slow down as it has to do both catching up on the lag and its normal operations.
 
-If you terminate the `xata clone stream` process and do not wish to run streaming replication again. Clean up the replication slot and
+If you terminate the `xata clone stream` process and do not wish to run streaming replication again, clean up the replication slot and
 other `pgstream` objects using `xata stream destroy` command.
 
 Not cleaning up the replication slot will cause the WAL to be aggregated continuously and that would lead to full disk space. Use options like `max_slot_wal_keep_size`
