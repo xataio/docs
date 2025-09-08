@@ -1,0 +1,162 @@
+---
+title: Set up a logical streaming replica
+description: Use Xata's streaming replication to keep your database continuously synchronized with real-time changes.
+---
+
+This guide shows you how to set up continuous logical streaming replication from your production PostgreSQL database to Xata, enabling real-time data synchronization with optional anonymization.
+
+![Setting up streaming replication to Xata](assets/images/xata-streaming-replication.png)
+
+## 1. Prerequisites
+
+- A Xata account ([sign up here](https://console.xata.io))
+- The [Xata CLI](/cli) installed:
+  ```bash
+  curl -fsSL https://xata.io/install.sh | bash
+  ```
+- A PostgreSQL database with:
+  - Logical replication enabled
+  - Role with permissions to create a replication slow (`xata clone stream` command does that automatically)
+  - Network connectivity from Xata to your database
+
+## 2. Enable logical replication on source database
+
+First, ensure your source PostgreSQL database has logical replication enabled. You'll need to set these parameters:
+
+```sql
+-- Check current settings
+SHOW wal_level;
+SHOW max_replication_slots;
+SHOW max_wal_senders;
+```
+
+If not already configured, update your PostgreSQL configuration:
+
+```sql
+ALTER SYSTEM SET wal_level = logical;
+ALTER SYSTEM SET max_replication_slots = 10;
+ALTER SYSTEM SET max_wal_senders = 10;
+```
+
+Restart your PostgreSQL instance for the changes to take effect.
+
+## 3. Create a Xata project and branch
+
+In the Console, create a new project and then click the **Create main branch** button to create the PostgreSQL instance.
+
+For streaming replication, consider using at least 1 replica to ensure high availability during continuous synchronization. Select an instance size that can handle your expected write throughput.
+
+> **Note:** Streaming replication maintains a persistent connection to your source database. Ensure your network allows stable, long-lived connections between Xata and your PostgreSQL instance.
+
+## 4. Configure the Xata CLI
+
+Authenticate the CLI by running:
+
+```sh
+xata auth login
+```
+
+Initialize the project by running:
+
+```sh
+xata init
+```
+
+## 5. Configure streaming replication
+
+Generate a configuration for the streaming process:
+
+```bash
+xata clone config --source-url $CONN_STRING
+```
+
+Where `CONN_STRING` is your PostgreSQL connection string with replication permissions.
+
+The configuration prompt will ask you to:
+
+- Select tables to replicate
+- Set up transformation pipelines i.e. anonymization rules
+
+This creates a configuration file at `.xata/clone.yaml` that you can further customize.
+
+## 6. Initialize and start streaming
+
+```bash
+xata clone stream --source-url $CONN_STRING
+```
+
+This command will:
+
+- Create an initial snapshot of your specified tables
+- Set up the streaming pipeline
+- Begin continuous replication
+
+## 7. Advanced configuration
+
+### Filtering specific tables
+
+To stream only specific tables, use the `--filter-tables` flag:
+
+```bash
+xata clone stream --source-url $CONN_STRING \
+  --filter-tables "users.*,orders.*,products.*"
+```
+
+If this option is not specified it defaults to `*.*`
+
+### Custom transformations
+
+Edit your `.xata/clone.yaml` file to add custom transformations:
+
+```yaml
+transforms:
+  - table: users
+    columns:
+      - name: email
+        transformer: mask_email
+      - name: phone
+        transformer: redact
+  - table: orders
+    columns:
+      - name: credit_card
+        transformer: mask_credit_card
+```
+
+### Running with Docker
+
+For production deployments, consider running the streaming process in a containerized environment:
+
+```bash
+docker run -d \
+  --name xata-stream \
+  --restart unless-stopped \
+  -v $(pwd)/.xata:/config \
+  xata/cli clone stream \
+  --source-url $CONN_STRING
+```
+
+## 10. Handling failures and recovery
+
+If the streaming connection is interrupted, the replication slot ensures no data is lost. Simply restart the streaming command:
+
+```bash
+xata clone stream --source-url $CONN_STRING
+```
+
+The process will resume from where it left off, catching up with any changes that occurred during the downtime.
+However, if the too much lag accumulates then the Postgres server might slow down as it has to do both catching up on the lag and its normal operations.
+
+If you terminate the `xata clone stream` process and do not wish to run streaming replication again, clean up the replication slot and
+other `pgstream` objects using `xata stream destroy` command.
+
+Not cleaning up the replication slot will cause the WAL to be aggregated continuously and that would lead to full disk space. Use options like `max_slot_wal_keep_size`
+to keep the max WAL size in check.
+
+## Summary
+
+- You now have real-time streaming replication (Postgres's logical replication) from your PostgreSQL database to Xata
+- Changes in your source database are automatically synchronized
+- Your data can be anonymized in transit using configurable transformers
+- The replication slot ensures no data loss during network interruptions
+
+For more details on advanced streaming configurations and monitoring, see the [clone command documentation](/cli/clone).
