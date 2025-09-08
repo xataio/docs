@@ -16,7 +16,7 @@ This guide shows you how to set up continuous streaming replication from your pr
   ```
 - A PostgreSQL database with:
   - Logical replication enabled
-  - A dedicated replication slot (or permissions to create one)
+  - Role with permissions to create a replication slow (`xata clone stream` command does that automatically)
   - Network connectivity from Xata to your database
 
 ## 2. Enable logical replication on source database
