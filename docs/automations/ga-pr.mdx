@@ -21,7 +21,7 @@ concurrency:
 
 env:
   FORCE_COLOR: 3
-  XATA_API_REFRESH_TOKEN: ${{ secrets.XATA_API_REFRESH_TOKEN }}
+  XATA_API_KEY: ${{ secrets.XATA_API_KEY }}
   XATA_ORGANIZATIONID: 123xyz
   XATA_PROJECTID: prj_i3qsq56h3p3d3crnk7htnc75d0
   XATA_BRANCHID: s99l2grl6d3nr1cqcbaaa5piic
@@ -40,7 +40,7 @@ permissions:
 
 The workflow requires several environment variables to be set:
 
-- `XATA_API_REFRESH_TOKEN`: Your Xata API refresh token (set as a GitHub secret)
+- `XATA_API_KEY`: Your Xata API key (set as a GitHub secret)
 - `XATA_ORGANIZATIONID`: Your Xata organization ID
 - `XATA_PROJECTID`: Your Xata project ID
 - `XATA_BRANCHID`: The ID of the main branch
@@ -50,8 +50,8 @@ The workflow requires several environment variables to be set:
 If you have the Xata CLI configured with your project locally, you can obtain these values with the following commands:
 
 ```sh
-# XATA_API_REFRESH_TOKEN
-xata auth refresh-token
+# XATA_API_KEY
+xata keys organization create
 
 # XATA_ORGANIZATIONID
 xata organization get id

@@ -30,11 +30,11 @@ spec:
                     secretKeyRef:
                       name: xata-secrets
                       key: source-postgres-url
-                - name: XATA_API_REFRESH_TOKEN
+                - name: XATA_API_KEY
                   valueFrom:
                     secretKeyRef:
                       name: xata-secrets
-                      key: XATA_API_REFRESH_TOKEN
+                      key: XATA_API_KEY
                 - name: XATA_ORGANIZATIONID
                   valueFrom:
                     secretKeyRef:
@@ -108,7 +108,7 @@ The task requires several env variables. Assuming you have the xata CLI already 
 kubectl create secret generic xata-secrets \
   --namespace xata-clone \
   --from-literal=source-postgres-url="$RDS_URI" \
-  --from-literal=XATA_API_REFRESH_TOKEN="$(xata auth refresh-token)" \
+  --from-literal=XATA_API_KEY="$(xata keys organization create)" \
   --from-literal=XATA_ORGANIZATIONID="$(xata organization get id)" \
   --from-literal=XATA_PROJECTID="$(xata project get id)" \
   --from-literal=XATA_BRANCHNAME="main" \
