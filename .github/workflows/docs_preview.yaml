@@ -8,10 +8,11 @@ jobs:
     steps:
       - name: Generate preview URL
         id: generate_url
+        env:
+          PR_OWNER: ${{ github.event.pull_request.head.repo.owner.login }}
+          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
         run: |
-          PR_OWNER=${{ github.event.pull_request.head.repo.owner.login }}
-          BRANCH=${{ github.event.pull_request.head.ref }}
-          PREVIEW_URL="https://xata.io/next/preview-path?path=/docs-preview/${PR_OWNER}:${BRANCH}/"
+          PREVIEW_URL="https://xata.io/next/preview-path?path=/docs-preview/${PR_OWNER}:${PR_BRANCH}/"
           echo "preview_url=${PREVIEW_URL}" >> $GITHUB_OUTPUT
 
       - name: Create or update docs preview comment
